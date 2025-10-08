@@ -1,4 +1,4 @@
-# Tugas Kelompok PBP 04
+# Tugas Kelompok PBP  (Goalytics)
 ## Anggota
 - Jefferson Tirza Liman (2406435963)
 - Haikal Muzaki (2406407360)
@@ -19,24 +19,23 @@ Aplikasi ini ditujukan bagi penggemar sepak bola, analis, jurnalis olahraga, hin
     ```
 
 - **Modul 2**: Match prediction
-    ```
+    ```javascript
     Modul ini memungkinkan pengguna membuat, membaca, memperbarui, dan menghapus prediksi pertandingan.
     ```
 - **Modul 3**: Football discussion (forum-based)
-    ```
+    ```javascript
     Sebuah ruang diskusi interaktif bagi pengguna untuk berbagi opini, analisis, dan berita sepak bola. Setiap postingan dan komentar dapat dikelola secara mandiri (CRUD) oleh pengguna.
     ```
 - **Modul 4**: Comparison
-    ```
-    Comparison
+    ```javascript
     Modul ini memungkinkan pengguna membandingkan dua atau lebih pemain berdasarkan statistik utama secara visual dan interaktif. Pengguna dapat menyimpan dan mengedit hasil perbandingan mereka.
     ```
 - **Modul 5**: View/edit profile
-    ```
+    ```javascript
     Pengguna dapat mengelola profil pribadi mereka, termasuk preferensi liga, klub favorit, dan mode tampilan. Modul ini juga mendukung pembaruan informasi akun.
     ```
 - **Modul 6**: Admin (Player database management)
-    ```
+    ```javascript
     Modul khusus admin untuk mengelola database pemain. Admin dapat menambah, memperbarui, atau menghapus data pemain agar informasi di aplikasi tetap akurat dan terkini.
     ```
 
