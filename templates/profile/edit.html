@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Edit Profil — Goalytics{% endblock %}
+{% block content %}
+<h1>Edit Profil (AJAX)</h1>
+<form id="profile-form" data-endpoint="{% url 'goalytics_app:api.profile.update' %}">
+  {% csrf_token %}
+  <p><label>Preferensi Liga <input type="text" name="preferred_league"></label></p>
+  <p><label>Klub Favorit <input type="text" name="favorite_club"></label></p>
+  <p>
+    <label>Mode Tampilan
+      <select name="display_mode">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
+  </p>
+  <p><label>Bio <textarea name="bio" rows="4"></textarea></label></p>
+  <button type="submit">Simpan</button>
+  <a href="{% url 'goalytics_app:profile.me' %}">Batal</a>
+</form>
+<script>
+  window.addEventListener("DOMContentLoaded", async () => {
+    const resp = await fetch("{% url 'goalytics_app:api.profile.me' %}", {credentials:"same-origin"});
+    const j = await resp.json();
+    if (j.ok) {
+      const f = document.getElementById("profile-form");
+      const d = j.data;
+      f.elements.preferred_league.value = d.preferred_league || "";
+      f.elements.favorite_club.value = d.favorite_club || "";
+      f.elements.display_mode.value = d.display_mode || "light";
+      f.elements.bio.value = d.bio || "";
+    }
+  });
+</script>
+{% endblock %}

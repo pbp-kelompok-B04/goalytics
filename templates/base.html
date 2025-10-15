@@ -1,0 +1,29 @@
+{% load static %}
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Goalytics{% endblock %}</title>
+  <script src="{% static 'js/ajax.js' %}" defer></script>
+  <link rel="stylesheet" href="{% static 'base.css' %}">
+</head>
+<body>
+  <nav style="display:flex;gap:1rem;justify-content:space-between;padding:12px;border-bottom:1px solid #eee">
+    <a href="{% url 'goalytics_app:profile.me' %}">Goalytics</a>
+    <div>
+      {% if user.is_authenticated %}
+        <span>Halo, {{ user.username }}</span>
+        <button id="btn-logout" data-endpoint="{% url 'goalytics_app:api.auth.logout' %}">Logout</button>
+      {% else %}
+        <a href="{% url 'goalytics_app:auth.login' %}">Login</a>
+        <a href="{% url 'goalytics_app:auth.register' %}">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+  <main style="max-width:920px;margin:24px auto;padding:0 16px;">
+    <div id="toast" style="display:none;padding:10px;border:1px solid #ddd;margin-bottom:10px;"></div>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

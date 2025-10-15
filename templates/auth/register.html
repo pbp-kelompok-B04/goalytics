@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Register — Goalytics{% endblock %}
+{% block content %}
+<h1>Register</h1>
+<form id="register-form" data-endpoint="{% url 'goalytics_app:api.auth.register' %}">
+  {% csrf_token %}
+  <p><label>Username <input type="text" name="username" required></label></p>
+  <p><label>Password <input type="password" name="password1" required></label></p>
+  <p><label>Ulangi Password <input type="password" name="password2" required></label></p>
+  <button type="submit">Buat Akun</button>
+</form>
+<p>Sudah punya akun? <a href="{% url 'goalytics_app:auth.login' %}">Login</a></p>
+{% endblock %}
