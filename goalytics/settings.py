@@ -36,7 +36,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://jefferson-tirza-goalytics.pbp.cs.ui.ac.id"
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
