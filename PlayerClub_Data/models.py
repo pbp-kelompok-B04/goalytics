@@ -1,5 +1,5 @@
 from django.db import models
-
+# sementara gini dulu aja, nanti ditambah lagi
 class Club(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=200, unique=True)
@@ -21,11 +21,7 @@ class Player(models.Model):
     total_assists = models.PositiveIntegerField(default=0)
     yellow_cards = models.PositiveIntegerField(default=0)
     red_cards = models.PositiveIntegerField(default=0)
-
+    total_win = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name
-
-
-
-
