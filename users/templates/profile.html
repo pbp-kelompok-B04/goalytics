@@ -5,11 +5,12 @@
 <div class="max-w-4xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-lg">
   <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
 
-    <!-- Profile Picture -->
     <div class="flex flex-col items-center w-full md:w-1/3">
-      <img src="{{ profile.profile_picture|default:'https://ui-avatars.com/api/?name='|add:user.username }}" 
-           alt="Profile Picture" 
-           class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4">
+      <img
+        src="{{ profile.profile_picture|default:'https://ui-avatars.com/api/?name='|add:user.username }}"
+        alt="Profile Picture"
+        class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4"
+      >
       <h2 class="text-2xl font-bold text-blue-800">{{ user.username }}</h2>
       <p class="text-gray-500 text-sm mb-2">{{ user.email }}</p>
       <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium mb-4">
@@ -17,11 +18,90 @@
       </span>
     </div>
 
-    <!-- Profile Details + Edit Form -->
     <div class="flex-1 w-full">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">Profile Information</h3>
-      
-      <form method="POST" class="space-y-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Profile Information</h3>
+
+        <button id="editBtn"
+                class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+          Edit Profile
+        </button>
+      </div>
+
+      <div id="readView" class="space-y-5">
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Bio</p>
+          <p class="text-gray-600">
+            {{ profile.bio|default:"No bio yet." }}
+          </p>
+        </div>
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Favorite Team</p>
+          <p class="text-gray-600">
+            {% if profile.favorite_team %}{{ profile.favorite_team }}{% else %}-{% endif %}
+          </p>
+        </div>
+        {# --- READ-ONLY: SOCIAL ICONS (hanya muncul jika ada data) --- #}
+        {% if profile.instagram_url or profile.x_url or profile.website_url %}
+          <div class="mt-2">
+            <p class="text-gray-700 font-semibold mb-2">Socials</p>
+
+            <div class="flex items-center gap-3">
+              {# Instagram #}
+              {% if profile.instagram_url %}
+                <a href="{{ profile.instagram_url }}"
+                  target="_blank" rel="noopener"
+                  aria-label="Instagram"
+                  title="Instagram"
+                  class="group inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition shadow-sm">
+                  <!-- Instagram SVG -->
+                  <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </a>
+              {% endif %}
+
+              {# X (Twitter) #}
+              {% if profile.x_url %}
+                <a href="{{ profile.x_url }}"
+                  target="_blank" rel="noopener"
+                  aria-label="X (Twitter)"
+                  title="X (Twitter)"
+                  class="group inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition shadow-sm">
+                  <!-- X (Twitter) SVG -->
+                  <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M18.244 2H21l-6.59 7.523L22.5 22h-6.937l-5.43-7.256L3.9 22H1.143l7.12-8.128L1.5 2h6.937l4.98 6.65L18.244 2Zm-2.431 18.285h1.925L7.275 3.643H5.35l10.463 16.642Z"/>
+                  </svg>
+                </a>
+              {% endif %}
+
+              {# Website/Link pribadi #}
+              {% if profile.website_url %}
+                <a href="{{ profile.website_url }}"
+                  target="_blank" rel="noopener"
+                  aria-label="Website"
+                  title="Website"
+                  class="group inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition shadow-sm">
+                  <!-- Globe SVG -->
+                  <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M2 12h20"></path>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="pt-2">
+          <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
+        </div>
+      </div>
+
+      <form id="editForm" method="POST" class="space-y-5 hidden">
         {% csrf_token %}
         <div>
           <label class="block text-gray-700 font-semibold mb-2">Profile Picture URL</label>
@@ -31,16 +111,68 @@
           <label class="block text-gray-700 font-semibold mb-2">Bio</label>
           {{ form.bio }}
         </div>
-        <button type="submit"
-                class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
-          Save Changes
-        </button>
-      </form>
+        <div>
+          <label class="block text-gray-700 font-semibold mb-2">Favorite Club</label>
+          {{ form.favorite_team }}
+        </div>
+        <div>
+          <label class="block text-gray-700 font-semibold mb-2">Instagram URL</label>
+          {{ form.instagram_url }}
+        </div>
 
-      <div class="mt-8">
-        <p class="text-gray-600 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
-      </div>
+        <div>
+          <label class="block text-gray-700 font-semibold mb-2">X (Twitter) URL</label>
+          {{ form.x_url }}
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-2">Website</label>
+          {{ form.website_url }}
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="submit"
+                  class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
+            Save Changes
+          </button>
+          <button type="button" id="cancelBtn"
+                  class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-5 rounded-lg transition">
+            Cancel
+          </button>
+        </div>
+
+        <div class="pt-2">
+          <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
+        </div>
+      </form>
     </div>
   </div>
 </div>
+
+<script>
+  const editBtn   = document.getElementById('editBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const readView  = document.getElementById('readView');
+  const editForm  = document.getElementById('editForm');
+
+  function showEditMode() {
+    readView.classList.add('hidden');
+    editForm.classList.remove('hidden');
+    editBtn.classList.add('hidden');
+  }
+
+  function hideEditMode() {
+    editForm.classList.add('hidden');
+    readView.classList.remove('hidden');
+    editBtn.classList.remove('hidden');
+  }
+
+  if (editBtn)   editBtn.addEventListener('click', showEditMode);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideEditMode);
+
+  // Esc to cancel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !editForm.classList.contains('hidden')) hideEditMode();
+  });
+</script>
 {% endblock %}
