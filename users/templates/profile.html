@@ -6,13 +6,17 @@
   <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
 
     <div class="flex flex-col items-center w-full md:w-1/3">
-      <img
-        src="{{ profile.profile_picture|default:'https://ui-avatars.com/api/?name='|add:user.username }}"
-        alt="Profile Picture"
-        class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4"
-      >
-      <h2 class="text-2xl font-bold text-blue-800">{{ user.username }}</h2>
-      <p class="text-gray-500 text-sm mb-2">{{ user.email }}</p>
+      {% if profile.profile_picture %}
+        <img src="{{ profile.profile_picture }}"
+            alt="Profile Picture"
+            class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4">
+      {% else %}
+        <img src="https://ui-avatars.com/api/?name={{ profile.user.username|urlencode }}"
+            alt="Profile Picture"
+            class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4">
+      {% endif %}
+      <h2 class="text-2xl font-bold text-blue-800">{{ profile.user.username }}</h2>
+      <p class="text-gray-500 text-sm mb-2">{{ profile.user.email }}</p>
       <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium mb-4">
         {{ profile.role|title }}
       </span>
@@ -21,11 +25,12 @@
     <div class="flex-1 w-full">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-xl font-semibold text-gray-800">Profile Information</h3>
-
-        <button id="editBtn"
-                class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
-          Edit Profile
-        </button>
+        {% if is_owner %}
+          <button id="editBtn"
+                  class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+            Edit Profile
+          </button>
+        {% endif %}
       </div>
 
       <div id="readView" class="space-y-5">
@@ -39,6 +44,26 @@
           <p class="text-gray-700 font-semibold mb-1">Favorite Team</p>
           <p class="text-gray-600">
             {% if profile.favorite_team %}{{ profile.favorite_team }}{% else %}-{% endif %}
+          </p>
+        </div>
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Favorite League</p>
+          <p class="text-gray-600">
+            {% if profile.favorite_league %}
+              {{ profile.get_favorite_league_display }}
+            {% else %}
+              -
+            {% endif %}
+          </p>
+        </div>
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Preferred Position</p>
+          <p class="text-gray-600">
+            {% if profile.preferred_position %}
+              {{ profile.get_preferred_position_display }}
+            {% else %}
+              -
+            {% endif %}
           </p>
         </div>
         {# --- READ-ONLY: SOCIAL ICONS (hanya muncul jika ada data) --- #}
@@ -100,51 +125,58 @@
           <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
         </div>
       </div>
+        <form id="editForm" method="POST" class="space-y-5 hidden">
+          {% csrf_token %}
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Profile Picture URL</label>
+            {{ form.profile_picture }}
+          </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Bio</label>
+            {{ form.bio }}
+          </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Favorite Club</label>
+            {{ form.favorite_team }}
+          </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Favorite League</label>
+            {{ form.favorite_league }}
+          </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Preferred Position</label>
+            {{ form.preferred_position }}
+          </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Instagram URL</label>
+            {{ form.instagram_url }}
+          </div>
 
-      <form id="editForm" method="POST" class="space-y-5 hidden">
-        {% csrf_token %}
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Profile Picture URL</label>
-          {{ form.profile_picture }}
-        </div>
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Bio</label>
-          {{ form.bio }}
-        </div>
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Favorite Club</label>
-          {{ form.favorite_team }}
-        </div>
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Instagram URL</label>
-          {{ form.instagram_url }}
-        </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">X (Twitter) URL</label>
+            {{ form.x_url }}
+          </div>
 
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">X (Twitter) URL</label>
-          {{ form.x_url }}
-        </div>
+          <div>
+            <label class="block text-gray-700 font-semibold mb-2">Website</label>
+            {{ form.website_url }}
+          </div>
 
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Website</label>
-          {{ form.website_url }}
-        </div>
+          <div class="flex items-center gap-3">
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
+              Save Changes
+            </button>
+            <button type="button" id="cancelBtn"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-5 rounded-lg transition">
+              Cancel
+            </button>
+          </div>
 
-        <div class="flex items-center gap-3">
-          <button type="submit"
-                  class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
-            Save Changes
-          </button>
-          <button type="button" id="cancelBtn"
-                  class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-5 rounded-lg transition">
-            Cancel
-          </button>
-        </div>
-
-        <div class="pt-2">
-          <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
-        </div>
-      </form>
+          <div class="pt-2">
+            <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
+          </div>
+        </form>
     </div>
   </div>
 </div>
@@ -170,7 +202,6 @@
   if (editBtn)   editBtn.addEventListener('click', showEditMode);
   if (cancelBtn) cancelBtn.addEventListener('click', hideEditMode);
 
-  // Esc to cancel
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !editForm.classList.contains('hidden')) hideEditMode();
   });
