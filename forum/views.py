@@ -24,22 +24,22 @@ def get_all_post(request):
             "updated_at": p.updated_at.isoformat(),
             "comment_count": getattr(p, "comment_count", None)
         }
-        data.append(data)
-    return JsonResponse({data: data})
+        data.append(post)
+    return JsonResponse({"data": data})
 
 @require_http_methods(["GET"])
 def get_post_by_id(request, post_id):
     post = get_object_or_404(Post.objects.annotate(comment_count=Count("comments")),id=post_id)
     data = {
-        'id': p.id,
-            'author': post.author.username,
-            'title': post.title,
-            'content': post.content,
-            "created_at": post.created_at.isoformat(),
-            "updated_at": post.updated_at.isoformat(),
-            "comment_count": getattr(post, "comment_count", None)
+        'id': post.id,
+        'author': post.author.username,
+        'title': post.title,
+        'content': post.content,
+        "created_at": post.created_at.isoformat(),
+        "updated_at": post.updated_at.isoformat(),
+        "comment_count": getattr(post, "comment_count", None)
     }
-    return JsonResponse({data: data})
+    return JsonResponse({"data": data})
 
 @require_http_methods(["GET"])
 def get_post_comment(request, post_id):
@@ -66,7 +66,7 @@ def get_post_comment(request, post_id):
             ]
         }
         data.append(comment)
-    return JsonResponse({data: data})
+    return JsonResponse({"data": data})
 
 @login_required
 @require_http_methods(["GET"])
@@ -83,8 +83,8 @@ def get_my_posts(request):
             "updated_at": p.updated_at.isoformat(),
             "comment_count": getattr(p, "comment_count", None)
         }
-        data.append(data)
-    return JsonResponse({data: data})
+        data.append(post)
+    return JsonResponse({"data": data})
 
 @login_required
 @require_http_methods(["POST"])
@@ -104,7 +104,7 @@ def create_post(request):
         "updated_at": p.updated_at.isoformat(),
         "comment_count": getattr(p, "comment_count", None)
     }
-    return JsonResponse({data: data}, status=201)
+    return JsonResponse({"data": data}, status=201)
 
 @login_required
 @require_http_methods(["POST"])
@@ -128,4 +128,4 @@ def create_comment(request, post_id):
         "created_at": c.created_at.isoformat(),
         "parent_id": c.parent_id,
     }
-    return JsonResponse({data: data}, status=201)
+    return JsonResponse({"data": data}, status=201)
