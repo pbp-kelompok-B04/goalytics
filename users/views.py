@@ -1,10 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileForm
 from .models import Profile
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.http import JsonResponse
 
 def login_user(request):
     
@@ -46,25 +49,106 @@ def register_user(request):
     return render(request, 'register.html')
 
 def logout_user(request):
-    logout(request)  # hapus session dan cookie
+    logout(request)  
     messages.info(request, "You have been logged out.")
     return redirect('main:home')
 
 @login_required
-def profile_view(request):
-    profile = Profile.objects.get(user=request.user)
+def search_users(request):
+    q = (request.GET.get('q') or '').strip()
+    league = (request.GET.get('league') or '').strip()
+    position = (request.GET.get('position') or '').strip()
 
-    if request.method == 'POST':
-        form = ProfileForm(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
-            return redirect('users:profile')
-    else:
-        form = ProfileForm(instance=profile)
+    qs = Profile.objects.select_related('user', 'favorite_team')
+
+    if q:
+        qs = qs.filter(
+            Q(user__username__icontains=q) |
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(bio__icontains=q) |
+            Q(favorite_team__name__icontains=q)
+        )
+
+    if league:
+        qs = qs.filter(favorite_league=league)
+
+    if position:
+        qs = qs.filter(preferred_position=position)
+
+    qs = qs.order_by('user__username')
+
+    paginator = Paginator(qs, 12)  # 12 kartu per halaman
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
-        'user': request.user,
-        'profile': profile,
-        'form': form,
+        'page_obj': page_obj,
+        'q': q,
+        'league': league,
+        'position': position,
+        'LEAGUE_CHOICES': Profile.LEAGUE_CHOICES,
+        'POSITION_CHOICES': Profile.POSITION_CHOICES,
     }
-    return render(request, 'profile.html', context)
+    return render(request, 'search.html', context)
+
+@login_required
+def search_users_api(request):
+    q = (request.GET.get('q') or '').strip()
+    league = (request.GET.get('league') or '').strip()
+    position = (request.GET.get('position') or '').strip()
+
+    qs = Profile.objects.select_related('user', 'favorite_team')
+
+    if q:
+        qs = qs.filter(
+            Q(user__username__icontains=q) |
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(bio__icontains=q) |
+            Q(favorite_team__name__icontains=q)
+        )
+
+    if league:
+        qs = qs.filter(favorite_league=league)
+
+    if position:
+        qs = qs.filter(preferred_position=position)
+
+    qs = qs.order_by('user__username')[:50]  
+
+    results = []
+    for p in qs:
+        results.append({
+            "username": p.user.username,
+            "name": (p.user.get_full_name() or "").strip(),
+            "favorite_team": p.favorite_team.name if p.favorite_team else None,
+            "favorite_league": p.get_favorite_league_display() if p.favorite_league else None,
+            "preferred_position": p.get_preferred_position_display() if p.preferred_position else None,
+            "avatar": p.profile_picture,
+        })
+
+    return JsonResponse({"results": results})
+
+@login_required
+def view_profile(request, username):
+    profile = get_object_or_404(
+        Profile.objects.select_related('user', 'favorite_team'),
+        user__username__iexact=username
+    )
+    is_owner = request.user == profile.user
+
+    form = None
+    if is_owner:
+        if request.method == "POST":
+            form = ProfileForm(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+                return redirect('users:profile', username=username)
+        else:
+            form = ProfileForm(instance=profile)
+
+    return render(request, "profile.html", {
+        "profile": profile,
+        "is_owner": is_owner,
+        "form": form,
+    })
