@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'users',
+    'PlayerClub_Data',
+    'forum'
 ]
 
 MIDDLEWARE = [
