@@ -17,6 +17,8 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Komentar oleh {self.user.username} di {self.post.title}"
+    parent = models.ForeignKey(self,null=True,blank=True,on_delete=models.Case,related_name='replies')
+    
+    @property
+    def is_parent(self):
+        return self.parent is None
