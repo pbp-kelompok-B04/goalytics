@@ -39,3 +39,6 @@ def get_post_by_id(request, post_id):
     }
     return JsonResponse({data: data})
 
+@require_http_methods(["GET"])
+def get_post_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
