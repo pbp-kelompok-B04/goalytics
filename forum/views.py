@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
+import json
 
 # Create your views here.
 @require_http_methods(["GET"])
@@ -23,6 +24,7 @@ def get_all_post(request):
             "updated_at": p.updated_at.isoformat(),
             "comment_count": getattr(p, "comment_count", None)
         }
+        data.append(data)
     return JsonResponse({data: data})
 
 @require_http_methods(["GET"])
@@ -42,3 +44,88 @@ def get_post_by_id(request, post_id):
 @require_http_methods(["GET"])
 def get_post_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+    comments = post.comments.filter(parent__isnull=True).order_by("-created_at")
+    data = []
+    for c in comments:
+        replies = c.replies.all().order_by("created_at")
+        comment = {
+            "id": c.id,
+            "user": c.user.username,
+            "content": c.content,
+            "created_at": c.created_at.isoformat(),
+            "parent_id": c.parent_id,
+            "replies": [
+                {
+                    "id": r.id,
+                    "user": r.user.username,
+                    "content": r.content,
+                    "created_at": r.created_at.isoformat(),
+                    "parent_id": r.parent_id,
+                }
+                for r in replies
+            ]
+        }
+        data.append(comment)
+    return JsonResponse({data: data})
+
+@login_required
+@require_http_methods(["GET"])
+def get_my_posts(request):
+    all_post = Post.objects.filter(author=request.user).order_by("-created_at").annotate(comment_count=Count("comments"))
+    data = []
+    for p in all_post:
+        post = {
+            'id': p.id,
+            'author': p.author.username,
+            'title': p.title,
+            'content': p.content,
+            "created_at": p.created_at.isoformat(),
+            "updated_at": p.updated_at.isoformat(),
+            "comment_count": getattr(p, "comment_count", None)
+        }
+        data.append(data)
+    return JsonResponse({data: data})
+
+@login_required
+@require_http_methods(["POST"])
+def create_post(request):
+    payload = json.loads(request.body.decode("utf-8"))
+    title = payload.get("title", "").strip()
+    content = payload.get("content", "").strip()
+    if not title or not content:
+        return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
+    p = Post.objects.create(author=request.user, title=title, content=content)
+    data = {
+        'id': p.id,
+        'author': p.author.username,
+        'title': p.title,
+        'content': p.content,
+        "created_at": p.created_at.isoformat(),
+        "updated_at": p.updated_at.isoformat(),
+        "comment_count": getattr(p, "comment_count", None)
+    }
+    return JsonResponse({data: data}, status=201)
+
+@login_required
+@require_http_methods(["POST"])
+def create_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    payload = json.loads(request.body.decode("utf-8"))
+    content = (payload.get("content") or "").strip()
+    parent_id = payload.get("parent_id")
+    if not content:
+        return JsonResponse({"error": "content wajib diisi"}, status=400)
+    parent = None
+    if parent_id:
+        parent = Comment.objects.filter(id=parent_id, post=post).first()
+        if parent_id and parent is None:
+            return JsonResponse({"error": "parent_id tidak valid untuk post ini"}, status=400)
+    c = Comment.objects.create(post=post, user=request.user, content=content, parent=parent)
+    data = {
+        "id": c.id,
+        "user": c.user.username,
+        "content": c.content,
+        "created_at": c.created_at.isoformat(),
+        "parent_id": c.parent_id,
+    }
+    return JsonResponse({data: data}, status=201)
