@@ -1,0 +1,789 @@
+{% extends "base.html" %}
+
+{% block title %}Forum{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-12">
+  <header class="mb-10">
+    <h1 class="text-3xl font-semibold text-gray-900">Community Forum</h1>
+    <p class="mt-3 text-gray-600">
+      Ikuti diskusi terbaru, berbagi ide, dan terhubung dengan pemain lain. Gunakan tombol di bawah untuk menulis postingan baru atau membalas percakapan yang ada.
+    </p>
+  </header>
+
+  <div id="forum-feedback" class="hidden mb-8 rounded-lg border px-4 py-3 text-sm font-medium"></div>
+
+  {% if request.user.is_authenticated %}
+    <section class="mb-12 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-semibold text-gray-900">Tulis Postingan Baru</h2>
+      <form id="post-form" class="mt-6 space-y-4" autocomplete="off">
+        <div>
+          <label for="post-title" class="block text-sm font-medium text-gray-700">Judul</label>
+          <input
+            id="post-title"
+            name="title"
+            type="text"
+            maxlength="200"
+            class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            placeholder="Tuliskan judul yang singkat dan jelas"
+            required
+          />
+        </div>
+        <div>
+          <label for="post-content" class="block text-sm font-medium text-gray-700">Konten</label>
+          <textarea
+            id="post-content"
+            name="content"
+            rows="5"
+            class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            placeholder="Bagikan ide, analisis pertandingan, atau ajukan pertanyaan..."
+            required
+          ></textarea>
+        </div>
+        <div class="flex items-center gap-4">
+          <button
+            type="submit"
+            class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            Publikasikan
+          </button>
+          <p id="post-form-status" class="text-sm text-gray-500"></p>
+        </div>
+      </form>
+    </section>
+  {% else %}
+    <section class="mb-12 rounded-xl border border-blue-200 bg-blue-50 p-6 text-blue-900">
+      <h2 class="text-xl font-semibold">Masuk untuk berpartisipasi</h2>
+      <p class="mt-2 text-sm">
+        Anda dapat membaca seluruh diskusi, namun perlu login untuk membuat postingan, memberi komentar, atau memberikan like.
+      </p>
+      <a
+        href="{% url 'users:login' %}"
+        class="mt-4 inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+      >
+        Masuk sekarang
+      </a>
+    </section>
+  {% endif %}
+
+  <section>
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">Semua Diskusi</h2>
+        <p class="text-sm text-gray-500">Klik sebuah postingan untuk melihat detail dan komentar.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          data-filter="all"
+          class="forum-filter active inline-flex items-center rounded-lg border border-blue-600 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+        >
+          Semua Postingan
+        </button>
+        {% if request.user.is_authenticated %}
+          <button
+            type="button"
+            data-filter="mine"
+            class="forum-filter inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-blue-400 hover:text-blue-600"
+          >
+            Postingan Saya
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <div id="posts-loading" class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-5 py-4 text-gray-600 shadow-sm">
+      <svg class="h-5 w-5 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span>Memuat forum...</span>
+    </div>
+
+    <div id="posts-empty" class="hidden rounded-lg border border-gray-200 bg-gray-50 px-6 py-8 text-center text-gray-500">
+      Belum ada postingan. Jadilah yang pertama untuk memulai percakapan!
+    </div>
+
+    <div id="posts-list" class="space-y-6"></div>
+  </section>
+</div>
+
+<template id="comment-template">
+  <div class="comment-item rounded-lg border border-gray-200 bg-white px-4 py-4 shadow-sm">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-sm font-semibold text-gray-900 comment-user"></p>
+        <p class="mt-1 text-sm text-gray-500 comment-date"></p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 comment-actions"></div>
+    </div>
+    <p class="mt-3 whitespace-pre-wrap text-gray-800 comment-content"></p>
+    <div class="mt-4 space-y-4 comment-replies pl-6"></div>
+    <div class="mt-4 hidden comment-reply-form">
+      <textarea class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" rows="3" placeholder="Tulis balasan kamu..."></textarea>
+      <div class="mt-2 flex items-center gap-2">
+        <button type="button" class="comment-reply-submit inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          Kirim Balasan
+        </button>
+        <button type="button" class="comment-reply-cancel text-sm font-medium text-gray-500 hover:text-gray-700">Batal</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  (function () {
+    const isAuthenticated = {{ request.user.is_authenticated|yesno:"true,false" }};
+    const currentUser = "{{ request.user.username|default_if_none:''|escapejs }}";
+
+    const endpoints = {
+      list: "{% url 'get_all_post' %}",
+      mine: "{% url 'get_my_post' %}",
+      create: "{% url 'create_post' %}",
+      likePost: "{% url 'like_post' %}",
+      updatePost: "{% url 'update_post' %}",
+      deletePost: "{% url 'delete_post' %}",
+      likeComment: "{% url 'like_comment' %}",
+      updateComment: "{% url 'update_comment' %}",
+      deleteComment: "{% url 'delete_comment' %}"
+    };
+
+    const state = {
+      filter: "all",
+      posts: [],
+      comments: {}
+    };
+
+    const postsListEl = document.getElementById("posts-list");
+    const postsLoadingEl = document.getElementById("posts-loading");
+    const postsEmptyEl = document.getElementById("posts-empty");
+    const feedbackEl = document.getElementById("forum-feedback");
+    const postForm = document.getElementById("post-form");
+    const postFormStatus = document.getElementById("post-form-status");
+
+    document.querySelectorAll(".forum-filter").forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextFilter = button.dataset.filter;
+        if (!isAuthenticated && nextFilter === "mine") {
+          showFeedback("Anda perlu login untuk melihat postingan milik akun Anda.", "warning");
+          return;
+        }
+        state.filter = nextFilter;
+        document.querySelectorAll(".forum-filter").forEach((btn) => btn.classList.remove("active", "border-blue-600", "bg-blue-50", "text-blue-700"));
+        button.classList.add("active", "border-blue-600", "bg-blue-50", "text-blue-700");
+        loadPosts();
+      });
+    });
+
+    if (postForm && isAuthenticated) {
+      postForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const title = postForm.title.value.trim();
+        const content = postForm.content.value.trim();
+        if (!title || !content) {
+          showFeedback("Judul dan konten tidak boleh kosong.", "warning");
+          return;
+        }
+
+        setPostFormState("Menambahkan postingan...");
+        try {
+          const response = await fetch(endpoints.create, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCsrfToken()
+            },
+            body: JSON.stringify({ title, content })
+          });
+
+          if (!response.ok) {
+            const errorPayload = await safeJson(response);
+            throw new Error(errorPayload?.error || "Gagal membuat postingan.");
+          }
+
+          postForm.reset();
+          showFeedback("Postingan berhasil dibuat.", "success");
+          loadPosts();
+        } catch (error) {
+          showFeedback(error.message, "error");
+        } finally {
+          setPostFormState("");
+        }
+      });
+    }
+
+    async function loadPosts() {
+      postsLoadingEl.classList.remove("hidden");
+      postsEmptyEl.classList.add("hidden");
+      postsListEl.innerHTML = "";
+      try {
+        const url = state.filter === "mine" ? endpoints.mine : endpoints.list;
+        const response = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!response.ok) {
+          throw new Error("Gagal memuat postingan. Silakan coba lagi.");
+        }
+        const payload = await response.json();
+        state.posts = payload.data || [];
+        if (!state.posts.length) {
+          postsEmptyEl.classList.remove("hidden");
+        } else {
+          renderPosts();
+        }
+      } catch (error) {
+        showFeedback(error.message, "error");
+      } finally {
+        postsLoadingEl.classList.add("hidden");
+      }
+    }
+
+    function renderPosts() {
+      postsListEl.innerHTML = "";
+      state.posts.forEach((post) => {
+        postsListEl.appendChild(buildPostCard(post));
+      });
+    }
+
+    function buildPostCard(post) {
+      const card = document.createElement("article");
+      card.className = "rounded-xl border border-gray-200 bg-white p-6 shadow-sm";
+      card.dataset.postId = post.id;
+
+      const header = document.createElement("div");
+      header.className = "flex flex-wrap items-start justify-between gap-4";
+
+      const titleBox = document.createElement("div");
+      const titleEl = document.createElement("h3");
+      titleEl.className = "text-lg font-semibold text-gray-900";
+      titleEl.textContent = post.title;
+
+      const meta = document.createElement("div");
+      meta.className = "mt-2 text-sm text-gray-500";
+      meta.textContent = `Oleh ${post.author} · ${formatDate(post.created_at)}`;
+
+      titleBox.append(titleEl, meta);
+      header.appendChild(titleBox);
+
+      const actions = document.createElement("div");
+      actions.className = "flex flex-wrap items-center gap-2";
+
+      if (isAuthenticated) {
+        const likeButton = document.createElement("button");
+        likeButton.type = "button";
+        likeButton.className = "inline-flex items-center rounded-lg border border-gray-300 px-3 py-1 text-sm font-medium text-gray-600 hover:border-blue-400 hover:text-blue-600 focus:outline-none";
+        likeButton.textContent = "Like";
+        likeButton.addEventListener("click", () => togglePostLike(post.id, likeButton));
+        actions.appendChild(likeButton);
+      }
+
+      if (isAuthenticated && post.author === currentUser) {
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "text-sm font-medium text-blue-600 hover:text-blue-800";
+        editButton.textContent = "Edit";
+        editButton.addEventListener("click", () => promptEditPost(post));
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "text-sm font-medium text-red-600 hover:text-red-800";
+        deleteButton.textContent = "Hapus";
+        deleteButton.addEventListener("click", () => confirmDeletePost(post.id));
+
+        actions.append(editButton, deleteButton);
+      }
+
+      header.appendChild(actions);
+
+      const body = document.createElement("div");
+      body.className = "mt-4 whitespace-pre-wrap text-gray-800";
+      body.textContent = post.content;
+
+      const footer = document.createElement("div");
+      footer.className = "mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 text-sm text-gray-500";
+
+      const commentMeta = document.createElement("button");
+      commentMeta.type = "button";
+      commentMeta.className = "inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700";
+      commentMeta.textContent = `Komentar (${post.comment_count ?? 0})`;
+
+      const commentsPanel = document.createElement("div");
+      commentsPanel.className = "mt-5 hidden space-y-4 border-t border-gray-100 pt-5";
+      commentsPanel.dataset.open = "false";
+
+      commentMeta.addEventListener("click", () => toggleComments(post.id, commentsPanel, commentMeta));
+
+      footer.appendChild(commentMeta);
+
+      if (isAuthenticated) {
+        const quickReply = document.createElement("button");
+        quickReply.type = "button";
+        quickReply.className = "inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700";
+        quickReply.textContent = "Tulis komentar";
+        quickReply.addEventListener("click", () => openReplyForm(commentsPanel, post.id));
+        footer.appendChild(quickReply);
+      }
+
+      card.append(header, body, footer, commentsPanel);
+      return card;
+    }
+
+    function openReplyForm(panel, postId) {
+      if (!isAuthenticated) {
+        showFeedback("Silakan login untuk meninggalkan komentar.", "warning");
+        return;
+      }
+      toggleComments(postId, panel);
+      const existingForm = panel.querySelector(".root-comment-form");
+      if (existingForm) {
+        existingForm.querySelector("textarea").focus();
+        return;
+      }
+
+      const formWrapper = document.createElement("div");
+      formWrapper.className = "root-comment-form rounded-lg border border-gray-200 bg-gray-50 p-4";
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200";
+      textarea.rows = 3;
+      textarea.placeholder = "Bagikan tanggapan kamu...";
+
+      const actionBar = document.createElement("div");
+      actionBar.className = "mt-3 flex items-center gap-2";
+
+      const submitButton = document.createElement("button");
+      submitButton.type = "button";
+      submitButton.className = "inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300";
+      submitButton.textContent = "Kirim";
+      submitButton.addEventListener("click", async () => {
+        const content = textarea.value.trim();
+        if (!content) {
+          showFeedback("Komentar tidak boleh kosong.", "warning");
+          return;
+        }
+        await submitComment(postId, content);
+        textarea.value = "";
+      });
+
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "text-sm font-medium text-gray-500 hover:text-gray-700";
+      cancelButton.textContent = "Batal";
+      cancelButton.addEventListener("click", () => formWrapper.remove());
+
+      actionBar.append(submitButton, cancelButton);
+      formWrapper.append(textarea, actionBar);
+      panel.prepend(formWrapper);
+      textarea.focus();
+    }
+
+    async function toggleComments(postId, panel, trigger) {
+      const isOpen = panel.dataset.open === "true";
+      if (isOpen) {
+        panel.dataset.open = "false";
+        panel.classList.add("hidden");
+        if (trigger) {
+          trigger.classList.remove("text-blue-700");
+        }
+        return;
+      }
+
+      panel.dataset.open = "true";
+      panel.classList.remove("hidden");
+      if (trigger) {
+        trigger.classList.add("text-blue-700");
+      }
+
+      if (!state.comments[postId]) {
+        panel.innerHTML = loadingIndicator("Mengambil komentar...");
+        await fetchComments(postId);
+      }
+      renderComments(postId, panel);
+    }
+
+    async function fetchComments(postId) {
+      try {
+        const response = await fetch(`${endpoints.list}${postId}/comments/`, {
+          headers: { "Accept": "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error("Gagal memuat komentar.");
+        }
+        const payload = await response.json();
+        state.comments[postId] = payload.data || [];
+      } catch (error) {
+        state.comments[postId] = [];
+        showFeedback(error.message, "error");
+      }
+    }
+
+    function renderComments(postId, panel) {
+      const data = state.comments[postId] || [];
+      panel.innerHTML = "";
+      if (!data.length) {
+        panel.innerHTML = '<p class="text-sm text-gray-500">Belum ada komentar.</p>';
+        return;
+      }
+
+      data.forEach((comment) => {
+        const commentNode = buildComment(comment, postId);
+        panel.appendChild(commentNode);
+      });
+    }
+
+    function buildComment(comment, postId, depth = 0) {
+      const template = document.getElementById("comment-template");
+      const fragment = template.content.cloneNode(true);
+      const wrapper = fragment.querySelector(".comment-item");
+      wrapper.dataset.commentId = comment.id;
+
+      fragment.querySelector(".comment-user").textContent = comment.user;
+      fragment.querySelector(".comment-date").textContent = formatDate(comment.created_at);
+      fragment.querySelector(".comment-content").textContent = comment.content;
+
+      const repliesContainer = fragment.querySelector(".comment-replies");
+      const actionsContainer = fragment.querySelector(".comment-actions");
+      const replyForm = fragment.querySelector(".comment-reply-form");
+      const replyTextarea = replyForm.querySelector("textarea");
+      const replySubmit = replyForm.querySelector(".comment-reply-submit");
+      const replyCancel = replyForm.querySelector(".comment-reply-cancel");
+
+      if (depth > 0) {
+        wrapper.classList.add("bg-gray-50");
+      }
+
+      if (isAuthenticated) {
+        const likeButton = actionButton("Like", "border border-gray-300 px-2 py-1 text-gray-600 hover:border-blue-400 hover:text-blue-600");
+        likeButton.addEventListener("click", () => toggleCommentLike(postId, comment.id, likeButton));
+        actionsContainer.appendChild(likeButton);
+
+        const replyButton = actionButton("Balas", "text-blue-600 hover:text-blue-800");
+        replyButton.addEventListener("click", () => {
+          replyForm.classList.toggle("hidden");
+          if (!replyForm.classList.contains("hidden")) {
+            replyTextarea.focus();
+          }
+        });
+        actionsContainer.appendChild(replyButton);
+
+        replySubmit.addEventListener("click", async () => {
+          const content = replyTextarea.value.trim();
+          if (!content) {
+            showFeedback("Balasan tidak boleh kosong.", "warning");
+            return;
+          }
+          await submitComment(postId, content, comment.id);
+          replyTextarea.value = "";
+          replyForm.classList.add("hidden");
+        });
+
+        replyCancel.addEventListener("click", () => {
+          replyTextarea.value = "";
+          replyForm.classList.add("hidden");
+        });
+      } else {
+        replyForm.remove();
+        actionsContainer.remove();
+      }
+
+      if (isAuthenticated && comment.user === currentUser) {
+        const editButton = actionButton("Edit", "text-blue-600 hover:text-blue-800");
+        editButton.addEventListener("click", () => promptEditComment(postId, comment));
+
+        const deleteButton = actionButton("Hapus", "text-red-600 hover:text-red-800");
+        deleteButton.addEventListener("click", () => confirmDeleteComment(postId, comment.id));
+
+        actionsContainer.append(editButton, deleteButton);
+      }
+
+      comment.replies?.forEach((reply) => {
+        const replyNode = buildComment(reply, postId, depth + 1);
+        repliesContainer.appendChild(replyNode);
+      });
+
+      return fragment;
+    }
+
+    async function submitComment(postId, content, parentId = null) {
+      try {
+        const response = await fetch(`${endpoints.list}${postId}/comments/create/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ content, parent_id: parentId })
+        });
+        if (!response.ok) {
+          const errorPayload = await safeJson(response);
+          throw new Error(errorPayload?.error || "Gagal mengirim komentar.");
+        }
+        await fetchComments(postId);
+        const card = postsListEl.querySelector(`[data-post-id="${postId}"]`);
+        const panel = card?.querySelector('[data-open="true"]');
+        if (panel) {
+          renderComments(postId, panel);
+        }
+        showFeedback("Komentar berhasil dipublikasikan.", "success");
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    async function togglePostLike(postId, button) {
+      try {
+        const response = await fetch(endpoints.likePost, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ post_id: postId })
+        });
+        if (!response.ok) {
+          throw new Error("Gagal memperbarui like.");
+        }
+        const payload = await response.json();
+        button.textContent = payload.liked ? "Unlike" : "Like";
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    async function toggleCommentLike(postId, commentId, button) {
+      try {
+        const response = await fetch(endpoints.likeComment, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ post_id: postId, comment_id: commentId })
+        });
+        if (!response.ok) {
+          throw new Error("Gagal memperbarui like komentar.");
+        }
+        const payload = await response.json();
+        button.textContent = payload.liked ? "Unlike" : "Like";
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    function promptEditPost(post) {
+      const newTitle = window.prompt("Perbarui judul postingan:", post.title);
+      if (newTitle === null) {
+        return;
+      }
+      const newContent = window.prompt("Perbarui konten postingan:", post.content);
+      if (newContent === null) {
+        return;
+      }
+      updatePost(post.id, newTitle.trim(), newContent.trim());
+    }
+
+    async function updatePost(postId, title, content) {
+      if (!title || !content) {
+        showFeedback("Judul dan konten harus diisi.", "warning");
+        return;
+      }
+      try {
+        const response = await fetch(endpoints.updatePost, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ post_id: postId, title, content })
+        });
+        if (!response.ok) {
+          throw new Error("Gagal memperbarui postingan.");
+        }
+        showFeedback("Postingan berhasil diperbarui.", "success");
+        await loadPosts();
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    function promptEditComment(postId, comment) {
+      const newContent = window.prompt("Perbarui komentar:", comment.content);
+      if (newContent === null) {
+        return;
+      }
+      updateComment(postId, comment.id, newContent.trim());
+    }
+
+    async function updateComment(postId, commentId, content) {
+      if (!content) {
+        showFeedback("Isi komentar tidak boleh kosong.", "warning");
+        return;
+      }
+      try {
+        const response = await fetch(endpoints.updateComment, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ post_id: postId, comment_id: commentId, content })
+        });
+        if (!response.ok) {
+          const errorPayload = await safeJson(response);
+          throw new Error(errorPayload?.error || "Gagal memperbarui komentar.");
+        }
+        await fetchComments(postId);
+        const card = postsListEl.querySelector(`[data-post-id="${postId}"]`);
+        const panel = card?.querySelector('[data-open="true"]');
+        if (panel) {
+          renderComments(postId, panel);
+        }
+        showFeedback("Komentar berhasil diperbarui.", "success");
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    async function confirmDeletePost(postId) {
+      if (!window.confirm("Apakah Anda yakin ingin menghapus postingan ini?")) {
+        return;
+      }
+      try {
+        const response = await fetch(endpoints.deletePost, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ post_id: postId })
+        });
+        if (response.status === 404) {
+          showFeedback("Endpoint penghapusan postingan belum tersedia di server.", "warning");
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Gagal menghapus postingan.");
+        }
+        showFeedback("Postingan berhasil dihapus.", "success");
+        await loadPosts();
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    async function confirmDeleteComment(postId, commentId) {
+      if (!window.confirm("Hapus komentar ini?")) {
+        return;
+      }
+      try {
+        const response = await fetch(endpoints.deleteComment, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          },
+          body: JSON.stringify({ post_id: postId, comment_id: commentId })
+        });
+        if (response.status === 404) {
+          showFeedback("Endpoint penghapusan komentar belum tersedia di server.", "warning");
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Gagal menghapus komentar.");
+        }
+        await fetchComments(postId);
+        const card = postsListEl.querySelector(`[data-post-id="${postId}"]`);
+        const panel = card?.querySelector('[data-open="true"]');
+        if (panel) {
+          renderComments(postId, panel);
+        }
+        showFeedback("Komentar berhasil dihapus.", "success");
+      } catch (error) {
+        showFeedback(error.message, "error");
+      }
+    }
+
+    function loadingIndicator(message) {
+      return `
+        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-600 shadow-sm">
+          <svg class="h-4 w-4 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+          <span>${message}</span>
+        </div>
+      `;
+    }
+
+    function actionButton(text, extraClass = "") {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `inline-flex items-center gap-1 rounded-md text-sm font-medium ${extraClass}`.trim();
+      button.textContent = text;
+      return button;
+    }
+
+    function showFeedback(message, type = "info") {
+      if (!feedbackEl) {
+        return;
+      }
+      feedbackEl.classList.remove("hidden", "border-green-200", "border-red-200", "border-yellow-200", "bg-green-50", "bg-red-50", "bg-yellow-50", "text-green-800", "text-red-800", "text-yellow-800");
+      const styles = {
+        success: ["border-green-200", "bg-green-50", "text-green-800"],
+        error: ["border-red-200", "bg-red-50", "text-red-800"],
+        warning: ["border-yellow-200", "bg-yellow-50", "text-yellow-800"],
+        info: ["border-blue-200", "bg-blue-50", "text-blue-800"]
+      }[type] || ["border-gray-200", "bg-gray-50", "text-gray-800"];
+      feedbackEl.classList.add(...styles);
+      feedbackEl.textContent = message;
+      window.clearTimeout(showFeedback.timeoutId);
+      showFeedback.timeoutId = window.setTimeout(() => {
+        feedbackEl.classList.add("hidden");
+      }, 5000);
+    }
+
+    function setPostFormState(message) {
+      if (!postFormStatus) {
+        return;
+      }
+      postFormStatus.textContent = message;
+    }
+
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      if (Number.isNaN(date.getTime())) {
+        return "Baru saja";
+      }
+      return date.toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function getCsrfToken() {
+      return getCookie("csrftoken");
+    }
+
+    function getCookie(name) {
+      const cookies = document.cookie ? document.cookie.split("; ") : [];
+      for (const cookie of cookies) {
+        if (cookie.startsWith(name + "=")) {
+          return decodeURIComponent(cookie.split("=")[1]);
+        }
+      }
+      return "";
+    }
+
+    async function safeJson(response) {
+      try {
+        return await response.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    loadPosts();
+  })();
+</script>
+{% endblock %}

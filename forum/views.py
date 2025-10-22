@@ -9,6 +9,11 @@ from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
 import json
 
+
+def forum_home(request):
+    """Render forum landing page that consumes JSON endpoints via JS."""
+    return render(request, "forum/forum.html")
+
 # Create your views here.
 @require_http_methods(["GET"])
 def get_all_post(request):
@@ -137,9 +142,9 @@ def like_post(request):
         payload = json.loads(request.body.decode('utf-8'))
         post_id = payload['post_id']
     except:
-        None
+        post_id = None
     post = get_object_or_404(Post, id=post_id)
-    if request.user in post.likes:
+    if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
         liked = False
     else:
@@ -158,10 +163,11 @@ def like_comment(request):
         post_id = payload['post_id']
         comment_id = payload['comment_id']
     except:
-        None
+        post_id = None
+        comment_id = None
     post = get_object_or_404(Post, id=post_id)
     comment=get_object_or_404(Comment, id=comment_id, post=post)
-    if request.user in comment.likes:
+    if comment.likes.filter(id=request.user.id).exists():
         comment.likes.remove(request.user)
         liked = False
     else:
@@ -178,12 +184,12 @@ def update_post(request):
         payload = json.loads(request.body.decode('utf-8'))
         post_id = payload['post_id']
     except:
-        None
+        post_id = None
 
     post = get_object_or_404(Post, id=post_id)
     data = json.loads(request.body.decode('utf-8'))
     if 'title' in data:
-        post.title = data['title'].strip
+        post.title = data['title'].strip()
     if 'content' in data:
         post.content = data['content'].strip()
     post.save()
@@ -227,7 +233,7 @@ def delete_post(request):
         payload = json.loads(request.body.decode('utf-8'))
         post_id = payload['post_id']
     except:
-        None
+        post_id = None
     if not post_id:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
     post = get_object_or_404(Post, id=post_id)
@@ -246,7 +252,8 @@ def delete_comment(request):
         post_id = payload['post_id']
         comment_id = payload['comment_id']
     except:
-        None
+        post_id = None
+        comment_id = None
     if not post_id:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
     if not comment_id:
@@ -259,3 +266,4 @@ def delete_comment(request):
     return JsonResponse({
         'message': 'Post berhasil dihapus'
     }, status=200)
+

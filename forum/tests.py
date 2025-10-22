@@ -6,6 +6,11 @@ from django.utils import timezone
 from datetime import timedelta
 
 from .models import Post, Comment
+from django.test import RequestFactory
+from django.contrib.auth.models import AnonymousUser
+from django.http import Http404
+from . import views as forum_views
+import unittest
 
 
 class ForumModelTests(TestCase):
@@ -44,7 +49,7 @@ class ForumViewTests(TestCase):
         url = reverse("get_all_post")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
+        payload = json.loads(resp.content)
         self.assertIn("data", payload)
         self.assertEqual(len(payload["data"]), 2)
         ids = [item["id"] for item in payload["data"]]
@@ -135,3 +140,224 @@ class ForumViewTests(TestCase):
         other_comment = Comment.objects.create(post=other_post, user=self.other, content="zzz")
         resp = self.client.post(url, data=json.dumps({"content": "bad", "parent_id": other_comment.id}), content_type="application/json")
         self.assertEqual(resp.status_code, 400)
+
+
+class ForumViewMoreTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="u1", password="pw12345678")
+        self.other = User.objects.create_user(username="u2", password="pw12345678")
+
+    def _json_request(self, method, path="/", data=None):
+        body = json.dumps(data or {})
+        req = getattr(self.factory, method)(path, data=body, content_type="application/json")
+        return req
+
+    def test_update_post_updates_content(self):
+        post = Post.objects.create(author=self.user, title="T", content="C")
+        req = self._json_request("patch", data={"post_id": post.id, "content": "New Content"})
+        req.user = self.user
+        resp = forum_views.update_post(req)
+        self.assertEqual(resp.status_code, 200)
+        payload = json.loads(resp.content)
+        self.assertEqual(payload["id"], post.id)
+        self.assertEqual(payload["content"], "New Content")
+
+    def test_update_comment_validation_and_permissions(self):
+        post = Post.objects.create(author=self.user, title="T", content="C")
+        comment = Comment.objects.create(post=post, user=self.user, content="old")
+
+        # invalid JSON
+        req = self.factory.patch("/api/comments/update", data="not-json", content_type="application/json")
+        req.user = self.user
+        resp = forum_views.update_comment(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # empty content
+        req = self._json_request("patch", data={"post_id": post.id, "comment_id": comment.id, "content": "  "})
+        req.user = self.user
+        resp = forum_views.update_comment(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # forbidden when not owner
+        req = self._json_request("patch", data={"post_id": post.id, "comment_id": comment.id, "content": "x"})
+        req.user = self.other
+        resp = forum_views.update_comment(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # success as owner
+        req = self._json_request("patch", data={"post_id": post.id, "comment_id": comment.id, "content": "updated"})
+        req.user = self.user
+        resp = forum_views.update_comment(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content)["new_content"], "updated")
+
+    def test_delete_post_requires_author_and_id(self):
+        post = Post.objects.create(author=self.user, title="T", content="C")
+
+        # missing id
+        req = self._json_request("delete", data={})
+        req.user = self.user
+        resp = forum_views.delete_post(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # forbidden for non-author
+        req = self._json_request("delete", data={"post_id": post.id})
+        req.user = self.other
+        resp = forum_views.delete_post(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # author can delete
+        req = self._json_request("delete", data={"post_id": post.id})
+        req.user = self.user
+        resp = forum_views.delete_post(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(Post.objects.filter(id=post.id).exists())
+
+    def test_delete_comment_requires_owner_and_ids(self):
+        post = Post.objects.create(author=self.user, title="T", content="C")
+        comment = Comment.objects.create(post=post, user=self.user, content="c")
+
+        # missing post_id
+        req = self._json_request("delete", data={})
+        req.user = self.user
+        resp = forum_views.delete_comment(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # missing comment_id
+        req = self._json_request("delete", data={"post_id": post.id})
+        req.user = self.user
+        resp = forum_views.delete_comment(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # forbidden for non-owner
+        req = self._json_request("delete", data={"post_id": post.id, "comment_id": comment.id})
+        req.user = self.other
+        resp = forum_views.delete_comment(req)
+        self.assertEqual(resp.status_code, 400)
+
+        # owner can delete
+        req = self._json_request("delete", data={"post_id": post.id, "comment_id": comment.id})
+        req.user = self.user
+        resp = forum_views.delete_comment(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(Comment.objects.filter(id=comment.id).exists())
+
+    def test_like_post_toggle(self):
+        post = Post.objects.create(author=self.user, title="T", content="C")
+        req = self._json_request("patch", data={"post_id": post.id})
+        req.user = self.user
+        resp = forum_views.like_post(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)["liked"])
+        self.assertTrue(Post.objects.get(id=post.id).likes.filter(id=self.user.id).exists())
+
+        # toggle back
+        req = self._json_request("patch", data={"post_id": post.id})
+        req.user = self.user
+        resp = forum_views.like_post(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content)["liked"])
+        self.assertFalse(Post.objects.get(id=post.id).likes.filter(id=self.user.id).exists())
+
+    def test_like_comment_toggle(self):
+        post = Post.objects.create(author=self.user, title="T", content="C")
+        comment = Comment.objects.create(post=post, user=self.user, content="c")
+        req = self._json_request("patch", data={"post_id": post.id, "comment_id": comment.id})
+        req.user = self.user
+        resp = forum_views.like_comment(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)["liked"])
+        self.assertTrue(Comment.objects.get(id=comment.id).likes.filter(id=self.user.id).exists())
+
+        # toggle back
+        req = self._json_request("patch", data={"post_id": post.id, "comment_id": comment.id})
+        req.user = self.user
+        resp = forum_views.like_comment(req)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(json.loads(resp.content)["liked"])
+        self.assertFalse(Comment.objects.get(id=comment.id).likes.filter(id=self.user.id).exists())
+
+
+class ForumAuthAndEdgeTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="u1", password="pw12345678")
+        self.other = User.objects.create_user(username="u2", password="pw12345678")
+
+    def _auth(self):
+        self.client.login(username="u1", password="pw12345678")
+
+    def _rf(self, method, data=None):
+        body = json.dumps(data or {})
+        return getattr(self.factory, method)("/", data=body, content_type="application/json")
+
+    def test_login_required_redirects_on_views(self):
+        # Using RequestFactory with AnonymousUser to hit @login_required wrappers
+        rf = self.factory
+        anon = AnonymousUser()
+        # update_post
+        req = self._rf("patch", {"post_id": 1})
+        req.user = anon
+        resp = forum_views.update_post(req)
+        self.assertEqual(resp.status_code, 302)
+        # update_comment
+        req = self._rf("patch", {"post_id": 1, "comment_id": 1, "content": "x"})
+        req.user = anon
+        resp = forum_views.update_comment(req)
+        self.assertEqual(resp.status_code, 302)
+        # delete_post
+        req = self._rf("delete", {"post_id": 1})
+        req.user = anon
+        resp = forum_views.delete_post(req)
+        self.assertEqual(resp.status_code, 302)
+        # delete_comment
+        req = self._rf("delete", {"post_id": 1, "comment_id": 1})
+        req.user = anon
+        resp = forum_views.delete_comment(req)
+        self.assertEqual(resp.status_code, 302)
+        # like_post
+        req = self._rf("patch", {"post_id": 1})
+        req.user = anon
+        resp = forum_views.like_post(req)
+        self.assertEqual(resp.status_code, 302)
+        # like_comment
+        req = self._rf("patch", {"post_id": 1, "comment_id": 1})
+        req.user = anon
+        resp = forum_views.like_comment(req)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_update_post_title_strip_and_both_fields(self):
+        p = Post.objects.create(author=self.user, title="Old", content="OldC")
+        req = self._rf("patch", {"post_id": p.id, "title": "  New Title  ", "content": "  NewC  "})
+        req.user = self.user
+        resp = forum_views.update_post(req)
+        self.assertEqual(resp.status_code, 200)
+        payload = json.loads(resp.content)
+        self.assertEqual(payload["title"], "New Title")
+        self.assertEqual(payload["content"], "NewC")
+
+    def test_update_post_invalid_id_404(self):
+        req = self._rf("patch", {"post_id": 999999, "content": "x"})
+        req.user = self.user
+        with self.assertRaises(Http404):
+            forum_views.update_post(req)
+
+    def test_like_post_invalid_id_404(self):
+        req = self._rf("patch", {"post_id": 123456})
+        req.user = self.user
+        with self.assertRaises(Http404):
+            forum_views.like_post(req)
+
+    def test_like_comment_invalid_ids_404(self):
+        p = Post.objects.create(author=self.user, title="T", content="C")
+        req = self._rf("patch", {"post_id": p.id, "comment_id": 987654})
+        req.user = self.user
+        with self.assertRaises(Http404):
+            forum_views.like_comment(req)
+
+    def test_get_post_comment_invalid_post_404(self):
+        url = reverse("get_post_comment", args=[999999])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
