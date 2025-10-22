@@ -150,8 +150,6 @@ def like_post(request):
         'liked': liked,
     }, status=200)
     
-
-
 @login_required
 @require_http_methods(["PATCH"])
 def like_comment(request):
@@ -222,5 +220,42 @@ def update_comment(request):
         'updated_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
     })
 
+@login_required
+@require_http_methods(["DELETE"])
+def delete_post(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        post_id = payload['post_id']
+    except:
+        None
+    if not post_id:
+        return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
+    post = get_object_or_404(Post, id=post_id)
+    if post.author != request.user:
+        return JsonResponse({'error': 'forbidden'}, status=400)
+    post.delete()
+    return JsonResponse({
+        'message': 'Post berhasil dihapus'
+    }, status=200)
 
-
+@login_required
+@require_http_methods(["DELETE"])
+def delete_comment(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        post_id = payload['post_id']
+        comment_id = payload['comment_id']
+    except:
+        None
+    if not post_id:
+        return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
+    if not comment_id:
+        return JsonResponse({'error': 'comment_id wajib dikirim'}, status=400)
+    post = get_object_or_404(Post, id=post_id)
+    comment = get_object_or_404(Comment, id=comment_id, post=post)
+    if comment.user != request.user:
+        return JsonResponse({'error': 'forbidden'}, status=400)
+    comment.delete()
+    return JsonResponse({
+        'message': 'Post berhasil dihapus'
+    }, status=200)

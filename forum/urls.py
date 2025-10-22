@@ -10,4 +10,9 @@ urlpatterns = [
 
     path("api/posts/<int:post_id>/comments/", views.get_post_comment, name="get_post_comment"),
     path("api/posts/<int:post_id>/comments/create/", views.create_comment, name="create_comment"),
+
+    path('api/posts/update',views.update_post),
+    path('api/posts/liked'), views.like_post,
+    path('api/comments/update', views.update_comment),
+    path('api/comments/liked', views.like_comment)
 ]
