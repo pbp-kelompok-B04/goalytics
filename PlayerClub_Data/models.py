@@ -1,8 +1,8 @@
 from django.db import models
 
 class Club(models.Model):
-    league = models.CharField(max_length=100)
-    season = models.CharField(max_length=20)
+    league = models.CharField(max_length=100, default='Unknown')
+    season = models.CharField(max_length=20, default='2425')
     name = models.CharField(max_length=200, unique=True)
     total_goal = models.IntegerField(default=0)
     total_assist = models.IntegerField(default=0)
