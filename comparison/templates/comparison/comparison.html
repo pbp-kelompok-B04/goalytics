@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Player Comparison{% endblock %}
+
+{% block content %}
+<section class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white text-center py-20 px-4">
+  <h1 class="text-4xl md:text-5xl font-bold mb-4">Player Comparison</h1>
+  <p class="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
+    Compare stats between two football players ⚽
+  </p>
+
+  <!-- Search form -->
+  <form method="GET" class="mt-8 flex justify-center gap-4 flex-wrap">
+    <input type="text" name="player1" placeholder="Player 1" 
+           class="p-3 rounded-lg text-gray-800 w-64" required>
+    <input type="text" name="player2" placeholder="Player 2" 
+           class="p-3 rounded-lg text-gray-800 w-64" required>
+    <button type="submit" 
+            class="bg-blue-500 hover:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition">
+      Compare
+    </button>
+  </form>
+</section>
+
+{% if player1 and player2 %}
+<section class="max-w-5xl mx-auto px-6 py-16">
+  <div class="grid md:grid-cols-2 gap-8">
+
+    <!-- Player 1 -->
+    <div class="bg-white p-6 rounded-xl shadow-md">
+      <h2 class="text-2xl font-bold text-blue-800 mb-2">{{ player1.name }}</h2>
+      {% if player1.club %}
+        <p class="text-gray-600 mb-2">Club: {{ player1.club.name }}</p>
+      {% else %}
+        <p class="text-gray-600 mb-2">Club: -</p>
+      {% endif %}
+      <p class="text-gray-600 mb-2">Position: {{ player1.position|default:"-" }}</p>
+
+      <div class="mt-4 space-y-3">
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Total Goals</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-blue-600 h-4 rounded-full" style="width: {{ player1.total_goals|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player1.total_goals }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Assists</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-green-600 h-4 rounded-full" style="width: {{ player1.total_assists|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player1.total_assists }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Yellow Cards</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-yellow-400 h-4 rounded-full" style="width: {{ player1.yellow_cards|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player1.yellow_cards }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Red Cards</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-red-500 h-4 rounded-full" style="width: {{ player1.red_cards|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player1.red_cards }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Total Wins</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-indigo-600 h-4 rounded-full" style="width: {{ player1.total_win|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player1.total_win }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player 2 -->
+    <div class="bg-white p-6 rounded-xl shadow-md">
+      <h2 class="text-2xl font-bold text-blue-800 mb-2">{{ player2.name }}</h2>
+      {% if player2.club %}
+        <p class="text-gray-600 mb-2">Club: {{ player2.club.name }}</p>
+      {% else %}
+        <p class="text-gray-600 mb-2">Club: -</p>
+      {% endif %}
+      <p class="text-gray-600 mb-2">Position: {{ player2.position|default:"-" }}</p>
+
+      <div class="mt-4 space-y-3">
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Total Goals</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-blue-600 h-4 rounded-full" style="width: {{ player2.total_goals|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player2.total_goals }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Assists</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-green-600 h-4 rounded-full" style="width: {{ player2.total_assists|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player2.total_assists }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Yellow Cards</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-yellow-400 h-4 rounded-full" style="width: {{ player2.yellow_cards|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player2.yellow_cards }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Red Cards</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-red-500 h-4 rounded-full" style="width: {{ player2.red_cards|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player2.red_cards }}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-sm text-gray-700">Total Wins</p>
+          <div class="w-full bg-gray-200 rounded-full h-4">
+            <div class="bg-indigo-600 h-4 rounded-full" style="width: {{ player2.total_win|floatformat:0 }}%"></div>
+          </div>
+          <p class="text-sm text-gray-600">{{ player2.total_win }}</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% elif query_submitted %}
+<section class="text-center py-16">
+  <p class="text-lg text-gray-600">No players found. Please check your input.</p>
+</section>
+{% endif %}
+
+<footer class="bg-blue-900 text-white text-center py-6">
+  <p>© 2025 Goalytics — All rights reserved.</p>
+</footer>
+{% endblock content %}

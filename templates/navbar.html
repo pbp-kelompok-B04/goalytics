@@ -14,7 +14,7 @@
         <a href="#" class="hover:text-blue-300 transition">Favorite Players</a>
         <a href="#" class="hover:text-blue-300 transition">Match Prediction</a>
         <a href="#" class="hover:text-blue-300 transition">Discussion</a>
-        <a href="#" class="hover:text-blue-300 transition">Comparison</a>
+        <a href="{% url 'comparison' %}" class="hover:text-blue-300 transition">Comparison</a>
 
         {% if user.is_authenticated %}
           <!-- Find Users hanya saat login -->
@@ -64,7 +64,7 @@
     <a href="#" class="block px-4 py-2 hover:bg-blue-700">Favorite Players</a>
     <a href="#" class="block px-4 py-2 hover:bg-blue-700">Match Prediction</a>
     <a href="#" class="block px-4 py-2 hover:bg-blue-700">Discussion</a>
-    <a href="#" class="block px-4 py-2 hover:bg-blue-700">Comparison</a>
+    <a href="{% url 'comparison' %}" class="block px-4 py-2 hover:bg-blue-700">Comparison</a>
 
     {% if user.is_authenticated %}
       <a href="{% url 'users:search_users' %}" class="block px-4 py-2 hover:bg-blue-700">Find Users</a>
