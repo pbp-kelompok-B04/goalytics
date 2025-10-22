@@ -129,3 +129,98 @@ def create_comment(request, post_id):
         "parent_id": c.parent_id,
     }
     return JsonResponse({"data": data}, status=201)
+
+@login_required
+@require_http_methods(["PATCH"])
+def like_post(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        post_id = payload['post_id']
+    except:
+        None
+    post = get_object_or_404(Post, id=post_id)
+    if request.user in post.likes:
+        post.likes.remove(request.user)
+        liked = False
+    else:
+        post.likes.add(request.user)
+        liked = True
+    
+    return JsonResponse({
+        'liked': liked,
+    }, status=200)
+    
+
+
+@login_required
+@require_http_methods(["PATCH"])
+def like_comment(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        post_id = payload['post_id']
+        comment_id = payload['comment_id']
+    except:
+        None
+    post = get_object_or_404(Post, id=post_id)
+    comment=get_object_or_404(Comment, id=comment_id, post=post)
+    if request.user in comment.likes:
+        comment.likes.remove(request.user)
+        liked = False
+    else:
+        comment.likes.add(request.user)
+        liked = True
+    return JsonResponse({
+        'liked': liked
+    }, status=200)
+
+@login_required
+@require_http_methods(["PATCH"])
+def update_post(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        post_id = payload['post_id']
+    except:
+        None
+
+    post = get_object_or_404(Post, id=post_id)
+    data = json.loads(request.body.decode('utf-8'))
+    if 'title' in data:
+        post.title = data['title'].strip
+    if 'content' in data:
+        post.content = data['content'].strip()
+    post.save()
+    return JsonResponse({
+        "message": "Post updated successfully",
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+    })
+
+
+@login_required
+@require_http_methods(["PATCH"])
+def update_comment(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        post_id = data['post_id']
+        comment_id = data['comment_id']
+        new_content = data['content'].strip()
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({'error': 'JSON tidak valid'}, status=400)
+    if not new_content:
+        return JsonResponse({'error': 'Isi komentar tidak boleh kosong'}, status=400)
+    post = get_object_or_404(Post, id=post_id)
+    comment = get_object_or_404(Comment, id=comment_id, post=post)
+    if comment.user != request.user:
+        return JsonResponse({'error': 'forbidden'}, status=400)
+    comment.content = new_content
+    comment.save()
+    return JsonResponse({
+        'status': 'success',
+        'comment_id': comment.id,
+        'new_content': comment.content,
+        'updated_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+
+
