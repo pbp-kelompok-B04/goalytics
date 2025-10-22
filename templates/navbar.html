@@ -17,29 +17,34 @@
         <a href="#" class="hover:text-blue-300 transition">Comparison</a>
 
         {% if user.is_authenticated %}
-        <!-- Profile Dropdown -->
-        <div class="relative">
-          <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
-            <img src="https://ui-avatars.com/api/?name={{ user.username }}" 
-                 class="w-8 h-8 rounded-full border-2 border-blue-400" alt="Profile">
-            <span class="hidden md:inline-block font-medium">{{ user.username }}</span>
-          </button>
+          <!-- Find Users hanya saat login -->
+          <a href="{% url 'users:search_users' %}" class="hover:text-blue-300 transition">Find Users</a>
 
-          <!-- Dropdown Menu -->
-          <div id="profileMenu"
-               class="absolute right-0 mt-2 w-44 bg-white text-gray-800 rounded-lg shadow-lg hidden transition-all duration-200 ease-out transform origin-top-right">
-            <div class="px-4 py-3 border-b border-gray-100">
-              <p class="font-semibold text-gray-800">{{ user.username }}</p>
-              <p class="text-sm text-gray-500">{{ user.email }}</p>
+          <!-- Profile Dropdown -->
+          <div class="relative">
+            <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
+              {% if user.profile and user.profile.profile_picture %}
+                <img src="{{ user.profile.profile_picture }}" class="w-8 h-8 rounded-full border-2 border-blue-400" alt="Profile">
+              {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}" class="w-8 h-8 rounded-full border-2 border-blue-400" alt="Profile">
+              {% endif %}
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="profileMenu"
+                 class="absolute right-0 mt-2 w-44 bg-white text-gray-800 rounded-lg shadow-lg hidden transition-all duration-200 ease-out transform origin-top-right">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="font-semibold text-gray-800">{{ user.username }}</p>
+                <p class="text-sm text-gray-500">{{ user.email }}</p>
+              </div>
+              <a href="{% url 'users:profile' user.username %}" class="block px-4 py-2 hover:bg-gray-100 transition">👤 Profile</a>
+              <a href="{% url 'main:dashboard' %}" class="block px-4 py-2 hover:bg-gray-100 transition">📊 Dashboard</a>
+              <hr class="border-gray-200">
+              <a href="{% url 'users:logout' %}" class="block px-4 py-2 text-red-500 hover:bg-red-50 transition">🚪 Logout</a>
             </div>
-            <a href="{% url 'users:profile' %}" class="block px-4 py-2 hover:bg-gray-100 transition">👤 Profile</a>
-            <a href="{% url 'main:dashboard' %}" class="block px-4 py-2 hover:bg-gray-100 transition">📊 Dashboard</a>
-            <hr class="border-gray-200">
-            <a href="{% url 'users:logout' %}" class="block px-4 py-2 text-red-500 hover:bg-red-50 transition">🚪 Logout</a>
           </div>
-        </div>
-
         {% else %}
+          <!-- Saat belum login: tombol Login, tanpa Find Users dan tanpa avatar -->
           <a href="{% url 'users:login' %}" 
              class="bg-white text-blue-900 font-semibold px-4 py-2 rounded-full shadow hover:bg-blue-100 transition">
             Login
@@ -60,8 +65,10 @@
     <a href="#" class="block px-4 py-2 hover:bg-blue-700">Match Prediction</a>
     <a href="#" class="block px-4 py-2 hover:bg-blue-700">Discussion</a>
     <a href="#" class="block px-4 py-2 hover:bg-blue-700">Comparison</a>
+
     {% if user.is_authenticated %}
-      <a href="{% url 'users:profile' %}" class="block px-4 py-2 border-t border-blue-700 hover:bg-blue-700">Profile</a>
+      <a href="{% url 'users:search_users' %}" class="block px-4 py-2 hover:bg-blue-700">Find Users</a>
+      <a href="{% url 'users:profile' user.username %}" class="block px-4 py-2 border-t border-blue-700 hover:bg-blue-700">Profile</a>
       <a href="{% url 'users:logout' %}" class="block px-4 py-2 hover:bg-blue-700">Logout</a>
     {% else %}
       <a href="{% url 'users:login' %}" 
@@ -75,9 +82,11 @@
 <script>
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
-  menuBtn.addEventListener('click', () => {
-    mobileMenu.classList.toggle('hidden');
-  });
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  }
 
   const profileBtn = document.getElementById('profileBtn');
   const profileMenu = document.getElementById('profileMenu');

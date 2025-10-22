@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
-    'users',
+    'PlayerClub_Data.apps.PlayerclubDataConfig',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
