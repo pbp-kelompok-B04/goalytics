@@ -1,12 +1,16 @@
 from django.db import models
 
 class Club(models.Model):
-    name = models.CharField(max_length=200, unique=True)
     league = models.CharField(max_length=100)
     season = models.CharField(max_length=20)
+    name = models.CharField(max_length=200, unique=True)
+    total_goal = models.IntegerField(default=0)
+    total_assist = models.IntegerField(default=0)
+    expected_xg = models.FloatField(default=0.0)
+    expected_xag = models.FloatField(default=0.0)
 
     def __str__(self):
-        return f"{self.name} ({self.league})"
+        return f"{self.name} ({self.league} {self.season})"
 
 
 class Player(models.Model):
