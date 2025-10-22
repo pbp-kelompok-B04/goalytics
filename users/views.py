@@ -152,3 +152,28 @@ def view_profile(request, username):
         "is_owner": is_owner,
         "form": form,
     })
+
+@login_required
+def toggle_block_user(request, username):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'admin':
+        messages.error(request, "Unauthorized.")
+        return redirect('users:search_users')
+
+    target = get_object_or_404(Profile, user__username=username)
+    target.is_blocked = not target.is_blocked
+    target.save()
+    messages.success(request, f"User '{username}' has been {'blocked' if target.is_blocked else 'unblocked'}.")
+    return redirect('users:profile', username=username)
+
+
+@login_required
+def toggle_flag_user(request, username):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'admin':
+        messages.error(request, "Unauthorized.")
+        return redirect('users:search_users')
+
+    target = get_object_or_404(Profile, user__username=username)
+    target.is_flagged = not target.is_flagged
+    target.save()
+    messages.success(request, f"User '{username}' flag status updated.")
+    return redirect('users:profile', username=username)
