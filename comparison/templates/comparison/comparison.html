@@ -8,20 +8,55 @@
     Compare stats between two football players ⚽
   </p>
 
-  <!-- Search form -->
-  <form method="GET" class="mt-8 flex justify-center gap-4 flex-wrap">
-    <input type="text" name="player1" placeholder="Player 1" 
-           class="p-3 rounded-lg text-gray-800 w-64" required>
-    <input type="text" name="player2" placeholder="Player 2" 
-           class="p-3 rounded-lg text-gray-800 w-64" required>
+  <!-- Search form - Diubah dari POST ke GET -->
+  <form method="GET" class="mt-8 max-w-2xl mx-auto">
+    <div class="flex flex-col md:flex-row gap-4 justify-center">
+      <!-- Player 1 Search -->
+      <div class="relative">
+        <input type="text" name="player1" placeholder="Search Player 1" 
+               class="p-3 rounded-lg text-gray-800 w-64" required
+               value="{{ request.GET.player1|default:'' }}"
+               list="suggestions1">
+        <datalist id="suggestions1">
+          {% for player in suggestions1 %}
+            <option value="{{ player.name }}">
+          {% endfor %}
+        </datalist>
+      </div>
+
+      <!-- Player 2 Search -->
+      <div class="relative">
+        <input type="text" name="player2" placeholder="Search Player 2" 
+               class="p-3 rounded-lg text-gray-800 w-64" required
+               value="{{ request.GET.player2|default:'' }}"
+               list="suggestions2">
+        <datalist id="suggestions2">
+          {% for player in suggestions2 %}
+            <option value="{{ player.name }}">
+          {% endfor %}
+        </datalist>
+      </div>
+    </div>
+
     <button type="submit" 
-            class="bg-blue-500 hover:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition">
+            class="mt-4 bg-blue-500 hover:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition">
       Compare
     </button>
   </form>
+
+  <!-- Info Text -->
+  <p class="mt-4 text-sm text-blue-200">
+    💡 Tip: Type part of the name (e.g., "messi" for "Lionel Messi")
+  </p>
 </section>
 
 {% if player1 and player2 %}
+<style>
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+}
+</style>
+
 <section class="max-w-5xl mx-auto px-6 py-16">
   <div class="grid md:grid-cols-2 gap-8">
 
@@ -37,43 +72,43 @@
 
       <div class="mt-4 space-y-3">
         <div>
-          <p class="font-semibold text-sm text-gray-700">Total Goals</p>
+          <p class="font-semibold text-sm text-gray-700">Total Goals: {{ player1.total_goals|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-blue-600 h-4 rounded-full" style="width: {{ player1.total_goals|floatformat:0 }}%"></div>
+            <div class="bg-blue-600 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player1.total_goals|default:0 max_goals 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player1.total_goals }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Assists</p>
+          <p class="font-semibold text-sm text-gray-700">Assists: {{ player1.total_assists|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-green-600 h-4 rounded-full" style="width: {{ player1.total_assists|floatformat:0 }}%"></div>
+            <div class="bg-green-600 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player1.total_assists|default:0 max_assists 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player1.total_assists }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Yellow Cards</p>
+          <p class="font-semibold text-sm text-gray-700">Yellow Cards: {{ player1.yellow_cards|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-yellow-400 h-4 rounded-full" style="width: {{ player1.yellow_cards|floatformat:0 }}%"></div>
+            <div class="bg-yellow-400 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player1.yellow_cards|default:0 max_yellow_cards 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player1.yellow_cards }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Red Cards</p>
+          <p class="font-semibold text-sm text-gray-700">Red Cards: {{ player1.red_cards|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-red-500 h-4 rounded-full" style="width: {{ player1.red_cards|floatformat:0 }}%"></div>
+            <div class="bg-red-500 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player1.red_cards|default:0 max_red_cards 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player1.red_cards }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Total Wins</p>
+          <p class="font-semibold text-sm text-gray-700">Total Wins: {{ player1.total_win|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-indigo-600 h-4 rounded-full" style="width: {{ player1.total_win|floatformat:0 }}%"></div>
+            <div class="bg-indigo-600 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player1.total_win|default:0 max_wins 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player1.total_win }}</p>
         </div>
       </div>
     </div>
@@ -90,52 +125,77 @@
 
       <div class="mt-4 space-y-3">
         <div>
-          <p class="font-semibold text-sm text-gray-700">Total Goals</p>
+          <p class="font-semibold text-sm text-gray-700">Total Goals: {{ player2.total_goals|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-blue-600 h-4 rounded-full" style="width: {{ player2.total_goals|floatformat:0 }}%"></div>
+            <div class="bg-blue-600 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player2.total_goals|default:0 max_goals 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player2.total_goals }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Assists</p>
+          <p class="font-semibold text-sm text-gray-700">Assists: {{ player2.total_assists|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-green-600 h-4 rounded-full" style="width: {{ player2.total_assists|floatformat:0 }}%"></div>
+            <div class="bg-green-600 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player2.total_assists|default:0 max_assists 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player2.total_assists }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Yellow Cards</p>
+          <p class="font-semibold text-sm text-gray-700">Yellow Cards: {{ player2.yellow_cards|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-yellow-400 h-4 rounded-full" style="width: {{ player2.yellow_cards|floatformat:0 }}%"></div>
+            <div class="bg-yellow-400 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player2.yellow_cards|default:0 max_yellow_cards 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player2.yellow_cards }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Red Cards</p>
+          <p class="font-semibold text-sm text-gray-700">Red Cards: {{ player2.red_cards|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-red-500 h-4 rounded-full" style="width: {{ player2.red_cards|floatformat:0 }}%"></div>
+            <div class="bg-red-500 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player2.red_cards|default:0 max_red_cards 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player2.red_cards }}</p>
         </div>
 
         <div>
-          <p class="font-semibold text-sm text-gray-700">Total Wins</p>
+          <p class="font-semibold text-sm text-gray-700">Total Wins: {{ player2.total_win|default:0 }}</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
-            <div class="bg-indigo-600 h-4 rounded-full" style="width: {{ player2.total_win|floatformat:0 }}%"></div>
+            <div class="bg-indigo-600 h-4 rounded-full progress-bar" 
+                 style="width: {% widthratio player2.total_win|default:0 max_wins 100 %}%"></div>
           </div>
-          <p class="text-sm text-gray-600">{{ player2.total_win }}</p>
         </div>
       </div>
     </div>
 
   </div>
 </section>
+
 {% elif query_submitted %}
 <section class="text-center py-16">
-  <p class="text-lg text-gray-600">No players found. Please check your input.</p>
+  <div class="max-w-2xl mx-auto px-4">
+    {% if not player1 or not player2 %}
+      <p class="text-lg text-gray-600 mb-4">Some players not found. Suggestions:</p>
+      
+      {% if not player1 and suggestions1 %}
+      <div class="mb-6">
+        <h3 class="font-semibold text-gray-800 mb-2">For "{{ request.GET.player1 }}":</h3>
+        {% for player in suggestions1 %}
+          <p class="text-gray-600">{{ player.name }}{% if player.club %} - {{ player.club.name }}{% endif %}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+      
+      {% if not player2 and suggestions2 %}
+      <div class="mb-6">
+        <h3 class="font-semibold text-gray-800 mb-2">For "{{ request.GET.player2 }}":</h3>
+        {% for player in suggestions2 %}
+          <p class="text-gray-600">{{ player.name }}{% if player.club %} - {{ player.club.name }}{% endif %}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+      
+      <p class="text-sm text-gray-500">Please try with a more specific name.</p>
+    {% endif %}
+  </div>
 </section>
 {% endif %}
 
