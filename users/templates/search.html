@@ -4,6 +4,14 @@
 {% block content %}
 <div class="max-w-6xl mx-auto mt-8">
 
+  <!-- Back to Dashboard Button -->
+  <div class="flex justify-between items-center mb-6">
+    <a href="{% url 'main:dashboard' %}" 
+       class="flex items-center gap-2 text-blue-800 font-semibold hover:text-blue-600 transition">
+      ← Back to Dashboard
+    </a>
+  </div>
+
   <!-- Search Bar + Filters -->
   <form method="get" action="" class="bg-white rounded-2xl shadow p-5 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -147,7 +155,7 @@
   {% endif %}
 </div>
 
-<script >
+<script>
 (function () {
   const q = document.querySelector('input[name="q"]');
   const league = document.querySelector('select[name="league"]');
