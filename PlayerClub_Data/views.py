@@ -147,7 +147,8 @@ def get_all_player(request):
 
 @login_required
 @require_http_methods(["POST"])
-def player_create(request):
+@user_passes_test(is_admin)
+def player_create_api(request):
     form_data = {
         field_name: field_value
         for field_name, field_value in request.POST.items()
@@ -218,7 +219,8 @@ def get_all_club(request):
 
 @login_required
 @require_http_methods(["POST"])
-def club_create(request):
+@user_passes_test(is_admin)
+def club_create_api(request):
     name = (request.POST.get("name") or "").strip()
     if not name:
         return JsonResponse({"error": "'name' is required"}, status=400)
