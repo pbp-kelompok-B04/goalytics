@@ -27,6 +27,7 @@ class Player(models.Model):
     age = models.PositiveIntegerField(blank=True, null=True)
     born = models.PositiveIntegerField(blank=True, null=True)
     club = models.ForeignKey(Club, on_delete=models.SET_NULL, null=True, related_name='players')
+    image_url = models.URLField(blank=True, null=True)
     
     #stat umum
     goals = models.FloatField(default=0)
