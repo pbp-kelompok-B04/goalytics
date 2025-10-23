@@ -39,7 +39,16 @@ def get_all_post(request):
             qs = qs.filter(author=request.user)
     sort = request.GET.get("sort", "newest")
     order_field = "created_at" if sort == "oldest" else "-created_at"
-    all_post = qs.annotate(comment_count=Count("comments")).order_by(order_field)
+    all_post = (
+        qs.annotate(
+            comment_count=Count("comments", distinct=True),
+            like_count=Count("likes", distinct=True),
+        )
+        .order_by(order_field)
+    )
+    liked_post_ids = set()
+    if request.user.is_authenticated:
+        liked_post_ids = set(request.user.liked_post.values_list("id", flat=True))
     data = []
     for p in all_post:
         post = {
@@ -49,107 +58,28 @@ def get_all_post(request):
             'content': p.content,
             "created_at": p.created_at.isoformat(),
             "updated_at": p.updated_at.isoformat(),
-            "comment_count": getattr(p, "comment_count", None),
+            "comment_count": (getattr(p, "comment_count", 0) or 0),
             "league": p.league,
             "is_author": request.user.is_authenticated and p.author == request.user,
+            "like_count": getattr(p, "like_count", 0),
+            "is_liked": p.id in liked_post_ids,
             "avatar": _avatar_for_user(p.author),
         }
         data.append(post)
     return JsonResponse({"data": data})
 
-
-@require_http_methods(["GET", "POST"])
-def posts_collection(request):
-    if request.method == "GET":
-        return get_all_post(request)
-    return create_post(request)
-
-
-@require_http_methods(["GET", "PATCH", "DELETE"])
-def post_detail(request, post_id):
-    if request.method == "GET":
-        return get_post_by_id(request, post_id)
-    try:
-        payload = json.loads((request.body or b"{}").decode("utf-8"))
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "invalid JSON"}, status=400)
-    payload = payload or {}
-    payload["post_id"] = post_id
-    request._body = json.dumps(payload).encode("utf-8")
-    if request.method == "PATCH":
-        return update_post(request)
-    return delete_post(request)
-
-
-@require_http_methods(["POST", "DELETE"])
-def post_likes(request, post_id):
-    if request.method == "POST":
-        try:
-            payload = json.loads((request.body or b"{}").decode("utf-8"))
-        except json.JSONDecodeError:
-            payload = {}
-        payload["post_id"] = post_id
-        request._body = json.dumps(payload).encode("utf-8")
-        return like_post(request)
-    post = get_object_or_404(Post, id=post_id)
-    if post.likes.filter(id=request.user.id).exists():
-        post.likes.remove(request.user)
-    return JsonResponse({"liked": False}, status=200)
-
-
-@require_http_methods(["GET", "POST"])
-def comments_collection(request, post_id):
-    if request.method == "GET":
-        return get_post_comment(request, post_id)
-    return create_comment(request, post_id)
-
-
-@require_http_methods(["PATCH", "DELETE"])
-def comment_detail(request, comment_id):
-    comment = get_object_or_404(Comment.objects.select_related("post"), id=comment_id)
-    post_id = comment.post_id
-    try:
-        payload = json.loads((request.body or b"{}").decode("utf-8"))
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "invalid JSON"}, status=400)
-    payload = payload or {}
-    payload["post_id"] = post_id
-    payload["comment_id"] = comment_id
-    request._body = json.dumps(payload).encode("utf-8")
-
-    if request.method == "PATCH":
-        return update_comment(request)
-    # DELETE
-    return delete_comment(request)
-
-
-@require_http_methods(["POST", "DELETE"])
-def comment_likes(request, comment_id):
-    # Resolve post id
-    comment = get_object_or_404(Comment.objects.select_related("post"), id=comment_id)
-    post_id = comment.post_id
-
-    if request.method == "POST":
-        try:
-            payload = json.loads((request.body or b"{}").decode("utf-8"))
-        except json.JSONDecodeError:
-            payload = {}
-        payload["post_id"] = post_id
-        payload["comment_id"] = comment_id
-        request._body = json.dumps(payload).encode("utf-8")
-        return like_comment(request)
-
-    # DELETE -> ensure unlike
-    if comment.likes.filter(id=request.user.id).exists():
-        comment.likes.remove(request.user)
-    return JsonResponse({"liked": False}, status=200)
-
 @require_http_methods(["GET"])
 def get_post_by_id(request, post_id):
     post = get_object_or_404(
-        Post.objects.select_related("author", "author__profile").annotate(comment_count=Count("comments")),
+        Post.objects.select_related("author", "author__profile").annotate(
+            comment_count=Count("comments", distinct=True),
+            like_count=Count("likes", distinct=True),
+        ),
         id=post_id,
     )
+    liked = False
+    if request.user.is_authenticated:
+        liked = post.likes.filter(id=request.user.id).exists()
     data = {
         'id': post.id,
         'author': post.author.username,
@@ -157,10 +87,12 @@ def get_post_by_id(request, post_id):
         'content': post.content,
         "created_at": post.created_at.isoformat(),
         "updated_at": post.updated_at.isoformat(),
-        "comment_count": getattr(post, "comment_count", None),
+        "comment_count": (getattr(post, "comment_count", 0) or 0),
         "league": post.league,
         "avatar": _avatar_for_user(post.author),
         "is_author": request.user.is_authenticated and post.author == request.user,
+        "like_count": getattr(post, "like_count", 0),
+        "is_liked": liked,
     }
     return JsonResponse({"data": data})
 
@@ -168,10 +100,14 @@ def get_post_by_id(request, post_id):
 def get_post_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     user = request.user if request.user.is_authenticated else None
-    # Pull every comment for this post once to avoid recursive queries
+    liked_comment_ids = set()
+    if user:
+        liked_comment_ids = set(user.liked_comment.values_list("id", flat=True))
     comments = (
         post.comments
         .select_related("user", "user__profile")
+        .prefetch_related("likes")
+        .annotate(like_count=Count("likes", distinct=True))
         .order_by("created_at")
     )
 
@@ -186,6 +122,8 @@ def get_post_comment(request, post_id):
             "parent_id": comment.parent_id,
             "replies": [],
             "is_owner": bool(user and comment.user_id == user.id),
+            "like_count": getattr(comment, "like_count", comment.likes.count()),
+            "is_liked": comment.id in liked_comment_ids,
             "avatar": _avatar_for_user(comment.user),
         }
         created_lookup[comment.id] = comment.created_at
@@ -216,7 +154,10 @@ def get_post_comment(request, post_id):
 @login_required
 @require_http_methods(["GET"])
 def get_my_posts(request):
-    qs = Post.objects.select_related("author", "author__profile").filter(author=request.user)
+    qs = (
+        Post.objects.select_related("author", "author__profile")
+        .filter(author=request.user)
+    )
     league = request.GET.get("league")
     if league:
         valid_codes = {code for code, _ in LEAGUE_CHOICES}
@@ -224,7 +165,14 @@ def get_my_posts(request):
             qs = qs.filter(league=league)
     sort = request.GET.get("sort", "newest")
     order_field = "created_at" if sort == "oldest" else "-created_at"
-    all_post = qs.annotate(comment_count=Count("comments")).order_by(order_field)
+    all_post = (
+        qs.annotate(
+            comment_count=Count("comments", distinct=True),
+            like_count=Count("likes", distinct=True),
+        )
+        .order_by(order_field)
+    )
+    liked_post_ids = set(request.user.liked_post.values_list("id", flat=True))
     data = []
     for p in all_post:
         post = {
@@ -234,9 +182,11 @@ def get_my_posts(request):
             'content': p.content,
             "created_at": p.created_at.isoformat(),
             "updated_at": p.updated_at.isoformat(),
-            "comment_count": getattr(p, "comment_count", None),
+            "comment_count": (getattr(p, "comment_count", 0) or 0),
             "league": p.league,
             "is_author": True,
+            "like_count": getattr(p, "like_count", 0),
+            "is_liked": p.id in liked_post_ids,
             "avatar": _avatar_for_user(p.author),
         }
         data.append(post)
@@ -265,9 +215,11 @@ def create_post(request):
         'content': p.content,
         "created_at": p.created_at.isoformat(),
         "updated_at": p.updated_at.isoformat(),
-        "comment_count": getattr(p, "comment_count", None),
+        "comment_count": 0,
         "league": p.league,
         "is_author": True,
+        "like_count": 0,
+        "is_liked": False,
         "avatar": _avatar_for_user(p.author),
     }
     return JsonResponse({"data": data}, status=201)
@@ -294,17 +246,21 @@ def create_comment(request, post_id):
         "created_at": c.created_at.isoformat(),
         "parent_id": c.parent_id,
         "is_owner": True,
+        "like_count": 0,
+        "is_liked": False,
         "avatar": _avatar_for_user(c.user),
     }
     return JsonResponse({"data": data}, status=201)
 
 @login_required
-@require_http_methods(["PATCH"])
-def like_post(request):
+@require_http_methods(["POST"])
+def like_post(request, post_id):
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return JsonResponse({'error': 'invalid JSON'}, status=400)
+    if payload.get('_method') != 'PATCH':
+        return JsonResponse({'error': 'Method override required'}, status=405)
     post_id = payload.get('post_id')
     if not post_id:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
@@ -318,15 +274,18 @@ def like_post(request):
     
     return JsonResponse({
         'liked': liked,
+        'like_count': post.likes.count(),
     }, status=200)
     
 @login_required
-@require_http_methods(["PATCH"])
-def like_comment(request):
+@require_http_methods(["POST"])
+def like_comment(request, comment_id):
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return JsonResponse({'error': 'invalid JSON'}, status=400)
+    if payload.get('_method') != 'PATCH':
+        return JsonResponse({'error': 'Method override required'}, status=405)
     post_id = payload.get('post_id')
     comment_id = payload.get('comment_id')
     if not post_id or not comment_id:
@@ -340,7 +299,8 @@ def like_comment(request):
         comment.likes.add(request.user)
         liked = True
     return JsonResponse({
-        'liked': liked
+        'liked': liked,
+        'like_count': comment.likes.count(),
     }, status=200)
 
 @login_required
