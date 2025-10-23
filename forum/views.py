@@ -1,11 +1,9 @@
 from django.shortcuts import render
 from .models import Post, Comment
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.views.decorators.http import require_http_methods
 import json
 
@@ -49,7 +47,13 @@ def get_post_by_id(request, post_id):
 @require_http_methods(["GET"])
 def get_post_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    comments = post.comments.filter(parent__isnull=True).order_by("-created_at")
+    comments = (
+        post.comments
+        .filter(parent__isnull=True)
+        .select_related("user")
+        .prefetch_related("replies__user")
+        .order_by("-created_at")
+    )
     data = []
     for c in comments:
         replies = c.replies.all().order_by("created_at")
@@ -140,9 +144,11 @@ def create_comment(request, post_id):
 def like_post(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
-        post_id = payload['post_id']
-    except:
-        post_id = None
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    post_id = payload.get('post_id')
+    if not post_id:
+        return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
     post = get_object_or_404(Post, id=post_id)
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
@@ -160,13 +166,14 @@ def like_post(request):
 def like_comment(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
-        post_id = payload['post_id']
-        comment_id = payload['comment_id']
-    except:
-        post_id = None
-        comment_id = None
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    post_id = payload.get('post_id')
+    comment_id = payload.get('comment_id')
+    if not post_id or not comment_id:
+        return JsonResponse({'error': 'post_id dan comment_id wajib dikirim'}, status=400)
     post = get_object_or_404(Post, id=post_id)
-    comment=get_object_or_404(Comment, id=comment_id, post=post)
+    comment = get_object_or_404(Comment, id=comment_id, post=post)
     if comment.likes.filter(id=request.user.id).exists():
         comment.likes.remove(request.user)
         liked = False
@@ -182,16 +189,20 @@ def like_comment(request):
 def update_post(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
-        post_id = payload['post_id']
-    except:
-        post_id = None
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid JSON"}, status=400)
 
+    post_id = payload.get('post_id')
+    if not post_id:
+        return JsonResponse({"error": "post_id wajib dikirim"}, status=400)
     post = get_object_or_404(Post, id=post_id)
-    data = json.loads(request.body.decode('utf-8'))
-    if 'title' in data:
-        post.title = data['title'].strip()
-    if 'content' in data:
-        post.content = data['content'].strip()
+    if post.author != request.user:
+        return JsonResponse({"error": "forbidden"}, status=400)
+
+    if 'title' in payload:
+        post.title = (payload.get('title') or '').strip()
+    if 'content' in payload:
+        post.content = (payload.get('content') or '').strip()
     post.save()
     return JsonResponse({
         "message": "Post updated successfully",
@@ -209,7 +220,7 @@ def update_comment(request):
         post_id = data['post_id']
         comment_id = data['comment_id']
         new_content = data['content'].strip()
-    except (json.JSONDecodeError, AttributeError):
+    except (json.JSONDecodeError, AttributeError, KeyError):
         return JsonResponse({'error': 'JSON tidak valid'}, status=400)
     if not new_content:
         return JsonResponse({'error': 'Isi komentar tidak boleh kosong'}, status=400)
@@ -231,9 +242,9 @@ def update_comment(request):
 def delete_post(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
-        post_id = payload['post_id']
-    except:
-        post_id = None
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    post_id = payload.get('post_id')
     if not post_id:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
     post = get_object_or_404(Post, id=post_id)
@@ -249,11 +260,10 @@ def delete_post(request):
 def delete_comment(request):
     try:
         payload = json.loads(request.body.decode('utf-8'))
-        post_id = payload['post_id']
-        comment_id = payload['comment_id']
-    except:
-        post_id = None
-        comment_id = None
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    post_id = payload.get('post_id')
+    comment_id = payload.get('comment_id')
     if not post_id:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
     if not comment_id:
@@ -264,6 +274,7 @@ def delete_comment(request):
         return JsonResponse({'error': 'forbidden'}, status=400)
     comment.delete()
     return JsonResponse({
-        'message': 'Post berhasil dihapus'
+        'message': 'Komentar berhasil dihapus'
     }, status=200)
+
 
