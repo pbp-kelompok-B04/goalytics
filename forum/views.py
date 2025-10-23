@@ -30,6 +30,95 @@ def get_all_post(request):
         data.append(post)
     return JsonResponse({"data": data})
 
+
+@require_http_methods(["GET", "POST"])
+def posts_collection(request):
+    if request.method == "GET":
+        return get_all_post(request)
+    return create_post(request)
+
+
+@require_http_methods(["GET", "PATCH", "DELETE"])
+def post_detail(request, post_id):
+    if request.method == "GET":
+        return get_post_by_id(request, post_id)
+    try:
+        payload = json.loads((request.body or b"{}").decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid JSON"}, status=400)
+    payload = payload or {}
+    payload["post_id"] = post_id
+    request._body = json.dumps(payload).encode("utf-8")
+
+    if request.method == "PATCH":
+        return update_post(request)
+    # DELETE
+    return delete_post(request)
+
+
+@require_http_methods(["POST", "DELETE"])
+def post_likes(request, post_id):
+    if request.method == "POST":
+        try:
+            payload = json.loads((request.body or b"{}").decode("utf-8"))
+        except json.JSONDecodeError:
+            payload = {}
+        payload["post_id"] = post_id
+        request._body = json.dumps(payload).encode("utf-8")
+        return like_post(request)
+    post = get_object_or_404(Post, id=post_id)
+    if post.likes.filter(id=request.user.id).exists():
+        post.likes.remove(request.user)
+    return JsonResponse({"liked": False}, status=200)
+
+
+@require_http_methods(["GET", "POST"])
+def comments_collection(request, post_id):
+    if request.method == "GET":
+        return get_post_comment(request, post_id)
+    return create_comment(request, post_id)
+
+
+@require_http_methods(["PATCH", "DELETE"])
+def comment_detail(request, comment_id):
+    comment = get_object_or_404(Comment.objects.select_related("post"), id=comment_id)
+    post_id = comment.post_id
+    try:
+        payload = json.loads((request.body or b"{}").decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid JSON"}, status=400)
+    payload = payload or {}
+    payload["post_id"] = post_id
+    payload["comment_id"] = comment_id
+    request._body = json.dumps(payload).encode("utf-8")
+
+    if request.method == "PATCH":
+        return update_comment(request)
+    # DELETE
+    return delete_comment(request)
+
+
+@require_http_methods(["POST", "DELETE"])
+def comment_likes(request, comment_id):
+    # Resolve post id
+    comment = get_object_or_404(Comment.objects.select_related("post"), id=comment_id)
+    post_id = comment.post_id
+
+    if request.method == "POST":
+        try:
+            payload = json.loads((request.body or b"{}").decode("utf-8"))
+        except json.JSONDecodeError:
+            payload = {}
+        payload["post_id"] = post_id
+        payload["comment_id"] = comment_id
+        request._body = json.dumps(payload).encode("utf-8")
+        return like_comment(request)
+
+    # DELETE -> ensure unlike
+    if comment.likes.filter(id=request.user.id).exists():
+        comment.likes.remove(request.user)
+    return JsonResponse({"liked": False}, status=200)
+
 @require_http_methods(["GET"])
 def get_post_by_id(request, post_id):
     post = get_object_or_404(Post.objects.annotate(comment_count=Count("comments")),id=post_id)
