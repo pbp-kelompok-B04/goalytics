@@ -50,9 +50,7 @@ INSTALLED_APPS = [
     'comparison',
     'users.apps.UsersConfig',
     'favorite_player.apps.FavoritePlayerConfig',
-    'users',
-    'PlayerClub_Data',
-    'forum'
+    'forum',
 ]
 
 MIDDLEWARE = [
