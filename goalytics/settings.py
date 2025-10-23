@@ -46,11 +46,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'adminpanel.apps.AdminpanelConfig',
     'PlayerClub_Data.apps.PlayerclubDataConfig',
     'comparison',
     'users.apps.UsersConfig',
     'favorite_player.apps.FavoritePlayerConfig',
-    'forum',
 ]
 
 MIDDLEWARE = [
@@ -152,7 +152,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
