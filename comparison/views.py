@@ -1,9 +1,12 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from PlayerClub_Data.models import Player, Club  
+import json
+import traceback
+from django.utils.safestring import mark_safe
 
 def comparison_view(request):
     return render(request, 'comparison/comparison.html')
@@ -34,8 +37,88 @@ def player_search_api(request):
     except Exception as e:
         return JsonResponse({'players': []})
 
+def get_position_stats(player):
+    """Get position-specific statistics for a player"""
+    position = player.position
+    stats = {}
+    
+    if position == 'GK':
+        stats = {
+            'goals': player.goals or 0,
+            'assists': player.assists or 0,
+            'saves': player.saves or 0,
+            'save_percentage': player.save_percentage or 0,
+            'clean_sheets': player.clean_sheets or 0,
+            'clean_sheet_percentage': player.clean_sheet_percentage or 0,
+        }
+    elif position == 'DF':
+        stats = {
+            'goals': player.goals or 0,
+            'assists': player.assists or 0,
+            'tackles': player.tackles or 0,
+            'tackles_won': player.tackles_won or 0,
+            'challenges_won': player.challenges_won or 0,
+            'challenges_attempted': player.challenges_attempted or 0,
+            'blocks': player.blocks or 0,
+            'clearances': player.clearances or 0,
+        }
+    elif position == 'MF':
+        stats = {
+            'goals': player.goals or 0,
+            'assists': player.assists or 0,
+            'Progressive_Carries': player.Progressive_Carries or 0,
+            'Progressive_Passes': player.Progressive_Passes or 0,
+            'Progressive_Receptions': player.Progressive_Receptions or 0,
+            'passes_completed': player.passes_completed or 0,
+            'passes_attempted': player.passes_attempted or 0,
+            'pass_accuracy': player.pass_accuracy or 0,
+            'xag': player.xag or 0,
+        }
+    elif position == 'FW':
+        stats = {
+            'goals': player.goals or 0,
+            'assists': player.assists or 0,
+            'xg': player.xg or 0,
+            'npxg': player.npxg or 0,
+            'xag': player.xag or 0,
+        }
+    else:
+        # Default stats untuk posisi unknown
+        stats = {
+            'goals': player.goals or 0,
+            'assists': player.assists or 0,
+            'xg': player.xg or 0,
+        }
+    
+    return stats
+
+def get_max_values():
+    """Get maximum values for all relevant stats from database"""
+    return {
+        'goals': Player.objects.aggregate(Max('goals'))['goals__max'] or 1,
+        'assists': Player.objects.aggregate(Max('assists'))['assists__max'] or 1,
+        'saves': Player.objects.aggregate(Max('saves'))['saves__max'] or 1,
+        'save_percentage': Player.objects.aggregate(Max('save_percentage'))['save_percentage__max'] or 100,
+        'clean_sheets': Player.objects.aggregate(Max('clean_sheets'))['clean_sheets__max'] or 1,
+        'clean_sheet_percentage': Player.objects.aggregate(Max('clean_sheet_percentage'))['clean_sheet_percentage__max'] or 100,
+        'tackles': Player.objects.aggregate(Max('tackles'))['tackles__max'] or 1,
+        'tackles_won': Player.objects.aggregate(Max('tackles_won'))['tackles_won__max'] or 1,
+        'challenges_won': Player.objects.aggregate(Max('challenges_won'))['challenges_won__max'] or 1,
+        'challenges_attempted': Player.objects.aggregate(Max('challenges_attempted'))['challenges_attempted__max'] or 1,
+        'blocks': Player.objects.aggregate(Max('blocks'))['blocks__max'] or 1,
+        'clearances': Player.objects.aggregate(Max('clearances'))['clearances__max'] or 1,
+        'Progressive_Carries': Player.objects.aggregate(Max('Progressive_Carries'))['Progressive_Carries__max'] or 1,
+        'Progressive_Passes': Player.objects.aggregate(Max('Progressive_Passes'))['Progressive_Passes__max'] or 1,
+        'Progressive_Receptions': Player.objects.aggregate(Max('Progressive_Receptions'))['Progressive_Receptions__max'] or 1,
+        'passes_completed': Player.objects.aggregate(Max('passes_completed'))['passes_completed__max'] or 1,
+        'passes_attempted': Player.objects.aggregate(Max('passes_attempted'))['passes_attempted__max'] or 1,
+        'pass_accuracy': Player.objects.aggregate(Max('pass_accuracy'))['pass_accuracy__max'] or 100,
+        'xag': Player.objects.aggregate(Max('xag'))['xag__max'] or 1,
+        'xg': Player.objects.aggregate(Max('xg'))['xg__max'] or 1,
+        'npxg': Player.objects.aggregate(Max('npxg'))['npxg__max'] or 1,
+    }
+
 def compare_players_api(request):
-    """API untuk compare players - SESUAIKAN DENGAN MODEL BARU"""
     try:
         player1_id = request.GET.get('player1_id')
         player2_id = request.GET.get('player2_id')
@@ -43,24 +126,50 @@ def compare_players_api(request):
         player1 = Player.objects.get(id=player1_id)
         player2 = Player.objects.get(id=player2_id)
         
-        # Stats yang akan ditampilkan di comparison
+        # Get position-specific stats
+        player1_stats = get_position_stats(player1)
+        player2_stats = get_position_stats(player2)
+        
+        # Get max values
+        max_values = get_max_values()
+
+        same_position = player1.position == player2.position
+
+        # Radar chart data (only if same position)
+        radar_labels = []
+        radar_data1 = []
+        radar_data2 = []
+        radar_max = []
+
+        if same_position:
+            radar_labels = list(player1_stats.keys())
+            radar_data1 = [player1_stats[k] or 0 for k in radar_labels]
+            radar_data2 = [player2_stats.get(k, 0) or 0 for k in radar_labels]
+            radar_max = [max_values.get(k, 1) or 1 for k in radar_labels]
+
         context = {
             'player1': player1,
             'player2': player2,
-            # Max values untuk progress bars
-            'max_goals': max(player1.goals or 0, player2.goals or 0) or 1,
-            'max_assists': max(player1.assists or 0, player2.assists or 0) or 1,
-            'max_xg': max(player1.xg or 0, player2.xg or 0) or 1,
-            'max_pass_accuracy': max(player1.pass_accuracy or 0, player2.pass_accuracy or 0) or 1,
-            'max_tackles': max(player1.tackles or 0, player2.tackles or 0) or 1,
-            'max_progressive_passes': max(player1.Progressive_Passes or 0, player2.Progressive_Passes or 0) or 1,
+            'player1_stats': player1_stats,
+            'player2_stats': player2_stats,
+            'max_values': max_values,
+            'same_position': same_position,
+            'radar_labels': mark_safe(json.dumps(radar_labels)),
+            'radar_data1': mark_safe(json.dumps(radar_data1)),
+            'radar_data2': mark_safe(json.dumps(radar_data2)),
+            'radar_max': mark_safe(json.dumps(radar_max)),
         }
-        
         html = render_to_string('comparison/comparison_results.html', context)
         
         return JsonResponse({
             'success': True,
-            'html': html
+            'html': html,
+            'radar_labels': radar_labels,
+            'radar_data1': radar_data1,
+            'radar_data2': radar_data2,
+            'radar_max': radar_max,
+            'player1_name': player1.name,
+            'player2_name': player2.name,
         })
         
     except Player.DoesNotExist:
@@ -69,9 +178,11 @@ def compare_players_api(request):
             'error': 'Player not found'
         }, status=404)
     except Exception as e:
+        print("❌ Error comparing players:", str(e))
+        traceback.print_exc()
         return JsonResponse({
             'success': False,
-            'error': 'Server error'
+            'error': f'Server error: {str(e)}'
         }, status=500)
 
 # Admin functions
