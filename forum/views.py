@@ -23,6 +23,10 @@ def get_all_post(request):
         valid_codes = {code for code, _ in LEAGUE_CHOICES}
         if league in valid_codes:
             qs = qs.filter(league=league)
+    mine = request.GET.get("mine")
+    if mine and request.user.is_authenticated:
+        if mine.lower() in {"true", "1", "yes", "on"}:
+            qs = qs.filter(author=request.user)
     sort = request.GET.get("sort", "newest")
     order_field = "created_at" if sort == "oldest" else "-created_at"
     all_post = qs.annotate(comment_count=Count("comments")).order_by(order_field)

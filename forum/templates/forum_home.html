@@ -8,9 +8,14 @@
     <!-- Header with Create Button -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-blue-400">Goalytics Football Forum</h1>
-        <button onclick="openCreateModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-            Create Post
-        </button>
+        <div class="flex items-center gap-3">
+            <button type="button" id="my-posts-toggle" aria-pressed="false" class="px-4 py-2.5 rounded-full border border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors duration-200">
+                My Posts
+            </button>
+            <button onclick="openCreateModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+                Create Post
+            </button>
+        </div>
     </div>
 
     <!-- Filter & Sort Section -->
@@ -114,13 +119,16 @@
 </style>
 
 <script>
+    const isAuthenticated = {{ request.user.is_authenticated|yesno:"true,false" }};
     let currentLeague = '';
     let currentSort = 'newest';
+    let showMyPostsOnly = false;
     const listUrl = "{% url 'get_all_post' %}";
     const createUrl = "{% url 'create_post' %}";
     const detailTemplate = "{% url 'forum_post_detail' 0 %}";
     const leagueSelect = document.getElementById('league-filter');
     const sortSelect = document.getElementById('sort-order');
+    const myPostsToggle = document.getElementById('my-posts-toggle');
 
     // Get CSRF token
     function getCookie(name) {
@@ -190,6 +198,36 @@
         });
     }
 
+    if (myPostsToggle) {
+        const updateMyPostsToggle = () => {
+            myPostsToggle.setAttribute('aria-pressed', showMyPostsOnly ? 'true' : 'false');
+            if (showMyPostsOnly) {
+                myPostsToggle.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'text-gray-200', 'border-gray-600');
+                myPostsToggle.classList.add('bg-blue-600', 'hover:bg-blue-700', 'text-white', 'border-blue-500', 'shadow-lg');
+                myPostsToggle.textContent = 'Showing My Posts';
+            } else {
+                myPostsToggle.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'text-white', 'border-blue-500', 'shadow-lg');
+                myPostsToggle.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-gray-200', 'border-gray-600');
+                myPostsToggle.textContent = 'My Posts';
+            }
+        };
+
+        updateMyPostsToggle();
+        if (!isAuthenticated) {
+            myPostsToggle.classList.add('opacity-60', 'cursor-not-allowed');
+        }
+
+        myPostsToggle.addEventListener('click', () => {
+            if (!isAuthenticated) {
+                showToast('Please log in to view your posts', true);
+                return;
+            }
+            showMyPostsOnly = !showMyPostsOnly;
+            updateMyPostsToggle();
+            loadPosts();
+        });
+    }
+
     // Load posts
     async function loadPosts() {
         const params = new URLSearchParams();
@@ -198,6 +236,9 @@
         }
         if (currentSort) {
             params.set('sort', currentSort);
+        }
+        if (showMyPostsOnly) {
+            params.set('mine', 'true');
         }
         const query = params.toString();
         const url = query ? `${listUrl}?${query}` : listUrl;
