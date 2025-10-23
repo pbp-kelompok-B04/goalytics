@@ -236,10 +236,60 @@
     }
 
     // Display comments
+    function renderComment(comment, depth = 0) {
+        const date = new Date(comment.created_at);
+        const timeAgo = getTimeAgo(date);
+        const indentClass = depth > 0 ? 'ml-8 border-l border-gray-700/60 pl-6' : '';
+        const hasReplies = Array.isArray(comment.replies) && comment.replies.length > 0;
+
+        const childHtml = hasReplies
+            ? `
+                <div class="mt-3">
+                    <button type="button"
+                            id="toggle-btn-${comment.id}"
+                            onclick="toggleReplies(${comment.id})"
+                            class="text-xs uppercase tracking-wide text-blue-300 hover:text-blue-100 font-semibold">
+                        Hide replies (${comment.replies.length})
+                    </button>
+                </div>
+                <div id="replies-${comment.id}" data-count="${comment.replies.length}" class="mt-4 space-y-4">
+                    ${comment.replies.map(child => renderComment(child, depth + 1)).join('')}
+                </div>
+            `
+            : '';
+
+        return `
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-5 ${indentClass}">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-white">
+                        ${comment.user.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="font-semibold text-gray-200">${comment.user}</span>
+                            <span class="text-gray-500">&middot;</span>
+                            <span class="text-sm text-gray-400">${timeAgo}</span>
+                        </div>
+                        <p class="text-gray-300 mb-3 whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
+                        <div class="flex items-center gap-4 text-sm">
+                            <button type="button" onclick="openReplyModal(${comment.id})" class="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                </svg>
+                                Reply
+                            </button>
+                        </div>
+                        ${childHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     function displayComments(comments) {
         const commentsList = document.getElementById('comments-list');
-        
-        if (comments.length === 0) {
+
+        if (!comments || comments.length === 0) {
             commentsList.innerHTML = `
                 <div class="text-center py-8">
                     <p class="text-gray-400">No comments yet. Be the first to comment!</p>
@@ -248,63 +298,19 @@
             return;
         }
 
-        commentsList.innerHTML = comments.map(comment => {
-            const date = new Date(comment.created_at);
-            const timeAgo = getTimeAgo(date);
-            
-            const repliesHtml = comment.replies && comment.replies.length > 0 ? `
-                <div class="mt-4 ml-12 space-y-3">
-                    ${comment.replies.map(reply => {
-                        const replyDate = new Date(reply.created_at);
-                        const replyTimeAgo = getTimeAgo(replyDate);
-                        return `
-                            <div class="bg-gray-700/50 border border-gray-600 rounded-lg p-4">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
-                                        ${reply.user.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="font-semibold text-gray-200 text-sm">${reply.user}</span>
-                                            <span class="text-gray-500">•</span>
-                                            <span class="text-xs text-gray-400">${replyTimeAgo}</span>
-                                        </div>
-                                        <p class="text-gray-300 text-sm whitespace-pre-wrap">${escapeHtml(reply.content)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            ` : '';
-            
-            return `
-                <div class="bg-gray-700/30 border border-gray-600 rounded-lg p-5">
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center font-bold text-white">
-                            ${comment.user.charAt(0).toUpperCase()}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="font-semibold text-gray-200">${comment.user}</span>
-                                <span class="text-gray-500">•</span>
-                                <span class="text-sm text-gray-400">${timeAgo}</span>
-                            </div>
-                            <p class="text-gray-300 mb-3 whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
-                            <button onclick="openReplyModal(${comment.id})" class="text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                                </svg>
-                                Reply
-                            </button>
-                        </div>
-                    </div>
-                    ${repliesHtml}
-                </div>
-            `;
-        }).join('');
+        commentsList.innerHTML = comments.map(comment => renderComment(comment)).join('');
     }
 
+    function toggleReplies(commentId) {
+        const container = document.getElementById(`replies-${commentId}`);
+        const button = document.getElementById(`toggle-btn-${commentId}`);
+        if (!container || !button) {
+            return;
+        }
+        const hidden = container.classList.toggle('hidden');
+        const count = container.dataset.count || container.children.length;
+        button.textContent = hidden ? `Show replies (${count})` : `Hide replies (${count})`;
+    }
     // Add comment
     document.getElementById('commentForm').addEventListener('submit', async (e) => {
         e.preventDefault();

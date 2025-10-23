@@ -144,35 +144,48 @@ def get_post_by_id(request, post_id):
 @require_http_methods(["GET"])
 def get_post_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+    # Pull every comment for this post once to avoid recursive queries
     comments = (
         post.comments
-        .filter(parent__isnull=True)
         .select_related("user")
-        .prefetch_related("replies__user")
-        .order_by("-created_at")
+        .order_by("created_at")
     )
-    data = []
-    for c in comments:
-        replies = c.replies.all().order_by("created_at")
-        comment = {
-            "id": c.id,
-            "user": c.user.username,
-            "content": c.content,
-            "created_at": c.created_at.isoformat(),
-            "parent_id": c.parent_id,
-            "replies": [
-                {
-                    "id": r.id,
-                    "user": r.user.username,
-                    "content": r.content,
-                    "created_at": r.created_at.isoformat(),
-                    "parent_id": r.parent_id,
-                }
-                for r in replies
-            ]
+
+    comment_lookup = {}
+    created_lookup = {}
+    for comment in comments:
+        comment_lookup[comment.id] = {
+            "id": comment.id,
+            "user": comment.user.username,
+            "content": comment.content,
+            "created_at": comment.created_at.isoformat(),
+            "parent_id": comment.parent_id,
+            "replies": [],
         }
-        data.append(comment)
-    return JsonResponse({"data": data})
+        created_lookup[comment.id] = comment.created_at
+
+    roots = []
+    for comment in comments:
+        data = comment_lookup[comment.id]
+        if comment.parent_id:
+            parent = comment_lookup.get(comment.parent_id)
+            if parent is not None:
+                parent["replies"].append(data)
+        else:
+            roots.append((comment.created_at, data))
+
+    # Replies were appended in chronological order; maintain that for nested
+    def sort_replies(node):
+        node["replies"].sort(key=lambda item: created_lookup.get(item["id"]))
+        for child in node["replies"]:
+            sort_replies(child)
+
+    for _, root_data in roots:
+        sort_replies(root_data)
+
+    roots.sort(key=lambda item: item[0], reverse=True)
+    serialized = [item[1] for item in roots]
+    return JsonResponse({"data": serialized})
 
 @login_required
 @require_http_methods(["GET"])
