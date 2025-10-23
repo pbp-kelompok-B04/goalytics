@@ -8,6 +8,12 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-blue-700">Goalytics Football Forum</h1>
         <div class="flex items-center gap-3">
+            {% if request.user.is_authenticated and request.user.profile and request.user.profile.role == 'admin' %}
+            <a href="{% url 'admin:forum_post_changelist' %}"
+               class="px-4 py-2.5 rounded-full border border-blue-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors duration-200 shadow">
+                Manage Forum
+            </a>
+            {% endif %}
             <button type="button" id="my-posts-toggle" aria-pressed="false" class="px-4 py-2.5 rounded-full border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200 shadow">
                 My Posts
             </button>

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import Post, Comment, LEAGUE_CHOICES
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
