@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .models import Player, Club
@@ -219,42 +219,4 @@ def get_all_club(request):
 @login_required
 @require_http_methods(["POST"])
 def club_create(request):
-    name = (request.POST.get("name") or "").strip()
-    if not name:
-        return JsonResponse({"error": "'name' is required"}, status=400)
-    if Club.objects.filter(name__iexact=name).exists():
-        return JsonResponse({"error": "Club with this name already exists"}, status=400)
-    def to_int(val, default=0):
-        if val is None or val == "":
-            return default
-        try:
-            return int(val)
-        except ValueError:
-            return default
-    def to_float(val, default=0.0):
-        if val is None or val == "":
-            return default
-        try:
-            return float(val)
-        except ValueError:
-            return default
-    club = Club.objects.create(
-        league=(request.POST.get("league") or None) or Club._meta.get_field("league").default,
-        season=(request.POST.get("season") or None) or Club._meta.get_field("season").default,
-        name=name,
-        total_goal=to_int(request.POST.get("total_goal"), 0),
-        total_assist=to_int(request.POST.get("total_assist"), 0),
-        expected_xg=to_float(request.POST.get("expected_xg"), 0.0),
-        expected_xag=to_float(request.POST.get("expected_xag"), 0.0),
-    )
-    data = {
-        "id": club.id,
-        "name": club.name,
-        "league": club.league,
-        "season": club.season,
-        "total_goal": club.total_goal,
-        "total_assist": club.total_assist,
-        "expected_xg": club.expected_xg,
-        "expected_xag": club.expected_xag,
-    }
-    return JsonResponse({"message": "Club created successfully", "data": data}, status=201)
+    None
