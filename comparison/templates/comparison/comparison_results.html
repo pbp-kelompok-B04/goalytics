@@ -1,0 +1,161 @@
+<div class="grid md:grid-cols-2 gap-8">
+  <!-- Player 1 -->
+  <div class="bg-white p-6 rounded-xl shadow-md">
+    <h2 class="text-2xl font-bold text-blue-800 mb-2">{{ player1.name }}</h2>
+    {% if player1.club %}
+      <p class="text-gray-600 mb-2">Club: {{ player1.club.name }}</p>
+    {% else %}
+      <p class="text-gray-600 mb-2">Club: -</p>
+    {% endif %}
+    <p class="text-gray-600 mb-2">Position: {{ player1.position|default:"-" }}</p>
+    {% if player1.age %}
+      <p class="text-gray-600 mb-2">Age: {{ player1.age }}</p>
+    {% endif %}
+
+    <div class="mt-4 space-y-3">
+      <!-- Basic Stats -->
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Goals: {{ player1.goals|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-blue-600 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player1.goals|default:0 max_goals 100 %}%"></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Assists: {{ player1.assists|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-green-600 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player1.assists|default:0 max_assists 100 %}%"></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Expected Goals (xG): {{ player1.xg|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-purple-600 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player1.xg|default:0 max_xg 100 %}%"></div>
+        </div>
+      </div>
+
+      <!-- Passing Stats -->
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Pass Accuracy: {{ player1.pass_accuracy|default:0 }}%</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-yellow-500 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player1.pass_accuracy|default:0 max_pass_accuracy 100 %}%"></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Progressive Passes: {{ player1.Progressive_Passes|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-orange-500 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player1.Progressive_Passes|default:0 max_progressive_passes 100 %}%"></div>
+        </div>
+      </div>
+
+      <!-- Defensive Stats -->
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Tackles: {{ player1.tackles|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-red-500 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player1.tackles|default:0 max_tackles 100 %}%"></div>
+        </div>
+      </div>
+
+      <!-- Additional stats bisa ditambahkan sesuai kebutuhan -->
+      {% if player1.saves %}
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Saves: {{ player1.saves|default:0 }}</p>
+      </div>
+      {% endif %}
+
+      {% if player1.clean_sheets %}
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Clean Sheets: {{ player1.clean_sheets|default:0 }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Player 2 -->
+  <div class="bg-white p-6 rounded-xl shadow-md">
+    <h2 class="text-2xl font-bold text-blue-800 mb-2">{{ player2.name }}</h2>
+    {% if player2.club %}
+      <p class="text-gray-600 mb-2">Club: {{ player2.club.name }}</p>
+    {% else %}
+      <p class="text-gray-600 mb-2">Club: -</p>
+    {% endif %}
+    <p class="text-gray-600 mb-2">Position: {{ player2.position|default:"-" }}</p>
+    {% if player2.age %}
+      <p class="text-gray-600 mb-2">Age: {{ player2.age }}</p>
+    {% endif %}
+
+    <div class="mt-4 space-y-3">
+      <!-- Basic Stats -->
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Goals: {{ player2.goals|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-blue-600 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player2.goals|default:0 max_goals 100 %}%"></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Assists: {{ player2.assists|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-green-600 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player2.assists|default:0 max_assists 100 %}%"></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Expected Goals (xG): {{ player2.xg|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-purple-600 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player2.xg|default:0 max_xg 100 %}%"></div>
+        </div>
+      </div>
+
+      <!-- Passing Stats -->
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Pass Accuracy: {{ player2.pass_accuracy|default:0 }}%</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-yellow-500 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player2.pass_accuracy|default:0 max_pass_accuracy 100 %}%"></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Progressive Passes: {{ player2.Progressive_Passes|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-orange-500 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player2.Progressive_Passes|default:0 max_progressive_passes 100 %}%"></div>
+        </div>
+      </div>
+
+      <!-- Defensive Stats -->
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Tackles: {{ player2.tackles|default:0 }}</p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="bg-red-500 h-4 rounded-full progress-bar" 
+               style="width: {% widthratio player2.tackles|default:0 max_tackles 100 %}%"></div>
+        </div>
+      </div>
+
+      <!-- Additional stats -->
+      {% if player2.saves %}
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Saves: {{ player2.saves|default:0 }}</p>
+      </div>
+      {% endif %}
+
+      {% if player2.clean_sheets %}
+      <div>
+        <p class="font-semibold text-sm text-gray-700">Clean Sheets: {{ player2.clean_sheets|default:0 }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

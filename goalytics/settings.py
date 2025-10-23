@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'PlayerClub_Data.apps.PlayerclubDataConfig',
+    'comparison',
     'users.apps.UsersConfig',
     'favorite_player.apps.FavoritePlayerConfig',
 ]
