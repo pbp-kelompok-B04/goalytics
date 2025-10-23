@@ -99,7 +99,7 @@
 </style>
 
 <script>
-    const postId = {{ post_id }};
+    const postId = "{{ post_id }}";
     const postUrl = "{% url 'get_post_by_id' post_id %}";
     const commentsUrl = "{% url 'get_post_comment' post_id %}";
     const createCommentUrl = "{% url 'create_comment' post_id %}";

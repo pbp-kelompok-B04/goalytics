@@ -162,7 +162,7 @@
 </style>
 
 <script>
-    const isAuthenticated = {{ request.user.is_authenticated|yesno:"true,false" }};
+    const isAuthenticated = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
     let currentLeague = '';
     let currentSort = 'newest';
     let showMyPostsOnly = false;
