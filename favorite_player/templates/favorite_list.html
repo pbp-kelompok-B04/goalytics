@@ -2,47 +2,206 @@
 {% block title %}Favorite Players{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-6 py-10">
-    <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center flex items-center justify-center gap-2">
-        ⭐ My Favorite Players
+<div class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+  <div class="text-center space-y-2">
+    <h2 class="text-3xl font-bold text-blue-900 flex items-center justify-center gap-2">
+      My Favorite Players
     </h2>
+    <p class="text-gray-500">
+      Manage your favorite list and discover new players without leaving this page.
+    </p>
+  </div>
+
+  <section class="bg-white shadow-md rounded-2xl p-6 border border-gray-100 space-y-6">
+    <div class="flex items-center justify-between gap-4">
+      <h3 class="text-xl font-semibold text-blue-900">Saved Favorites</h3>
+      <span class="text-sm text-gray-500">{{ favorites|length }} players</span>
+    </div>
 
     {% if favorites %}
-        <ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for favorite in favorites %}
-                <li class="bg-white shadow-md rounded-2xl p-6 border border-gray-100 hover:shadow-blue-200 transition-all duration-300 hover:-translate-y-1">
-                    <div class="flex flex-col items-center text-center">
-                        <div class="w-20 h-20 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full text-2xl font-semibold mb-3 shadow-inner">
-                            {{ favorite.player.name|slice:":2" }}
-                        </div>
-                        <p class="font-semibold text-lg text-gray-800">
-                            {{ favorite.player.name }}
-                        </p>
-                        <p class="text-sm text-gray-500 mt-1">
-                            {{ favorite.player.team }}
-                        </p>
-                    </div>
-                    <a
-                        href="{% url 'favorite_player:remove_favorite' favorite.player.id %}"
-                        class="mt-5 inline-block bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 hover:scale-[1.02] transition-all duration-200"
-                    >
-                        Remove
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
+      <ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for favorite in favorites %}
+          <li class="bg-blue-50/60 border border-blue-100 rounded-xl p-5 flex flex-col gap-4 shadow-sm hover:shadow-lg transition">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold">
+                {{ favorite.player.name|slice:":2" }}
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900">{{ favorite.player.name }}</p>
+                <p class="text-sm text-gray-500">{{ favorite.player.club.name|default:"Free Agent" }}</p>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">
+                  {{ favorite.player.get_position_display|default:favorite.player.position|default:"-" }}
+                </p>
+              </div>
+            </div>
+            <form method="post" action="{% url 'favorite_player:remove_favorite' favorite.player.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                      class="w-full bg-red-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition">
+                Remove
+              </button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
     {% else %}
-        <div class="bg-white shadow-md rounded-2xl p-10 text-center border border-gray-100">
-            <p class="text-gray-600 text-lg mb-4">
-                You don't have any favorite players yet.
-            </p>
-            <a
-                href="{% url 'PlayerClub_Data:player_list' %}"
-                class="inline-block mt-2 bg-blue-900 text-white font-semibold px-6 py-2 rounded-full shadow hover:bg-blue-800 hover:scale-[1.03] transition-all duration-300"
-            >
-                Browse Players
-            </a>
-        </div>
+      <div class="text-center text-gray-600 py-10 border border-dashed border-blue-200 rounded-xl" data-empty-state>
+        You don't have any favorite players yet. Browse players below to start building your list.
+      </div>
     {% endif %}
+  </section>
+
+  <section class="bg-white shadow-md rounded-2xl p-6 border border-gray-100 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-semibold text-blue-900">Browse Players</h3>
+        <p class="text-sm text-gray-500">Search and add players directly to your favorites.</p>
+      </div>
+      <form method="get" class="w-full sm:w-auto flex items-center gap-3" data-player-search-form>
+        <input
+          type="text"
+          name="q"
+          placeholder="Search player..."
+          value="{{ search_query }}"
+          class="w-full sm:w-64 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          autocomplete="off"
+          data-player-search-input
+        />
+        <button
+          type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
+        >
+          Search
+        </button>
+      </form>
+    </div>
+
+    <div id="player-results" data-player-results>
+      {% include 'partials/player_results.html' with players=players favorite_ids=favorite_ids limited=players_limited %}
+    </div>
+  </section>
 </div>
+
+<script>
+(function () {
+  const searchForm = document.querySelector('[data-player-search-form]');
+  const searchInput = searchForm?.querySelector('[data-player-search-input]');
+  const resultsContainer = document.querySelector('[data-player-results]');
+  let searchDebounce;
+  let activeController;
+
+  function getCSRFToken() {
+    const name = 'csrftoken=';
+    return document.cookie
+      .split(';')
+      .map(c => c.trim())
+      .find(c => c.startsWith(name))
+      ?.slice(name.length) || '';
+  }
+
+  function attachFavoriteFormHandlers(root = document) {
+    const forms = root.querySelectorAll('[data-favorite-form]');
+    forms.forEach(form => {
+      if (form.dataset.bound === 'true') return;
+      form.dataset.bound = 'true';
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const button = form.querySelector('button[type="submit"]');
+        if (!button || button.disabled) return;
+        const url = form.getAttribute('action');
+        const formData = new FormData(form);
+        const csrfToken = formData.get('csrfmiddlewaretoken') || getCSRFToken();
+
+        button.disabled = true;
+        button.textContent = 'Adding...';
+        button.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+        button.classList.add('bg-blue-400', 'cursor-wait');
+
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrfToken,
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to add favorite');
+          }
+
+          button.textContent = 'Added';
+          button.classList.remove('bg-blue-400', 'cursor-wait');
+          button.classList.add('bg-green-500', 'opacity-80');
+
+          setTimeout(() => window.location.reload(), 400);
+        } catch (error) {
+          console.error(error);
+          button.disabled = false;
+          button.textContent = 'Add to Favorites';
+          button.classList.remove('bg-blue-400', 'cursor-wait');
+          button.classList.add('bg-blue-600', 'hover:bg-blue-500');
+          alert('Failed to add favorite. Please try again.');
+        }
+      });
+    });
+  }
+
+  async function performSearch(query) {
+    if (!searchForm || !resultsContainer) return;
+    if (activeController) {
+      activeController.abort();
+    }
+    activeController = new AbortController();
+
+    const url = new URL(searchForm.getAttribute('action') || window.location.href, window.location.origin);
+    if (query) {
+      url.searchParams.set('q', query);
+    } else {
+      url.searchParams.delete('q');
+    }
+
+    resultsContainer.setAttribute('aria-busy', 'true');
+    resultsContainer.classList.add('opacity-60');
+
+    try {
+      const response = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: activeController.signal,
+      });
+      if (!response.ok) {
+        throw new Error('Search request failed');
+      }
+      const data = await response.json();
+      resultsContainer.innerHTML = data.html;
+      attachFavoriteFormHandlers(resultsContainer);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error(error);
+      }
+    } finally {
+      resultsContainer.removeAttribute('aria-busy');
+      resultsContainer.classList.remove('opacity-60');
+    }
+  }
+
+  if (searchInput && searchForm && resultsContainer) {
+    attachFavoriteFormHandlers();
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => performSearch(query), 300);
+    });
+
+    searchForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const query = searchInput.value.trim();
+      performSearch(query);
+    });
+  } else {
+    attachFavoriteFormHandlers();
+  }
+})();
+</script>
 {% endblock %}
