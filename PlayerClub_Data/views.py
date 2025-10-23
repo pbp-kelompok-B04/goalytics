@@ -204,10 +204,27 @@ def get_all_club(request):
     clubs = Club.objects.all()
     data = []
     for c in clubs:
+        country = None
+        if c.league:
+            prefix = c.league.split('-', 1)[0].strip().upper()
+            country_map = {
+                'GER': 'GERMAN',
+                'ENG': 'ENGLAND',
+                'ESP': 'SPAIN',
+                'ITA': 'ITALY',
+                'FRA': 'FRANCE',
+                'NED': 'NETHERLANDS',
+                'POR': 'PORTUGAL',
+                'TUR': 'TURKIYE',
+                'BEL': 'BELGIUM',
+                'SCO': 'SCOTLAND',
+            }
+            country = country_map.get(prefix, None)
         item = {
             "id": c.id,
             "name": c.name,
             "league": c.league,
+            "country": country,
             "season": c.season,
             "total_goal": c.total_goal,
             "total_assist": c.total_assist,

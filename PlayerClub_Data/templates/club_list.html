@@ -32,11 +32,12 @@
           <th class="p-3">League</th>
           <th class="p-3">Country</th>
           <th class="p-3">Code</th>
+          {% if is_admin %}<th class="p-3">Actions</th>{% endif %}
         </tr>
       </thead>
       <tbody id="club-rows">
         <tr>
-          <td colspan="4" class="text-center py-5 text-gray-500">Loading clubs…</td>
+          <td colspan="5" class="text-center py-5 text-gray-500">Loading clubs…</td>
         </tr>
       </tbody>
     </table>
@@ -46,30 +47,42 @@
   (function() {
     const rowsEl = document.getElementById('club-rows');
     const url = "{% url 'PlayerClub_Data:get_all_club' %}";
+    const IS_ADMIN = {{ is_admin|yesno:"true,false" }};
+    const editTpl = "{% url 'PlayerClub_Data:club_update' 0 %}";
+    const delTpl = "{% url 'PlayerClub_Data:club_delete' 0 %}";
+    const makeUrl = (tpl, id) => tpl.replace(/\/0\//, `/${id}/`);
 
     fetch(url, { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : Promise.reject(r))
       .then(payload => {
         const data = (payload && payload.data) || [];
         if (!Array.isArray(data) || data.length === 0) {
-          rowsEl.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-gray-500">No clubs found.</td></tr>';
+          rowsEl.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-gray-500">No clubs found.</td></tr>';
           return;
         }
         const html = data.map(c => {
           const safe = (v) => (v === null || v === undefined || v === '' ? '-' : String(v));
-          return `<tr class=\"border-b hover:bg-gray-50 transition\">`
+          let row = `<tr class=\"border-b hover:bg-gray-50 transition\">`
                + `<td class=\"p-3 font-medium text-gray-800\">${safe(c.name)}</td>`
                + `<td class=\"p-3\">${safe(c.league)}</td>`
                + `<td class=\"p-3\">${safe(c.country)}</td>`
-               + `<td class=\"p-3\">${safe(c.code)}</td>`
-               + `</tr>`;
+               + `<td class=\"p-3\">${safe(c.code)}</td>`;
+          if (IS_ADMIN) {
+            const editUrl = makeUrl(editTpl, c.id);
+            const delUrl = makeUrl(delTpl, c.id);
+            row += `<td class=\"p-3 flex gap-2\">`
+                + `<a href=\"${editUrl}\" class=\"bg-yellow-400 hover:bg-yellow-300 text-white px-3 py-1 rounded-md text-sm\">✏️</a>`
+                + `<a href=\"${delUrl}\" class=\"bg-red-500 hover:bg-red-400 text-white px-3 py-1 rounded-md text-sm\">🗑️</a>`
+                + `</td>`;
+          }
+          row += `</tr>`;
+          return row;
         }).join('');
         rowsEl.innerHTML = html;
       })
       .catch(() => {
-        rowsEl.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-red-600">Failed to load clubs.</td></tr>';
+        rowsEl.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-red-600">Failed to load clubs.</td></tr>';
       });
   })();
   </script>
 {% endblock %}
-
