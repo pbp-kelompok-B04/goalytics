@@ -41,6 +41,7 @@ for p in players:
             "position": p.get("position"),
             "age": p.get("age"),
             "born": p.get("born"),
+            "image_url": p.get("image_url"),
             "goals": p.get("goals", 0),
             "assists": p.get("assists", 0),
             "xg": p.get("xg", 0),
