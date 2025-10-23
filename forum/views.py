@@ -167,6 +167,7 @@ def get_post_by_id(request, post_id):
 @require_http_methods(["GET"])
 def get_post_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+    user = request.user if request.user.is_authenticated else None
     # Pull every comment for this post once to avoid recursive queries
     comments = (
         post.comments
@@ -184,6 +185,7 @@ def get_post_comment(request, post_id):
             "created_at": comment.created_at.isoformat(),
             "parent_id": comment.parent_id,
             "replies": [],
+            "is_owner": bool(user and comment.user_id == user.id),
             "avatar": _avatar_for_user(comment.user),
         }
         created_lookup[comment.id] = comment.created_at
@@ -291,6 +293,7 @@ def create_comment(request, post_id):
         "content": c.content,
         "created_at": c.created_at.isoformat(),
         "parent_id": c.parent_id,
+        "is_owner": True,
         "avatar": _avatar_for_user(c.user),
     }
     return JsonResponse({"data": data}, status=201)
@@ -379,8 +382,8 @@ def update_post(request, post_id):
 
 
 @login_required
-@require_http_methods(["PATCH"])
-def update_comment(request):
+@require_http_methods(["POST"])
+def update_comment(request, comment_id):
     try:
         data = json.loads(request.body.decode('utf-8'))
         post_id = data['post_id']
@@ -388,6 +391,8 @@ def update_comment(request):
         new_content = data['content'].strip()
     except (json.JSONDecodeError, AttributeError, KeyError):
         return JsonResponse({'error': 'JSON tidak valid'}, status=400)
+    if data.get('_method') != 'PATCH':
+        return JsonResponse({'error': 'Method override required'}, status=405)
     if not new_content:
         return JsonResponse({'error': 'Isi komentar tidak boleh kosong'}, status=400)
     post = get_object_or_404(Post, id=post_id)
@@ -424,12 +429,14 @@ def delete_post(request, post_id):
     }, status=200)
 
 @login_required
-@require_http_methods(["DELETE"])
-def delete_comment(request):
+@require_http_methods(["POST"])
+def delete_comment(request, comment_id):
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return JsonResponse({'error': 'invalid JSON'}, status=400)
+    if payload.get('_method') != 'DELETE':
+        return JsonResponse({'error': 'Method override required'}, status=405)
     post_id = payload.get('post_id')
     comment_id = payload.get('comment_id')
     if not post_id:
