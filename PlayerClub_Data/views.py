@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .models import Player, Club
+from favorite_player.models import FavoritePlayer 
 from .forms import PlayerForm, ClubForm
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
@@ -107,7 +108,14 @@ def club_delete(request, pk):
 @login_required
 @require_http_methods(["GET"])
 def get_all_player(request):
-    players = (Player.objects.select_related("club").all())
+    players = Player.objects.select_related("club").all()
+
+    # Ambil semua player_id favorit user saat ini
+    favorite_ids = set(
+        FavoritePlayer.objects.filter(user=request.user)
+        .values_list("player_id", flat=True)
+    )
+
     data = []
     for p in players:
         item = {
@@ -139,10 +147,13 @@ def get_all_player(request):
             "save_percentage": p.save_percentage,
             "clean_sheets": p.clean_sheets,
             "clean_sheet_percentage": p.clean_sheet_percentage,
+            # ✅ Tandai apakah player ini sudah jadi favorit
+            "is_favorite": p.id in favorite_ids,
         }
         data.append(item)
 
     return JsonResponse({"data": data})
+
 
 
 @login_required

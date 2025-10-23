@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'PlayerClub_Data.apps.PlayerclubDataConfig',
+    'comparison',
+    'users.apps.UsersConfig',
+    'favorite_player.apps.FavoritePlayerConfig',
     'users',
     'PlayerClub_Data',
     'forum'

@@ -14,7 +14,7 @@
   <!-- Feature Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
     <!-- Favorite Players -->
-    <a href="#"
+    <a href="{% url 'favorite_player:favorite_list' %}"
       class="group flex items-start gap-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
       <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
         ⚽
@@ -56,7 +56,7 @@
     </a>
 
     <!-- Player Comparison -->
-    <a href="#"
+    <a href="{% url 'comparison' %}"
       class="group flex items-start gap-5 bg-gradient-to-br from-pink-500 to-rose-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
       <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
         ⚔️
