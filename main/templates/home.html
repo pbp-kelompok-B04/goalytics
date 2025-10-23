@@ -31,7 +31,7 @@
     <h3 class="text-xl font-bold text-blue-800 mb-3">Discussion Forum</h3>
     <p class="text-gray-600">Join passionate fans and discuss matches in real-time.</p>
   </div>
-  <a href="{% if user.is_authenticated %}{% url 'comparison:comparison' %}{% else %}{% url 'users:login' %}{% endif %}"
+  <a href="{% if user.is_authenticated %}{% url 'comparison' %}{% else %}{% url 'users:login' %}{% endif %}"
     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
     <h3 class="text-xl font-bold text-blue-800 mb-3">Player Comparison</h3>
     <p class="text-gray-600">Compare player stats and performance side by side.</p>
