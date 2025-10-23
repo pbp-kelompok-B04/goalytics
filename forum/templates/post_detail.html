@@ -6,7 +6,7 @@
 <main class="max-w-4xl mx-auto px-4 py-6">
     <!-- Back Button -->
     <div class="mb-6">
-        <button onclick="window.location.href='{% url 'forum_home' %}'" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+        <button onclick="window.location.href='{% url 'forum_home' %}'" class="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -15,25 +15,25 @@
     </div>
 
     <!-- Post Content -->
-    <div id="post-detail" class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+    <div id="post-detail" class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
         <!-- Post will be loaded here -->
         <div class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <p class="mt-4 text-gray-400">Loading post...</p>
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-gray-500">Loading post...</p>
         </div>
     </div>
 
     <!-- Comments Section -->
-    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
         <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-white">Comments</h2>
-            <span id="comment-count" class="text-sm text-gray-400"></span>
+            <h2 class="text-xl font-bold text-gray-800">Comments</h2>
+            <span id="comment-count" class="text-sm text-gray-500"></span>
         </div>
 
         <!-- Comment Form -->
-        <form id="commentForm" class="mb-6 pb-6 border-b border-gray-700">
-            <textarea id="commentContent" rows="3" placeholder="Share your thoughts..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-3"></textarea>
-            <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300">
+        <form id="commentForm" class="mb-6 pb-6 border-b border-gray-200">
+            <textarea id="commentContent" rows="3" placeholder="Share your thoughts..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-3"></textarea>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 shadow">
                 Add Comment
             </button>
         </form>
@@ -46,11 +46,11 @@
 </main>
 
 <!-- Reply Modal -->
-<div id="replyModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-800 rounded-xl max-w-2xl w-full border-2 border-gray-700 shadow-2xl">
-        <div class="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-blue-400">Reply to Comment</h2>
-            <button onclick="closeReplyModal()" class="text-gray-400 hover:text-white transition-colors">
+<div id="replyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full border border-gray-200 shadow-lg">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-blue-700">Reply to Comment</h2>
+            <button onclick="closeReplyModal()" class="text-gray-400 hover:text-gray-700 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -59,14 +59,14 @@
         <form id="replyForm" class="p-6 space-y-4">
             <input type="hidden" id="replyParentId">
             <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Your Reply</label>
-                <textarea id="replyContent" rows="4" placeholder="Write your reply..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Your Reply</label>
+                <textarea id="replyContent" rows="4" placeholder="Write your reply..." class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
             </div>
             <div class="flex gap-3">
-                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow">
                     Reply
                 </button>
-                <button type="button" onclick="closeReplyModal()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold rounded-lg transition-colors">
+                <button type="button" onclick="closeReplyModal()" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors">
                     Cancel
                 </button>
             </div>
@@ -182,7 +182,7 @@
             console.error('Error loading post:', error);
             document.getElementById('post-detail').innerHTML = `
                 <div class="text-center py-12">
-                    <p class="text-red-400">Error loading post. Please try again.</p>
+                    <p class="text-red-500">Error loading post. Please try again.</p>
                 </div>
             `;
         }
@@ -203,17 +203,17 @@
 
         document.getElementById('post-detail').innerHTML = `
             <div class="flex items-start gap-4">
-                <img src="${resolveAvatar(post.author, post.avatar)}" alt="${post.author}" class="flex-shrink-0 w-12 h-12 rounded-full object-cover border border-blue-500/40" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
+                <img src="${resolveAvatar(post.author, post.avatar)}" alt="${post.author}" class="flex-shrink-0 w-12 h-12 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-3">
-                        <span class="font-semibold text-gray-200">${post.author}</span>
-                        <span class="text-gray-500">•</span>
-                        <span class="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">${leagueLabel}</span>
-                        <span class="text-gray-500">•</span>
-                        <span class="text-sm text-gray-400">${timeAgo}</span>
+                        <span class="font-semibold text-gray-900">${post.author}</span>
+                        <span class="text-gray-400">&middot;</span>
+                        <span class="text-xs px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full">${leagueLabel}</span>
+                        <span class="text-gray-400">&middot;</span>
+                        <span class="text-sm text-gray-500">${timeAgo}</span>
                     </div>
-                    <h1 class="text-2xl font-bold text-white mb-4">${escapeHtml(post.title)}</h1>
-                    <p class="text-gray-300 text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(post.content)}</p>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-4">${escapeHtml(post.title)}</h1>
+                    <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(post.content)}</p>
                 </div>
             </div>
         `;
@@ -235,7 +235,7 @@
             console.error('Error loading comments:', error);
             document.getElementById('comments-list').innerHTML = `
                 <div class="text-center py-8">
-                    <p class="text-red-400">Error loading comments.</p>
+                    <p class="text-red-500">Error loading comments.</p>
                 </div>
             `;
         }
@@ -245,7 +245,7 @@
     function renderComment(comment, depth = 0) {
         const date = new Date(comment.created_at);
         const timeAgo = getTimeAgo(date);
-        const indentClass = depth > 0 ? 'ml-8 border-l border-gray-700/60 pl-6' : '';
+        const indentClass = depth > 0 ? 'ml-8 border-l border-gray-200 pl-6' : '';
         const hasReplies = Array.isArray(comment.replies) && comment.replies.length > 0;
 
         const childHtml = hasReplies
@@ -254,7 +254,7 @@
                     <button type="button"
                             id="toggle-btn-${comment.id}"
                             onclick="toggleReplies(${comment.id})"
-                            class="text-xs uppercase tracking-wide text-blue-300 hover:text-blue-100 font-semibold">
+                            class="text-xs uppercase tracking-wide text-blue-600 hover:text-blue-500 font-semibold">
                         Hide replies (${comment.replies.length})
                     </button>
                 </div>
@@ -265,18 +265,18 @@
             : '';
 
         return `
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-5 ${indentClass}">
+            <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm ${indentClass}">
                 <div class="flex items-start gap-3">
-                    <img src="${resolveAvatar(comment.user, comment.avatar)}" alt="${comment.user}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-blue-500/40" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user || 'User')}';">
+                    <img src="${resolveAvatar(comment.user, comment.avatar)}" alt="${comment.user}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user || 'User')}';">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="font-semibold text-gray-200">${comment.user}</span>
-                            <span class="text-gray-500">&middot;</span>
-                            <span class="text-sm text-gray-400">${timeAgo}</span>
+                            <span class="font-semibold text-gray-900">${comment.user}</span>
+                            <span class="text-gray-400">&middot;</span>
+                            <span class="text-sm text-gray-500">${timeAgo}</span>
                         </div>
-                        <p class="text-gray-300 mb-3 whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
-                        <div class="flex items-center gap-4 text-sm">
-                            <button type="button" onclick="openReplyModal(${comment.id})" class="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-1">
+                        <p class="text-gray-700 mb-3 whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
+                        <div class="flex items-center gap-4 text-sm text-gray-500">
+                            <button type="button" onclick="openReplyModal(${comment.id})" class="text-blue-600 hover:text-blue-500 font-medium inline-flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
                                 </svg>
@@ -296,7 +296,7 @@
         if (!comments || comments.length === 0) {
             commentsList.innerHTML = `
                 <div class="text-center py-8">
-                    <p class="text-gray-400">No comments yet. Be the first to comment!</p>
+                    <p class="text-gray-500">No comments yet. Be the first to comment!</p>
                 </div>
             `;
             return;
