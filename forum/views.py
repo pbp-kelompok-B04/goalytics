@@ -41,6 +41,7 @@ def get_all_post(request):
             "updated_at": p.updated_at.isoformat(),
             "comment_count": getattr(p, "comment_count", None),
             "league": p.league,
+            "is_author": request.user.is_authenticated and p.author == request.user,
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -318,12 +319,14 @@ def like_comment(request):
     }, status=200)
 
 @login_required
-@require_http_methods(["PATCH"])
-def update_post(request):
+@require_http_methods(["POST"])
+def update_post(request, post_id):
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return JsonResponse({"error": "invalid JSON"}, status=400)
+    if payload.get('_method') != 'PATCH':
+        return JsonResponse({'error': 'Method override required'}, status=405)
 
     post_id = payload.get('post_id')
     if not post_id:
