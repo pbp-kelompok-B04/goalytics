@@ -5,7 +5,17 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from django.views.decorators.http import require_http_methods
+from urllib.parse import quote
 import json
+
+
+def _avatar_for_user(user):
+    profile = getattr(user, "profile", None)
+    avatar = getattr(profile, "profile_picture", None) if profile else None
+    if avatar:
+        return avatar
+    fallback_source = (user.get_full_name() or "").strip() or user.username or "User"
+    return f"https://ui-avatars.com/api/?name={quote(fallback_source)}"
 
 
 def forum_home(request):
@@ -17,7 +27,7 @@ def forum_post_detail(request, post_id):
 # Create your views here.
 @require_http_methods(["GET"])
 def get_all_post(request):
-    qs = Post.objects.all()
+    qs = Post.objects.select_related("author", "author__profile")
     league = request.GET.get("league")
     if league:
         valid_codes = {code for code, _ in LEAGUE_CHOICES}
@@ -42,6 +52,7 @@ def get_all_post(request):
             "comment_count": getattr(p, "comment_count", None),
             "league": p.league,
             "is_author": request.user.is_authenticated and p.author == request.user,
+            "avatar": _avatar_for_user(p.author),
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -135,7 +146,10 @@ def comment_likes(request, comment_id):
 
 @require_http_methods(["GET"])
 def get_post_by_id(request, post_id):
-    post = get_object_or_404(Post.objects.annotate(comment_count=Count("comments")),id=post_id)
+    post = get_object_or_404(
+        Post.objects.select_related("author", "author__profile").annotate(comment_count=Count("comments")),
+        id=post_id,
+    )
     data = {
         'id': post.id,
         'author': post.author.username,
@@ -145,6 +159,8 @@ def get_post_by_id(request, post_id):
         "updated_at": post.updated_at.isoformat(),
         "comment_count": getattr(post, "comment_count", None),
         "league": post.league,
+        "avatar": _avatar_for_user(post.author),
+        "is_author": request.user.is_authenticated and post.author == request.user,
     }
     return JsonResponse({"data": data})
 
@@ -154,7 +170,7 @@ def get_post_comment(request, post_id):
     # Pull every comment for this post once to avoid recursive queries
     comments = (
         post.comments
-        .select_related("user")
+        .select_related("user", "user__profile")
         .order_by("created_at")
     )
 
@@ -168,6 +184,7 @@ def get_post_comment(request, post_id):
             "created_at": comment.created_at.isoformat(),
             "parent_id": comment.parent_id,
             "replies": [],
+            "avatar": _avatar_for_user(comment.user),
         }
         created_lookup[comment.id] = comment.created_at
 
@@ -197,7 +214,7 @@ def get_post_comment(request, post_id):
 @login_required
 @require_http_methods(["GET"])
 def get_my_posts(request):
-    qs = Post.objects.filter(author=request.user)
+    qs = Post.objects.select_related("author", "author__profile").filter(author=request.user)
     league = request.GET.get("league")
     if league:
         valid_codes = {code for code, _ in LEAGUE_CHOICES}
@@ -217,6 +234,8 @@ def get_my_posts(request):
             "updated_at": p.updated_at.isoformat(),
             "comment_count": getattr(p, "comment_count", None),
             "league": p.league,
+            "is_author": True,
+            "avatar": _avatar_for_user(p.author),
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -246,6 +265,8 @@ def create_post(request):
         "updated_at": p.updated_at.isoformat(),
         "comment_count": getattr(p, "comment_count", None),
         "league": p.league,
+        "is_author": True,
+        "avatar": _avatar_for_user(p.author),
     }
     return JsonResponse({"data": data}, status=201)
 
@@ -270,6 +291,7 @@ def create_comment(request, post_id):
         "content": c.content,
         "created_at": c.created_at.isoformat(),
         "parent_id": c.parent_id,
+        "avatar": _avatar_for_user(c.user),
     }
     return JsonResponse({"data": data}, status=201)
 
@@ -382,12 +404,14 @@ def update_comment(request):
     })
 
 @login_required
-@require_http_methods(["DELETE"])
-def delete_post(request):
+@require_http_methods(["POST"])
+def delete_post(request, post_id):
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return JsonResponse({'error': 'invalid JSON'}, status=400)
+    if payload.get('_method') != 'DELETE':
+        return JsonResponse({'error': 'Method override required'}, status=405)
     post_id = payload.get('post_id')
     if not post_id:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)

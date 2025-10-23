@@ -104,6 +104,14 @@
     const commentsUrl = "{% url 'get_post_comment' post_id %}";
     const createCommentUrl = "{% url 'create_comment' post_id %}";
 
+    function resolveAvatar(name, provided) {
+        if (provided) {
+            return provided;
+        }
+        const fallbackName = (name || 'User').trim() || 'User';
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}`;
+    }
+
     // Get CSRF token
     function getCookie(name) {
         let cookieValue = null;
@@ -195,9 +203,7 @@
 
         document.getElementById('post-detail').innerHTML = `
             <div class="flex items-start gap-4">
-                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-white text-lg">
-                    ${post.author.charAt(0).toUpperCase()}
-                </div>
+                <img src="${resolveAvatar(post.author, post.avatar)}" alt="${post.author}" class="flex-shrink-0 w-12 h-12 rounded-full object-cover border border-blue-500/40" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="font-semibold text-gray-200">${post.author}</span>
@@ -261,9 +267,7 @@
         return `
             <div class="bg-gray-800 border border-gray-700 rounded-lg p-5 ${indentClass}">
                 <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-white">
-                        ${comment.user.charAt(0).toUpperCase()}
-                    </div>
+                    <img src="${resolveAvatar(comment.user, comment.avatar)}" alt="${comment.user}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-blue-500/40" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user || 'User')}';">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
                             <span class="font-semibold text-gray-200">${comment.user}</span>
