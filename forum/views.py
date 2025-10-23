@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Post, Comment
+from .models import Post, Comment, LEAGUE_CHOICES
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
@@ -15,7 +15,13 @@ def forum_home(request):
 # Create your views here.
 @require_http_methods(["GET"])
 def get_all_post(request):
-    all_post = Post.objects.all().order_by("-created_at").annotate(comment_count=Count("comments"))
+    qs = Post.objects.all()
+    league = request.GET.get("league")
+    if league:
+        valid_codes = {code for code, _ in LEAGUE_CHOICES}
+        if league in valid_codes:
+            qs = qs.filter(league=league)
+    all_post = qs.order_by("-created_at").annotate(comment_count=Count("comments"))
     data = []
     for p in all_post:
         post = {
@@ -25,7 +31,8 @@ def get_all_post(request):
             'content': p.content,
             "created_at": p.created_at.isoformat(),
             "updated_at": p.updated_at.isoformat(),
-            "comment_count": getattr(p, "comment_count", None)
+            "comment_count": getattr(p, "comment_count", None),
+            "league": p.league,
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -49,10 +56,8 @@ def post_detail(request, post_id):
     payload = payload or {}
     payload["post_id"] = post_id
     request._body = json.dumps(payload).encode("utf-8")
-
     if request.method == "PATCH":
         return update_post(request)
-    # DELETE
     return delete_post(request)
 
 
@@ -129,7 +134,8 @@ def get_post_by_id(request, post_id):
         'content': post.content,
         "created_at": post.created_at.isoformat(),
         "updated_at": post.updated_at.isoformat(),
-        "comment_count": getattr(post, "comment_count", None)
+        "comment_count": getattr(post, "comment_count", None),
+        "league": post.league,
     }
     return JsonResponse({"data": data})
 
@@ -169,7 +175,13 @@ def get_post_comment(request, post_id):
 @login_required
 @require_http_methods(["GET"])
 def get_my_posts(request):
-    all_post = Post.objects.filter(author=request.user).order_by("-created_at").annotate(comment_count=Count("comments"))
+    qs = Post.objects.filter(author=request.user)
+    league = request.GET.get("league")
+    if league:
+        valid_codes = {code for code, _ in LEAGUE_CHOICES}
+        if league in valid_codes:
+            qs = qs.filter(league=league)
+    all_post = qs.order_by("-created_at").annotate(comment_count=Count("comments"))
     data = []
     for p in all_post:
         post = {
@@ -179,7 +191,8 @@ def get_my_posts(request):
             'content': p.content,
             "created_at": p.created_at.isoformat(),
             "updated_at": p.updated_at.isoformat(),
-            "comment_count": getattr(p, "comment_count", None)
+            "comment_count": getattr(p, "comment_count", None),
+            "league": p.league,
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -190,9 +203,16 @@ def create_post(request):
     payload = json.loads(request.body.decode("utf-8"))
     title = payload.get("title", "").strip()
     content = payload.get("content", "").strip()
+    league = (payload.get("league") or "").strip().upper()
     if not title or not content:
         return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
-    p = Post.objects.create(author=request.user, title=title, content=content)
+    valid_codes = {code for code, _ in LEAGUE_CHOICES}
+    kwargs = {"author": request.user, "title": title, "content": content}
+    if league:
+        if league not in valid_codes:
+            return JsonResponse({"error": "league tidak valid"}, status=400)
+        kwargs["league"] = league
+    p = Post.objects.create(**kwargs)
     data = {
         'id': p.id,
         'author': p.author.username,
@@ -200,7 +220,8 @@ def create_post(request):
         'content': p.content,
         "created_at": p.created_at.isoformat(),
         "updated_at": p.updated_at.isoformat(),
-        "comment_count": getattr(p, "comment_count", None)
+        "comment_count": getattr(p, "comment_count", None),
+        "league": p.league,
     }
     return JsonResponse({"data": data}, status=201)
 
@@ -292,12 +313,20 @@ def update_post(request):
         post.title = (payload.get('title') or '').strip()
     if 'content' in payload:
         post.content = (payload.get('content') or '').strip()
+    if 'league' in payload:
+        league = (payload.get('league') or '').strip().upper()
+        if league:
+            valid_codes = {code for code, _ in LEAGUE_CHOICES}
+            if league not in valid_codes:
+                return JsonResponse({"error": "league tidak valid"}, status=400)
+            post.league = league
     post.save()
     return JsonResponse({
         "message": "Post updated successfully",
         "id": post.id,
         "title": post.title,
         "content": post.content,
+        "league": post.league,
     })
 
 

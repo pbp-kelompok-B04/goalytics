@@ -2,6 +2,14 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here.
+LEAGUE_CHOICES = (
+    ("EPL", "Premier League"),
+    ("LALIGA", "La Liga"),
+    ("SERIEA", "Serie A"),
+    ("BUNDES", "Bundesliga"),
+    ("LIGUE1", "Ligue 1"),
+)
+
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=200)
@@ -9,6 +17,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(User, related_name='liked_post')
+    league = models.CharField(max_length=20, choices=LEAGUE_CHOICES, default="EPL")
 
     def __str__(self):
         return self.title

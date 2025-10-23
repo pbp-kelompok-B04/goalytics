@@ -14,7 +14,13 @@ class Club(models.Model):
 
 
 class Player(models.Model):
-    id = models.IntegerField(unique=True)
+    POSITION_CHOICES = [
+        ('GK', 'Goalkeeper'),
+        ('DF', 'Defender'),
+        ('MF', 'Midfielder'),
+        ('FW', 'Forward'),
+    ]
+
     name = models.CharField(max_length=200)
     nation = models.CharField(max_length=50, blank=True, null=True)
     position = models.CharField(max_length=50, blank=True, null=True)
