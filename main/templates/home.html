@@ -19,7 +19,7 @@
 
 <!-- Features -->
   <section class="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-  <a href="{% url 'favorite_player:favorite_list' %}" 
+  <a href="{% if user.is_authenticated %}{% url 'favorite_player:favorite_list' %}{% else %}{% url 'users:login' %}{% endif %}"
     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
     <h3 class="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
       Favorite Players
