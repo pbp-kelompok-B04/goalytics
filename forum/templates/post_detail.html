@@ -155,6 +155,7 @@
     let currentPost = null;
     let editCommentTargetId = null;
     let deleteCommentTargetId = null;
+    const profileTemplate = "{% url 'users:profile' 'USERNAME_PLACEHOLDER' %}";
 
     function resolveAvatar(name, provided) {
         if (provided) {
@@ -162,6 +163,11 @@
         }
         const fallbackName = (name || 'User').trim() || 'User';
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}`;
+    }
+
+    function buildProfileUrl(username) {
+        const safeName = (username || '').trim();
+        return profileTemplate.replace('USERNAME_PLACEHOLDER', encodeURIComponent(safeName || ''));
     }
 
     // Get CSRF token
@@ -454,7 +460,6 @@
         }
     }
 
-    // Load post detail
     async function loadPost() {
         try {
             const response = await fetch(postUrl, { credentials: 'include' });
@@ -476,7 +481,6 @@
         }
     }
 
-    // Display post
     function displayPost(post) {
         const date = new Date(post.created_at);
         const timeAgo = getTimeAgo(date);
@@ -494,12 +498,15 @@
         const likeButtonClass = post.is_liked ? 'text-blue-600' : 'text-gray-500';
         const likeIconClass = post.is_liked ? 'text-blue-600' : 'text-gray-400';
 
+        const profileUrl = buildProfileUrl(post.author);
         document.getElementById('post-detail').innerHTML = `
             <div class="flex items-start gap-4">
-                <img src="${resolveAvatar(post.author, post.avatar)}" alt="${post.author}" class="flex-shrink-0 w-12 h-12 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
+                <a href="${profileUrl}" onclick="event.stopPropagation();" class="flex-shrink-0">
+                    <img src="${resolveAvatar(post.author, post.avatar)}" alt="${post.author}" class="w-12 h-12 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
+                </a>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-3">
-                        <span class="font-semibold text-gray-900">${post.author}</span>
+                        <a href="${profileUrl}" onclick="event.stopPropagation();" class="font-semibold text-gray-900 hover:text-blue-600 transition-colors">${post.author}</a>
                         <span class="text-gray-400">&middot;</span>
                         <span class="text-xs px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full">${leagueLabel}</span>
                         <span class="text-gray-400">&middot;</span>
@@ -562,6 +569,7 @@
         const likeCount = comment.like_count || 0;
         const likeButtonClass = comment.is_liked ? 'text-blue-600' : 'text-gray-500';
         const likeIconClass = comment.is_liked ? 'text-blue-600' : 'text-gray-400';
+        const profileUrl = buildProfileUrl(comment.user);
         commentCache.set(comment.id, {
             content: comment.content,
             like_count: likeCount,
@@ -620,10 +628,12 @@
         return `
             <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm ${indentClass}">
                 <div class="flex items-start gap-3">
-                    <img src="${resolveAvatar(comment.user, comment.avatar)}" alt="${comment.user}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user || 'User')}';">
+                    <a href="${profileUrl}" onclick="event.stopPropagation();" class="flex-shrink-0">
+                        <img src="${resolveAvatar(comment.user, comment.avatar)}" alt="${comment.user}" class="w-10 h-10 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user || 'User')}';">
+                    </a>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="font-semibold text-gray-900">${comment.user}</span>
+                            <a href="${profileUrl}" onclick="event.stopPropagation();" class="font-semibold text-gray-900 hover:text-blue-600 transition-colors">${comment.user}</a>
                             <span class="text-gray-400">&middot;</span>
                             <span class="text-sm text-gray-500">${timeAgo}</span>
                         </div>
@@ -738,7 +748,7 @@
                 showToast('Reply added successfully!');
                 closeReplyModal();
                 loadComments();
-                loadPost(); // Reload post to update comment count
+                loadPost(); 
             } else {
                 showToast(result.error || 'Error adding reply', true);
             }
@@ -752,7 +762,6 @@
         editCommentForm.addEventListener('submit', submitEditComment);
     }
 
-    // Helper functions
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -779,7 +788,6 @@
         return 'just now';
     }
 
-    // Load data on page load
     loadPost();
     loadComments();
 </script>

@@ -192,6 +192,8 @@
     const myPostsToggle = document.getElementById('my-posts-toggle');
     const deleteModal = document.getElementById('deleteConfirmModal');
 
+    const profileTemplate = "{% url 'users:profile' 'USERNAME_PLACEHOLDER' %}";
+
     function resolveAvatar(name, provided) {
         if (provided) {
             return provided;
@@ -200,7 +202,11 @@
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}`;
     }
 
-    // Get CSRF token
+    function buildProfileUrl(username) {
+        const safeName = (username || '').trim();
+        return profileTemplate.replace('USERNAME_PLACEHOLDER', encodeURIComponent(safeName || ''));
+    }
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -284,7 +290,6 @@
         }, 3000);
     }
 
-    // Filter by league
     if (leagueSelect) {
         leagueSelect.addEventListener('change', (event) => {
             currentLeague = event.target.value;
@@ -329,7 +334,6 @@
         });
     }
 
-    // Load posts
     async function loadPosts() {
         const params = new URLSearchParams();
         if (currentLeague) {
@@ -376,7 +380,6 @@
         return `${detailTemplate}${postId}`;
     }
 
-    // Display posts
     function displayPosts(posts) {
         const postsList = document.getElementById('posts-list');
         
@@ -403,6 +406,7 @@
             
             const likeCount = post.like_count || 0;
             const isLiked = !!post.is_liked;
+            const profileUrl = buildProfileUrl(post.author);
             const actionButtons = post.is_author ? `
                 <div class="absolute top-3 right-3 flex gap-2">
                     <button onclick="event.stopPropagation(); openEditModalForPost(${post.id})" 
@@ -426,10 +430,12 @@
                 <div onclick="window.location.href = buildDetailUrl(${post.id})" class="relative bg-white border border-gray-200 rounded-lg p-5 transition-all duration-300 cursor-pointer shadow-sm hover:border-blue-400 hover:shadow-md">
                     ${actionButtons}
                     <div class="flex items-start gap-3">
-                        <img src="${avatarUrl}" alt="${post.author}" class="flex-shrink-0 w-10 h-10 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
+                        <a href="${profileUrl}" onclick="event.stopPropagation();" class="flex-shrink-0">
+                            <img src="${avatarUrl}" alt="${post.author}" class="w-10 h-10 rounded-full object-cover border border-blue-200" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}';">
+                        </a>
                         <div class="flex-1 min-w-0 pr-20">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="font-semibold text-gray-900">${post.author}</span>
+                                <a href="${profileUrl}" onclick="event.stopPropagation();" class="font-semibold text-gray-900 hover:text-blue-600 transition-colors">${post.author}</a>
                                 <span class="text-gray-400">&middot;</span>
                                 <span class="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-100">${leagueNames[post.league]}</span>
                                 <span class="text-gray-400">&middot;</span>
@@ -513,7 +519,6 @@
         }
     }
 
-    // Create post
     document.getElementById('createPostForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -596,7 +601,6 @@
         }
     }
 
-    // Edit post
     document.getElementById('editPostForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -665,7 +669,6 @@
         }
     }
 
-    // Load posts on page load
     loadPosts();
 </script>
 
