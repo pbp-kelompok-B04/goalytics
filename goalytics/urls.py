@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
     path('users/', include('users.urls')),
-    path('comparison/', include('comparison.urls'))
+    path('comparison/', include('comparison.urls')),
+    path('data/', include('PlayerClub_Data.urls')),
 ]

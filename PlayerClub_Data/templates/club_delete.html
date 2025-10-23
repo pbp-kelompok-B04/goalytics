@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Delete Club{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-20 bg-white p-10 rounded-3xl shadow-xl border border-gray-100 text-center">
+
+  <!-- Header -->
+  <h1 class="text-3xl font-extrabold text-red-600 mb-4">Delete Club</h1>
+  <p class="text-gray-700 text-lg mb-8">
+    Are you sure you want to delete the club 
+    <span class="font-semibold text-blue-800">"{{ club.name }}"</span>?
+  </p>
+
+  <!-- Info Box -->
+  <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-8 text-sm">
+    ⚠️ This action <strong>cannot be undone</strong>. Deleting this club may affect linked player data.
+  </div>
+
+  <!-- Form Buttons -->
+  <form method="POST" class="flex justify-center gap-4">
+    {% csrf_token %}
+    <a href="{% url 'PlayerClub_Data:club_list' %}"
+       class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold transition duration-200 shadow-sm hover:shadow-md">
+      Cancel
+    </a>
+    <button type="submit"
+            class="px-6 py-2.5 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-500 shadow-md hover:shadow-lg hover:scale-[1.02] transition duration-200 flex items-center gap-2">
+      🗑️ Delete
+    </button>
+  </form>
+</div>
+
+<!-- Custom Styling -->
+<style>
+  /* Smooth transitions & responsive spacing */
+  body {
+    background-color: #f9fafb;
+  }
+
+  div[role="dialog"] {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+{% endblock %}
