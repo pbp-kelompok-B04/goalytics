@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'main',
     'PlayerClub_Data.apps.PlayerclubDataConfig',
     'users.apps.UsersConfig',
+    'favorite_player.apps.FavoritePlayerConfig',
 ]
 
 MIDDLEWARE = [
