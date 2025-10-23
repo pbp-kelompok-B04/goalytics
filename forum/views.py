@@ -23,7 +23,9 @@ def get_all_post(request):
         valid_codes = {code for code, _ in LEAGUE_CHOICES}
         if league in valid_codes:
             qs = qs.filter(league=league)
-    all_post = qs.order_by("-created_at").annotate(comment_count=Count("comments"))
+    sort = request.GET.get("sort", "newest")
+    order_field = "created_at" if sort == "oldest" else "-created_at"
+    all_post = qs.annotate(comment_count=Count("comments")).order_by(order_field)
     data = []
     for p in all_post:
         post = {
@@ -196,7 +198,9 @@ def get_my_posts(request):
         valid_codes = {code for code, _ in LEAGUE_CHOICES}
         if league in valid_codes:
             qs = qs.filter(league=league)
-    all_post = qs.order_by("-created_at").annotate(comment_count=Count("comments"))
+    sort = request.GET.get("sort", "newest")
+    order_field = "created_at" if sort == "oldest" else "-created_at"
+    all_post = qs.annotate(comment_count=Count("comments")).order_by(order_field)
     data = []
     for p in all_post:
         post = {

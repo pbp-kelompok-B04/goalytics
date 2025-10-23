@@ -13,27 +13,27 @@
         </button>
     </div>
 
-    <!-- Filter Section -->
+    <!-- Filter & Sort Section -->
     <div class="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
-        <div class="flex gap-2 flex-wrap">
-            <button onclick="filterByLeague(this, '')" class="filter-tab active px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
-                All Leagues
-            </button>
-            <button onclick="filterByLeague(this, 'EPL')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
-                Premier League
-            </button>
-            <button onclick="filterByLeague(this, 'LALIGA')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
-                La Liga
-            </button>
-            <button onclick="filterByLeague(this, 'SERIEA')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
-                Serie A
-            </button>
-            <button onclick="filterByLeague(this, 'BUNDES')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
-                Bundesliga
-            </button>
-            <button onclick="filterByLeague(this, 'LIGUE1')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
-                Ligue 1
-            </button>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-2">
+                <label for="league-filter" class="text-sm font-medium text-gray-300">Filter League</label>
+                <select id="league-filter" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Leagues</option>
+                    <option value="EPL">Premier League</option>
+                    <option value="LALIGA">La Liga</option>
+                    <option value="SERIEA">Serie A</option>
+                    <option value="BUNDES">Bundesliga</option>
+                    <option value="LIGUE1">Ligue 1</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label for="sort-order" class="text-sm font-medium text-gray-300">Sort Posts</label>
+                <select id="sort-order" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -98,15 +98,6 @@
 </div>
 
 <style>
-    .filter-tab {
-        @apply bg-gray-700 text-gray-300 border border-gray-600;
-    }
-    .filter-tab:hover {
-        @apply bg-gray-600 text-blue-400;
-    }
-    .filter-tab.active {
-        @apply bg-blue-500 text-white border-blue-500;
-    }
     @keyframes slide-in {
         from {
             transform: translateX(400px);
@@ -124,9 +115,12 @@
 
 <script>
     let currentLeague = '';
+    let currentSort = 'newest';
     const listUrl = "{% url 'get_all_post' %}";
     const createUrl = "{% url 'create_post' %}";
     const detailTemplate = "{% url 'forum_post_detail' 0 %}";
+    const leagueSelect = document.getElementById('league-filter');
+    const sortSelect = document.getElementById('sort-order');
 
     // Get CSRF token
     function getCookie(name) {
@@ -182,24 +176,31 @@
     }
 
     // Filter by league
-    function filterByLeague(button, league) {
-        currentLeague = league;
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.classList.remove('active');
+    if (leagueSelect) {
+        leagueSelect.addEventListener('change', (event) => {
+            currentLeague = event.target.value;
+            loadPosts();
         });
-        if (button) {
-            button.classList.add('active');
-        }
-        loadPosts();
     }
-//currentLeague ? `/api/posts/?league=${currentLeague}` : '/api/posts/'
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (event) => {
+            currentSort = event.target.value || 'newest';
+            loadPosts();
+        });
+    }
+
     // Load posts
     async function loadPosts() {
-        let url = listUrl;
+        const params = new URLSearchParams();
         if (currentLeague) {
-            const separator = listUrl.includes('?') ? '&' : '?';
-            url = `${listUrl}${separator}league=${encodeURIComponent(currentLeague)}`;
+            params.set('league', currentLeague);
         }
+        if (currentSort) {
+            params.set('sort', currentSort);
+        }
+        const query = params.toString();
+        const url = query ? `${listUrl}?${query}` : listUrl;
         try {
             const response = await fetch(url, { credentials: 'include' });
             const result = await response.json();
