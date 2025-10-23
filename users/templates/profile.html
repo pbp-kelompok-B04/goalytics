@@ -3,44 +3,201 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-lg">
+  
+  <!-- BACK TO DASHBOARD BUTTON -->
+  <div class="flex justify-between items-center mb-6">
+    <a href="{% url 'main:dashboard' %}" 
+       class="flex items-center gap-2 text-blue-800 font-semibold hover:text-blue-600 transition">
+      ← Back to Dashboard
+    </a>
+  </div>
+
   <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
 
-    <!-- Profile Picture -->
+    <!-- LEFT: Profile Picture & Role -->
     <div class="flex flex-col items-center w-full md:w-1/3">
-      <img src="{{ profile.profile_picture|default:'https://ui-avatars.com/api/?name='|add:user.username }}" 
-           alt="Profile Picture" 
-           class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4">
-      <h2 class="text-2xl font-bold text-blue-800">{{ user.username }}</h2>
-      <p class="text-gray-500 text-sm mb-2">{{ user.email }}</p>
-      <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium mb-4">
+      {% if profile.profile_picture %}
+        <img src="{{ profile.profile_picture }}"
+             alt="Profile Picture"
+             class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4 object-cover">
+      {% else %}
+        <img src="https://ui-avatars.com/api/?name={{ profile.user.username|urlencode }}"
+             alt="Profile Picture"
+             class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4 object-cover">
+      {% endif %}
+
+      <h2 class="text-2xl font-bold text-blue-800">{{ profile.user.username }}</h2>
+      <p class="text-gray-500 text-sm mb-2">{{ profile.user.email }}</p>
+
+      <!-- ROLE TAG -->
+      <span class="
+        inline-block px-3 py-1 rounded-full text-sm font-medium mb-4
+        {% if profile.role == 'admin' %}
+          bg-red-100 text-red-700 border border-red-300
+        {% else %}
+          bg-blue-100 text-blue-800
+        {% endif %}
+      ">
         {{ profile.role|title }}
       </span>
+
+      <!-- FLAG & BLOCK WARNING -->
+      {% if profile.is_flagged %}
+        <div class="mt-1 text-sm text-red-600 font-medium">
+          🚨 Violated the regulation & terms
+        </div>
+      {% endif %}
+
+      {% if profile.is_blocked %}
+        <div class="mt-2 text-center bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+          This user is currently blocked.
+        </div>
+      {% endif %}
     </div>
 
-    <!-- Profile Details + Edit Form -->
+    <!-- RIGHT: Profile Info -->
     <div class="flex-1 w-full">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">Profile Information</h3>
-      
-      <form method="POST" class="space-y-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Profile Information</h3>
+
+        {% if is_owner %}
+          <button id="editBtn"
+                  class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+            Edit Profile
+          </button>
+        {% endif %}
+      </div>
+
+      <div id="readView" class="space-y-5">
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Bio</p>
+          <p class="text-gray-600">{{ profile.bio|default:"No bio yet." }}</p>
+        </div>
+
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Favorite Team</p>
+          <p class="text-gray-600">
+            {% if profile.favorite_team %}{{ profile.favorite_team }}{% else %}-{% endif %}
+          </p>
+        </div>
+
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Favorite League</p>
+          <p class="text-gray-600">
+            {% if profile.favorite_league %}
+              {{ profile.get_favorite_league_display }}
+            {% else %}
+              -
+            {% endif %}
+          </p>
+        </div>
+
+        <div>
+          <p class="text-gray-700 font-semibold mb-1">Preferred Position</p>
+          <p class="text-gray-600">
+            {% if profile.preferred_position %}
+              {{ profile.get_preferred_position_display }}
+            {% else %}
+              -
+            {% endif %}
+          </p>
+        </div>
+
+        <!-- SOCIAL ICONS -->
+        {% if profile.instagram_url or profile.x_url or profile.website_url %}
+        <div class="mt-2">
+          <p class="text-gray-700 font-semibold mb-2">Socials</p>
+          <div class="flex items-center gap-3">
+            {% if profile.instagram_url %}
+              <a href="{{ profile.instagram_url }}" target="_blank" class="group w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition">
+                <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+              </a>
+            {% endif %}
+
+            {% if profile.x_url %}
+              <a href="{{ profile.x_url }}" target="_blank" class="group w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition">
+                <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2H21l-6.59 7.523L22.5 22h-6.937l-5.43-7.256L3.9 22H1.143l7.12-8.128L1.5 2h6.937l4.98 6.65L18.244 2Zm-2.431 18.285h1.925L7.275 3.643H5.35l10.463 16.642Z"/>
+                </svg>
+              </a>
+            {% endif %}
+
+            {% if profile.website_url %}
+              <a href="{{ profile.website_url }}" target="_blank" class="group w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition">
+                <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M2 12h20"></path>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="pt-2">
+          <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
+        </div>
+      </div>
+
+      <!-- EDIT FORM -->
+      <form id="editForm" method="POST" class="space-y-5 hidden">
         {% csrf_token %}
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Profile Picture URL</label>
-          {{ form.profile_picture }}
+        {{ form.as_p }}
+        <div class="flex items-center gap-3">
+          <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
+            Save Changes
+          </button>
+          <button type="button" id="cancelBtn"
+                  class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-5 rounded-lg transition">
+            Cancel
+          </button>
         </div>
-        <div>
-          <label class="block text-gray-700 font-semibold mb-2">Bio</label>
-          {{ form.bio }}
-        </div>
-        <button type="submit"
-                class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
-          Save Changes
-        </button>
       </form>
 
-      <div class="mt-8">
-        <p class="text-gray-600 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
-      </div>
+      <!-- ADMIN CONTROLS -->
+      {% if user.profile.role == 'admin' and not is_owner %}
+        <div class="mt-6 flex gap-3">
+          <a href="{% url 'users:block_user' profile.user.username %}"
+             class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+             {% if profile.is_blocked %}Unblock{% else %}Block{% endif %}
+          </a>
+          <a href="{% url 'users:flag_user' profile.user.username %}"
+             class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+             {% if profile.is_flagged %}Unflag{% else %}Flag{% endif %}
+          </a>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>
+
+<script>
+  const editBtn   = document.getElementById('editBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const readView  = document.getElementById('readView');
+  const editForm  = document.getElementById('editForm');
+
+  function showEditMode() {
+    readView.classList.add('hidden');
+    editForm.classList.remove('hidden');
+    editBtn?.classList.add('hidden');
+  }
+
+  function hideEditMode() {
+    editForm.classList.add('hidden');
+    readView.classList.remove('hidden');
+    editBtn?.classList.remove('hidden');
+  }
+
+  editBtn?.addEventListener('click', showEditMode);
+  cancelBtn?.addEventListener('click', hideEditMode);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !editForm.classList.contains('hidden')) hideEditMode();
+  });
+</script>
 {% endblock %}

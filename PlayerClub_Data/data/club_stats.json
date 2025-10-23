@@ -1,0 +1,866 @@
+[
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Augsburg",
+        "gls": 35,
+        "ast": 26,
+        "xg": 34.7,
+        "xag": 25.1
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Bayern Munich",
+        "gls": 96,
+        "ast": 66,
+        "xg": 81.7,
+        "xag": 59.7
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Bochum",
+        "gls": 32,
+        "ast": 23,
+        "xg": 41.8,
+        "xag": 30.0
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Dortmund",
+        "gls": 69,
+        "ast": 56,
+        "xg": 61.2,
+        "xag": 47.4
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Eint Frankfurt",
+        "gls": 68,
+        "ast": 47,
+        "xg": 65.1,
+        "xag": 45.2
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Freiburg",
+        "gls": 46,
+        "ast": 35,
+        "xg": 44.3,
+        "xag": 30.5
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Gladbach",
+        "gls": 53,
+        "ast": 39,
+        "xg": 50.6,
+        "xag": 37.7
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Heidenheim",
+        "gls": 37,
+        "ast": 26,
+        "xg": 40.3,
+        "xag": 28.6
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Hoffenheim",
+        "gls": 46,
+        "ast": 30,
+        "xg": 42.6,
+        "xag": 32.7
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Holstein Kiel",
+        "gls": 49,
+        "ast": 29,
+        "xg": 39.8,
+        "xag": 26.7
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Leverkusen",
+        "gls": 70,
+        "ast": 53,
+        "xg": 56.9,
+        "xag": 41.9
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Mainz 05",
+        "gls": 53,
+        "ast": 37,
+        "xg": 50.1,
+        "xag": 37.5
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "RB Leipzig",
+        "gls": 51,
+        "ast": 36,
+        "xg": 46.6,
+        "xag": 35.6
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "St. Pauli",
+        "gls": 26,
+        "ast": 22,
+        "xg": 35.3,
+        "xag": 26.3
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Stuttgart",
+        "gls": 61,
+        "ast": 45,
+        "xg": 62.3,
+        "xag": 45.3
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Union Berlin",
+        "gls": 36,
+        "ast": 25,
+        "xg": 37.0,
+        "xag": 23.5
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Werder Bremen",
+        "gls": 53,
+        "ast": 38,
+        "xg": 49.1,
+        "xag": 37.4
+    },
+    {
+        "league": "GER-Bundesliga",
+        "season": "2425",
+        "team": "Wolfsburg",
+        "gls": 53,
+        "ast": 38,
+        "xg": 47.5,
+        "xag": 33.0
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Alavés",
+        "gls": 38,
+        "ast": 20,
+        "xg": 42.8,
+        "xag": 25.4
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Athletic Club",
+        "gls": 53,
+        "ast": 40,
+        "xg": 53.0,
+        "xag": 36.7
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Atlético Madrid",
+        "gls": 68,
+        "ast": 51,
+        "xg": 64.6,
+        "xag": 47.9
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Barcelona",
+        "gls": 99,
+        "ast": 72,
+        "xg": 91.5,
+        "xag": 67.5
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Betis",
+        "gls": 55,
+        "ast": 37,
+        "xg": 54.7,
+        "xag": 37.5
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Celta Vigo",
+        "gls": 58,
+        "ast": 40,
+        "xg": 54.2,
+        "xag": 38.4
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Espanyol",
+        "gls": 38,
+        "ast": 27,
+        "xg": 34.4,
+        "xag": 24.5
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Getafe",
+        "gls": 34,
+        "ast": 21,
+        "xg": 36.8,
+        "xag": 23.9
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Girona",
+        "gls": 43,
+        "ast": 31,
+        "xg": 42.5,
+        "xag": 31.6
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Las Palmas",
+        "gls": 38,
+        "ast": 27,
+        "xg": 36.3,
+        "xag": 26.3
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Leganés",
+        "gls": 38,
+        "ast": 27,
+        "xg": 36.0,
+        "xag": 23.3
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Mallorca",
+        "gls": 34,
+        "ast": 24,
+        "xg": 38.8,
+        "xag": 26.5
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Osasuna",
+        "gls": 46,
+        "ast": 28,
+        "xg": 44.0,
+        "xag": 29.8
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Rayo Vallecano",
+        "gls": 38,
+        "ast": 27,
+        "xg": 45.4,
+        "xag": 36.2
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Real Madrid",
+        "gls": 78,
+        "ast": 55,
+        "xg": 75.3,
+        "xag": 54.6
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Real Sociedad",
+        "gls": 34,
+        "ast": 22,
+        "xg": 42.5,
+        "xag": 30.9
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Sevilla",
+        "gls": 39,
+        "ast": 32,
+        "xg": 42.7,
+        "xag": 30.8
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Valencia",
+        "gls": 43,
+        "ast": 26,
+        "xg": 43.3,
+        "xag": 30.0
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Valladolid",
+        "gls": 26,
+        "ast": 15,
+        "xg": 34.6,
+        "xag": 25.7
+    },
+    {
+        "league": "ESP-La Liga",
+        "season": "2425",
+        "team": "Villarreal",
+        "gls": 69,
+        "ast": 51,
+        "xg": 64.8,
+        "xag": 49.7
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Angers",
+        "gls": 31,
+        "ast": 17,
+        "xg": 36.0,
+        "xag": 23.5
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Auxerre",
+        "gls": 47,
+        "ast": 35,
+        "xg": 41.0,
+        "xag": 32.0
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Brest",
+        "gls": 52,
+        "ast": 32,
+        "xg": 45.4,
+        "xag": 29.4
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Le Havre",
+        "gls": 37,
+        "ast": 21,
+        "xg": 41.3,
+        "xag": 24.3
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Lens",
+        "gls": 40,
+        "ast": 26,
+        "xg": 51.8,
+        "xag": 36.2
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Lille",
+        "gls": 52,
+        "ast": 29,
+        "xg": 54.7,
+        "xag": 35.1
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Lyon",
+        "gls": 62,
+        "ast": 46,
+        "xg": 60.3,
+        "xag": 44.4
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Marseille",
+        "gls": 70,
+        "ast": 49,
+        "xg": 63.8,
+        "xag": 44.6
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Monaco",
+        "gls": 63,
+        "ast": 49,
+        "xg": 72.8,
+        "xag": 55.3
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Montpellier",
+        "gls": 23,
+        "ast": 13,
+        "xg": 33.5,
+        "xag": 23.0
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Nantes",
+        "gls": 39,
+        "ast": 27,
+        "xg": 39.1,
+        "xag": 27.8
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Nice",
+        "gls": 62,
+        "ast": 43,
+        "xg": 61.6,
+        "xag": 42.9
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Paris S-G",
+        "gls": 89,
+        "ast": 69,
+        "xg": 88.9,
+        "xag": 70.8
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Reims",
+        "gls": 32,
+        "ast": 19,
+        "xg": 37.4,
+        "xag": 26.5
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Rennes",
+        "gls": 51,
+        "ast": 32,
+        "xg": 48.6,
+        "xag": 29.6
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Saint-Étienne",
+        "gls": 39,
+        "ast": 28,
+        "xg": 36.4,
+        "xag": 24.6
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Strasbourg",
+        "gls": 54,
+        "ast": 43,
+        "xg": 49.3,
+        "xag": 38.5
+    },
+    {
+        "league": "FRA-Ligue 1",
+        "season": "2425",
+        "team": "Toulouse",
+        "gls": 42,
+        "ast": 34,
+        "xg": 49.1,
+        "xag": 34.7
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Atalanta",
+        "gls": 76,
+        "ast": 54,
+        "xg": 65.0,
+        "xag": 46.9
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Bologna",
+        "gls": 56,
+        "ast": 43,
+        "xg": 49.3,
+        "xag": 35.2
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Cagliari",
+        "gls": 38,
+        "ast": 31,
+        "xg": 42.7,
+        "xag": 32.0
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Como",
+        "gls": 44,
+        "ast": 39,
+        "xg": 45.4,
+        "xag": 36.6
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Empoli",
+        "gls": 31,
+        "ast": 21,
+        "xg": 32.5,
+        "xag": 22.9
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Fiorentina",
+        "gls": 58,
+        "ast": 39,
+        "xg": 48.9,
+        "xag": 35.1
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Genoa",
+        "gls": 35,
+        "ast": 27,
+        "xg": 37.2,
+        "xag": 26.8
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Hellas Verona",
+        "gls": 31,
+        "ast": 20,
+        "xg": 33.8,
+        "xag": 24.8
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Inter",
+        "gls": 76,
+        "ast": 57,
+        "xg": 66.9,
+        "xag": 48.3
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Juventus",
+        "gls": 56,
+        "ast": 40,
+        "xg": 51.0,
+        "xag": 35.9
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Lazio",
+        "gls": 60,
+        "ast": 43,
+        "xg": 57.2,
+        "xag": 38.5
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Lecce",
+        "gls": 27,
+        "ast": 21,
+        "xg": 34.6,
+        "xag": 24.5
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Milan",
+        "gls": 59,
+        "ast": 43,
+        "xg": 63.7,
+        "xag": 46.8
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Monza",
+        "gls": 27,
+        "ast": 18,
+        "xg": 29.9,
+        "xag": 20.9
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Napoli",
+        "gls": 56,
+        "ast": 42,
+        "xg": 52.9,
+        "xag": 39.1
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Parma",
+        "gls": 43,
+        "ast": 31,
+        "xg": 43.1,
+        "xag": 29.3
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Roma",
+        "gls": 55,
+        "ast": 35,
+        "xg": 53.0,
+        "xag": 35.0
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Torino",
+        "gls": 36,
+        "ast": 21,
+        "xg": 34.6,
+        "xag": 22.5
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Udinese",
+        "gls": 41,
+        "ast": 28,
+        "xg": 38.2,
+        "xag": 27.2
+    },
+    {
+        "league": "ITA-Serie A",
+        "season": "2425",
+        "team": "Venezia",
+        "gls": 31,
+        "ast": 16,
+        "xg": 35.8,
+        "xag": 22.2
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Arsenal",
+        "gls": 67,
+        "ast": 55,
+        "xg": 59.9,
+        "xag": 45.3
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Aston Villa",
+        "gls": 56,
+        "ast": 45,
+        "xg": 56.1,
+        "xag": 41.7
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Bournemouth",
+        "gls": 57,
+        "ast": 41,
+        "xg": 64.0,
+        "xag": 43.8
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Brentford",
+        "gls": 65,
+        "ast": 44,
+        "xg": 59.0,
+        "xag": 42.4
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Brighton",
+        "gls": 64,
+        "ast": 41,
+        "xg": 58.7,
+        "xag": 40.4
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Chelsea",
+        "gls": 61,
+        "ast": 47,
+        "xg": 67.8,
+        "xag": 52.7
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Crystal Palace",
+        "gls": 49,
+        "ast": 38,
+        "xg": 60.4,
+        "xag": 46.4
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Everton",
+        "gls": 39,
+        "ast": 27,
+        "xg": 41.8,
+        "xag": 32.2
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Fulham",
+        "gls": 53,
+        "ast": 44,
+        "xg": 49.0,
+        "xag": 37.5
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Ipswich Town",
+        "gls": 35,
+        "ast": 26,
+        "xg": 34.4,
+        "xag": 24.2
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Leicester City",
+        "gls": 33,
+        "ast": 25,
+        "xg": 32.6,
+        "xag": 25.1
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Liverpool",
+        "gls": 85,
+        "ast": 65,
+        "xg": 82.2,
+        "xag": 61.6
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Manchester City",
+        "gls": 71,
+        "ast": 51,
+        "xg": 68.1,
+        "xag": 54.2
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Manchester Utd",
+        "gls": 42,
+        "ast": 29,
+        "xg": 52.6,
+        "xag": 39.7
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Newcastle Utd",
+        "gls": 66,
+        "ast": 50,
+        "xg": 63.8,
+        "xag": 46.0
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Nott'ham Forest",
+        "gls": 57,
+        "ast": 42,
+        "xg": 45.5,
+        "xag": 33.0
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Southampton",
+        "gls": 25,
+        "ast": 16,
+        "xg": 32.7,
+        "xag": 24.8
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Tottenham",
+        "gls": 61,
+        "ast": 47,
+        "xg": 58.8,
+        "xag": 44.4
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "West Ham",
+        "gls": 43,
+        "ast": 29,
+        "xg": 47.0,
+        "xag": 33.9
+    },
+    {
+        "league": "ENG-Premier League",
+        "season": "2425",
+        "team": "Wolves",
+        "gls": 53,
+        "ast": 42,
+        "xg": 43.7,
+        "xag": 35.4
+    }
+]
