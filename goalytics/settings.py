@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'adminpanel.apps.AdminpanelConfig',
     'PlayerClub_Data.apps.PlayerclubDataConfig',
     'comparison',
     'users.apps.UsersConfig',
