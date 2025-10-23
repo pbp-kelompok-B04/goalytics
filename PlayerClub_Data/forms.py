@@ -3,6 +3,12 @@ from .models import Player, Club
 
 
 class PlayerForm(forms.ModelForm):
+    # Limit position to model's 4 choices
+    position = forms.ChoiceField(
+        choices=Player.POSITION_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
     class Meta:
         model = Player
         fields = [
@@ -17,7 +23,6 @@ class PlayerForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input'}),
             'nation': forms.TextInput(attrs={'class': 'form-input'}),
-            'position': forms.TextInput(attrs={'class': 'form-input'}),
             'age': forms.NumberInput(attrs={'class': 'form-input', 'min': 0, 'step': 1}),
             'born': forms.NumberInput(attrs={'class': 'form-input', 'min': 0, 'step': 1}),
             'club': forms.Select(attrs={'class': 'form-select'}),

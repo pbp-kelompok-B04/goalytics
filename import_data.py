@@ -64,6 +64,6 @@ for p in players:
             "clean_sheet_percentage": p.get("clean_sheet_percentage"),
         }
     )
-    print(f"{'🆕 Created' if created else 'Updated'} Player: {player.name} ({club.name})")
+    print(f"{'Created' if created else 'Updated'} Player: {player.name} ({club.name})")
 
 
