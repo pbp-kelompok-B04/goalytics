@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<!-- Main Content -->
+<main class="max-w-4xl mx-auto px-4 py-6">
+    <!-- Header with Create Button -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-blue-400">Goalytics Football Forum</h1>
+        <button onclick="openCreateModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+            Create Post
+        </button>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="filterByLeague(this, '')" class="filter-tab active px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
+                All Leagues
+            </button>
+            <button onclick="filterByLeague(this, 'EPL')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
+                Premier League
+            </button>
+            <button onclick="filterByLeague(this, 'LALIGA')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
+                La Liga
+            </button>
+            <button onclick="filterByLeague(this, 'SERIEA')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
+                Serie A
+            </button>
+            <button onclick="filterByLeague(this, 'BUNDES')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
+                Bundesliga
+            </button>
+            <button onclick="filterByLeague(this, 'LIGUE1')" class="filter-tab px-4 py-2 rounded-full text-sm font-medium transition-all duration-200">
+                Ligue 1
+            </button>
+        </div>
+    </div>
+
+    <!-- Posts List -->
+    <div id="posts-list" class="space-y-4">
+        <!-- Posts will be loaded here -->
+        <div class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <p class="mt-4 text-gray-400">Loading posts...</p>
+        </div>
+    </div>
+</main>
+
+<!-- Create Post Modal -->
+<div id="createModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-700 shadow-2xl">
+        <div class="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-blue-400">Create New Post</h2>
+            <button onclick="closeCreateModal()" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="createPostForm" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">League</label>
+                <select id="postLeague" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="EPL">Premier League</option>
+                    <option value="LALIGA">La Liga</option>
+                    <option value="SERIEA">Serie A</option>
+                    <option value="BUNDES">Bundesliga</option>
+                    <option value="LIGUE1">Ligue 1</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <input type="text" id="postTitle" placeholder="What's on your mind?" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Content</label>
+                <textarea id="postContent" rows="6" placeholder="Share your thoughts..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
+                    Post
+                </button>
+                <button type="button" onclick="closeCreateModal()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden items-center gap-3 z-50 animate-slide-in">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="toastMessage">Post created successfully!</span>
+</div>
+
+<style>
+    .filter-tab {
+        @apply bg-gray-700 text-gray-300 border border-gray-600;
+    }
+    .filter-tab:hover {
+        @apply bg-gray-600 text-blue-400;
+    }
+    .filter-tab.active {
+        @apply bg-blue-500 text-white border-blue-500;
+    }
+    @keyframes slide-in {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+    }
+</style>
+
+<script>
+    let currentLeague = '';
+    const listUrl = "{% url 'get_all_post' %}";
+    const createUrl = "{% url 'create_post' %}";
+    const detailTemplate = "{% url 'forum_post_detail' 0 %}";
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    // Modal functions
+    function openCreateModal() {
+        document.getElementById('createModal').classList.remove('hidden');
+        document.getElementById('createModal').classList.add('flex');
+    }
+
+    function closeCreateModal() {
+        document.getElementById('createModal').classList.add('hidden');
+        document.getElementById('createModal').classList.remove('flex');
+        document.getElementById('createPostForm').reset();
+    }
+
+    // Toast function
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toastMessage.textContent = message;
+        
+        if (isError) {
+            toast.classList.remove('bg-green-500');
+            toast.classList.add('bg-red-500');
+        } else {
+            toast.classList.remove('bg-red-500');
+            toast.classList.add('bg-green-500');
+        }
+        
+        toast.classList.remove('hidden');
+        toast.classList.add('flex');
+        
+        setTimeout(() => {
+            toast.classList.add('hidden');
+            toast.classList.remove('flex');
+        }, 3000);
+    }
+
+    // Filter by league
+    function filterByLeague(button, league) {
+        currentLeague = league;
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        if (button) {
+            button.classList.add('active');
+        }
+        loadPosts();
+    }
+//currentLeague ? `/api/posts/?league=${currentLeague}` : '/api/posts/'
+    // Load posts
+    async function loadPosts() {
+        let url = listUrl;
+        if (currentLeague) {
+            const separator = listUrl.includes('?') ? '&' : '?';
+            url = `${listUrl}${separator}league=${encodeURIComponent(currentLeague)}`;
+        }
+        try {
+            const response = await fetch(url, { credentials: 'include' });
+            const result = await response.json();
+            displayPosts(result.data || []);
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            document.getElementById('posts-list').innerHTML = `
+                <div class="text-center py-12">
+                    <p class="text-red-400">Error loading posts. Please try again.</p>
+                </div>
+            `;
+        }
+    }
+
+    function buildDetailUrl(postId) {
+        if (!detailTemplate) {
+            return `/forum/posts/${postId}/`;
+        }
+        if (detailTemplate.endsWith('/0/')) {
+            return detailTemplate.replace('/0/', `/${postId}/`);
+        }
+        if (detailTemplate.endsWith('0/')) {
+            return `${detailTemplate.slice(0, -2)}${postId}/`;
+        }
+        if (detailTemplate.endsWith('/0')) {
+            return detailTemplate.replace('/0', `/${postId}`);
+        }
+        if (detailTemplate.endsWith('0')) {
+            return `${detailTemplate.slice(0, -1)}${postId}`;
+        }
+        return `${detailTemplate}${postId}`;
+    }
+
+    // Display posts
+    function displayPosts(posts) {
+        const postsList = document.getElementById('posts-list');
+        
+        if (posts.length === 0) {
+            postsList.innerHTML = `
+                <div class="text-center py-12">
+                    <p class="text-gray-400">No posts yet. Be the first to create one!</p>
+                </div>
+            `;
+            return;
+        }
+
+        postsList.innerHTML = posts.map(post => {
+            const date = new Date(post.created_at);
+            const timeAgo = getTimeAgo(date);
+            const leagueNames = {
+                'EPL': 'Premier League',
+                'LALIGA': 'La Liga',
+                'SERIEA': 'Serie A',
+                'BUNDES': 'Bundesliga',
+                'LIGUE1': 'Ligue 1'
+            };
+            
+            return `
+                <div onclick="window.location.href = buildDetailUrl(${post.id})" class="bg-gray-800 border border-gray-700 rounded-lg p-5 hover:border-blue-500 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-blue-500/20">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-white">
+                            ${post.author.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="font-semibold text-gray-200">${post.author}</span>
+                                <span class="text-gray-500" >&middot;</span>
+                                <span class="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">${leagueNames[post.league]}</span>
+                                <span class="text-gray-500" >&middot;</span>
+                                <span class="text-sm text-gray-400">${timeAgo}</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-2 hover:text-blue-400 transition-colors">${escapeHtml(post.title)}</h3>
+                            <p class="text-gray-300 mb-3 line-clamp-3">${escapeHtml(post.content)}</p>
+                            <div class="flex items-center gap-4 text-sm text-gray-400">
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                    </svg>
+                                    <span>${post.comment_count} comments</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Create post
+    document.getElementById('createPostForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('postTitle').value.trim();
+        const content = document.getElementById('postContent').value.trim();
+        const league = document.getElementById('postLeague').value;
+        
+        if (!title || !content) {
+            showToast('Please fill in all fields', true);
+            return;
+        }
+        
+        try {
+            const response = await fetch(createUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'include',
+                body: JSON.stringify({ title, content, league })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showToast('Post created successfully!');
+                closeCreateModal();
+                loadPosts();
+            } else {
+                showToast(result.error || 'Error creating post', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error creating post', true);
+        }
+    });
+
+    // Helper functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+        
+        for (const [key, value] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / value);
+            if (interval >= 1) {
+                return interval === 1 ? `1 ${key} ago` : `${interval} ${key}s ago`;
+            }
+        }
+        return 'just now';
+    }
+
+    // Load posts on page load
+    loadPosts();
+</script>
+
+{% endblock %}

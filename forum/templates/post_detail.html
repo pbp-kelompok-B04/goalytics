@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- Main Content -->
+<main class="max-w-4xl mx-auto px-4 py-6">
+    <!-- Back Button -->
+    <div class="mb-6">
+        <button onclick="window.location.href='{% url 'forum_home' %}'" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Forum
+        </button>
+    </div>
+
+    <!-- Post Content -->
+    <div id="post-detail" class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+        <!-- Post will be loaded here -->
+        <div class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <p class="mt-4 text-gray-400">Loading post...</p>
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-white">Comments</h2>
+            <span id="comment-count" class="text-sm text-gray-400"></span>
+        </div>
+
+        <!-- Comment Form -->
+        <form id="commentForm" class="mb-6 pb-6 border-b border-gray-700">
+            <textarea id="commentContent" rows="3" placeholder="Share your thoughts..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-3"></textarea>
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300">
+                Add Comment
+            </button>
+        </form>
+
+        <!-- Comments List -->
+        <div id="comments-list" class="space-y-4">
+            <!-- Comments will be loaded here -->
+        </div>
+    </div>
+</main>
+
+<!-- Reply Modal -->
+<div id="replyModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-xl max-w-2xl w-full border-2 border-gray-700 shadow-2xl">
+        <div class="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-blue-400">Reply to Comment</h2>
+            <button onclick="closeReplyModal()" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="replyForm" class="p-6 space-y-4">
+            <input type="hidden" id="replyParentId">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Your Reply</label>
+                <textarea id="replyContent" rows="4" placeholder="Write your reply..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300">
+                    Reply
+                </button>
+                <button type="button" onclick="closeReplyModal()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden items-center gap-3 z-50 animate-slide-in">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="toastMessage">Success!</span>
+</div>
+
+<style>
+    @keyframes slide-in {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+    }
+</style>
+
+<script>
+    const postId = {{ post_id }};
+    const postUrl = "{% url 'get_post_by_id' post_id %}";
+    const commentsUrl = "{% url 'get_post_comment' post_id %}";
+    const createCommentUrl = "{% url 'create_comment' post_id %}";
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    // Toast function
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toastMessage.textContent = message;
+        
+        if (isError) {
+            toast.classList.remove('bg-green-500');
+            toast.classList.add('bg-red-500');
+        } else {
+            toast.classList.remove('bg-red-500');
+            toast.classList.add('bg-green-500');
+        }
+        
+        toast.classList.remove('hidden');
+        toast.classList.add('flex');
+        
+        setTimeout(() => {
+            toast.classList.add('hidden');
+            toast.classList.remove('flex');
+        }, 3000);
+    }
+
+    // Reply Modal functions
+    function openReplyModal(parentId) {
+        document.getElementById('replyParentId').value = parentId;
+        document.getElementById('replyModal').classList.remove('hidden');
+        document.getElementById('replyModal').classList.add('flex');
+    }
+
+    function closeReplyModal() {
+        document.getElementById('replyModal').classList.add('hidden');
+        document.getElementById('replyModal').classList.remove('flex');
+        document.getElementById('replyForm').reset();
+    }
+
+    // Load post detail
+    async function loadPost() {
+        try {
+            const response = await fetch(postUrl, { credentials: 'include' });
+            if (!response.ok) {
+                throw new Error('Failed to load post');
+            }
+            const result = await response.json();
+            if (!result || !result.data) {
+                throw new Error('Invalid post payload');
+            }
+            displayPost(result.data);
+        } catch (error) {
+            console.error('Error loading post:', error);
+            document.getElementById('post-detail').innerHTML = `
+                <div class="text-center py-12">
+                    <p class="text-red-400">Error loading post. Please try again.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Display post
+    function displayPost(post) {
+        const date = new Date(post.created_at);
+        const timeAgo = getTimeAgo(date);
+        const leagueNames = {
+            'EPL': 'Premier League',
+            'LALIGA': 'La Liga',
+            'SERIEA': 'Serie A',
+            'BUNDES': 'Bundesliga',
+            'LIGUE1': 'Ligue 1'
+        };
+        const leagueLabel = leagueNames[post.league] || 'General';
+
+        document.getElementById('post-detail').innerHTML = `
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-white text-lg">
+                    ${post.author.charAt(0).toUpperCase()}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="font-semibold text-gray-200">${post.author}</span>
+                        <span class="text-gray-500">•</span>
+                        <span class="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">${leagueLabel}</span>
+                        <span class="text-gray-500">•</span>
+                        <span class="text-sm text-gray-400">${timeAgo}</span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white mb-4">${escapeHtml(post.title)}</h1>
+                    <p class="text-gray-300 text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(post.content)}</p>
+                </div>
+            </div>
+        `;
+        
+        const commentTotal = post.comment_count || 0;
+        document.getElementById('comment-count').textContent = `${commentTotal} comments`;
+    }
+
+    // Load comments
+    async function loadComments() {
+        try {
+            const response = await fetch(commentsUrl, { credentials: 'include' });
+            if (!response.ok) {
+                throw new Error('Failed to load comments');
+            }
+            const result = await response.json();
+            displayComments((result && result.data) || []);
+        } catch (error) {
+            console.error('Error loading comments:', error);
+            document.getElementById('comments-list').innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-red-400">Error loading comments.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Display comments
+    function displayComments(comments) {
+        const commentsList = document.getElementById('comments-list');
+        
+        if (comments.length === 0) {
+            commentsList.innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-gray-400">No comments yet. Be the first to comment!</p>
+                </div>
+            `;
+            return;
+        }
+
+        commentsList.innerHTML = comments.map(comment => {
+            const date = new Date(comment.created_at);
+            const timeAgo = getTimeAgo(date);
+            
+            const repliesHtml = comment.replies && comment.replies.length > 0 ? `
+                <div class="mt-4 ml-12 space-y-3">
+                    ${comment.replies.map(reply => {
+                        const replyDate = new Date(reply.created_at);
+                        const replyTimeAgo = getTimeAgo(replyDate);
+                        return `
+                            <div class="bg-gray-700/50 border border-gray-600 rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        ${reply.user.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="font-semibold text-gray-200 text-sm">${reply.user}</span>
+                                            <span class="text-gray-500">•</span>
+                                            <span class="text-xs text-gray-400">${replyTimeAgo}</span>
+                                        </div>
+                                        <p class="text-gray-300 text-sm whitespace-pre-wrap">${escapeHtml(reply.content)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : '';
+            
+            return `
+                <div class="bg-gray-700/30 border border-gray-600 rounded-lg p-5">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center font-bold text-white">
+                            ${comment.user.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="font-semibold text-gray-200">${comment.user}</span>
+                                <span class="text-gray-500">•</span>
+                                <span class="text-sm text-gray-400">${timeAgo}</span>
+                            </div>
+                            <p class="text-gray-300 mb-3 whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
+                            <button onclick="openReplyModal(${comment.id})" class="text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                </svg>
+                                Reply
+                            </button>
+                        </div>
+                    </div>
+                    ${repliesHtml}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Add comment
+    document.getElementById('commentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const content = document.getElementById('commentContent').value.trim();
+        
+        if (!content) {
+            showToast('Please enter a comment', true);
+            return;
+        }
+        
+        try {
+            const response = await fetch(createCommentUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'include',
+                body: JSON.stringify({ content })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showToast('Comment added successfully!');
+                document.getElementById('commentContent').value = '';
+                loadComments();
+                loadPost(); // Reload post to update comment count
+            } else {
+                showToast(result.error || 'Error adding comment', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error adding comment', true);
+        }
+    });
+
+    // Add reply
+    document.getElementById('replyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const content = document.getElementById('replyContent').value.trim();
+        const parentId = document.getElementById('replyParentId').value;
+        
+        if (!content) {
+            showToast('Please enter a reply', true);
+            return;
+        }
+        
+        try {
+            const response = await fetch(createCommentUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'include',
+                body: JSON.stringify({ content, parent_id: parentId })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showToast('Reply added successfully!');
+                closeReplyModal();
+                loadComments();
+                loadPost(); // Reload post to update comment count
+            } else {
+                showToast(result.error || 'Error adding reply', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error adding reply', true);
+        }
+    });
+
+    // Helper functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+        
+        for (const [key, value] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / value);
+            if (interval >= 1) {
+                return interval === 1 ? `1 ${key} ago` : `${interval} ${key}s ago`;
+            }
+        }
+        return 'just now';
+    }
+
+    // Load data on page load
+    loadPost();
+    loadComments();
+</script>
+
+{% endblock %}

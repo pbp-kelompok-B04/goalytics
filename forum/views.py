@@ -9,8 +9,10 @@ import json
 
 
 def forum_home(request):
-    """Render forum landing page that consumes JSON endpoints via JS."""
-    return render(request, "forum/forum.html")
+    return render(request, "forum_home.html")
+
+def forum_post_detail(request, post_id):
+    return render(request, "post_detail.html", {"post_id": post_id})
 
 # Create your views here.
 @require_http_methods(["GET"])
