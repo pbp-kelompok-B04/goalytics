@@ -22,4 +22,5 @@ urlpatterns = [
     path('', include('main.urls')),
     path('users/', include('users.urls')),
     path('data/', include('PlayerClub_Data.urls')),
+    path('favorite/', include('favorite_player.urls')), 
 ]

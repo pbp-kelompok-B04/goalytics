@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Favorite Players{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10">
+    <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center flex items-center justify-center gap-2">
+        ⭐ My Favorite Players
+    </h2>
+
+    {% if favorites %}
+        <ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for favorite in favorites %}
+                <li class="bg-white shadow-md rounded-2xl p-6 border border-gray-100 hover:shadow-blue-200 transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-20 h-20 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full text-2xl font-semibold mb-3 shadow-inner">
+                            {{ favorite.player.name|slice:":2" }}
+                        </div>
+                        <p class="font-semibold text-lg text-gray-800">
+                            {{ favorite.player.name }}
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            {{ favorite.player.team }}
+                        </p>
+                    </div>
+                    <a
+                        href="{% url 'favorite_player:remove_favorite' favorite.player.id %}"
+                        class="mt-5 inline-block bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 hover:scale-[1.02] transition-all duration-200"
+                    >
+                        Remove
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="bg-white shadow-md rounded-2xl p-10 text-center border border-gray-100">
+            <p class="text-gray-600 text-lg mb-4">
+                You don't have any favorite players yet.
+            </p>
+            <a
+                href="{% url 'PlayerClub_Data:player_list' %}"
+                class="inline-block mt-2 bg-blue-900 text-white font-semibold px-6 py-2 rounded-full shadow hover:bg-blue-800 hover:scale-[1.03] transition-all duration-300"
+            >
+                Browse Players
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
