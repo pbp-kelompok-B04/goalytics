@@ -152,6 +152,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Get base URL dynamically
 const BASE_URL = window.location.origin;
@@ -273,6 +274,8 @@ async function comparePlayers() {
             resultsSection.innerHTML = data.html;
             resultsSection.classList.remove('hidden');
             resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+            renderRadarChart();
         } else {
             alert('Error: ' + data.error);
         }
@@ -281,6 +284,102 @@ async function comparePlayers() {
     } finally {
         loading.classList.add('hidden');
     }
+}
+
+function renderRadarChart() {
+    const canvas = document.getElementById('radarChart');
+    if (!canvas) return;
+
+    // Parse data dari atribut HTML
+    let labels = JSON.parse(canvas.dataset.labels);
+    const data1 = JSON.parse(canvas.dataset.data1);
+    const data2 = JSON.parse(canvas.dataset.data2);
+    const maxValues = JSON.parse(canvas.dataset.max);
+    const player1 = canvas.dataset.player1;
+    const player2 = canvas.dataset.player2;
+
+    // ✨ Format label agar huruf besar setiap kata (hapus underscore/dash)
+       labels = labels.map(label => {
+        label = label.replace(/[_\-]/g, ' '); // Ganti _ dan - jadi spasi
+        let formatted = label
+            .split(' ')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+        // Format khusus xG-family
+        formatted = formatted
+            .replace(/\bXg\b/g, 'xG')
+            .replace(/\bNpxg\b/g, 'NPxG')
+            .replace(/\bXag\b/g, 'xAG');
+
+        return formatted;
+    });
+    // Normalisasi nilai jadi persentase
+    const norm1 = data1.map((v, i) => maxValues[i] > 0 ? (v / maxValues[i]) * 100 : 0);
+    const norm2 = data2.map((v, i) => maxValues[i] > 0 ? (v / maxValues[i]) * 100 : 0);
+
+    const ctx = canvas.getContext('2d');
+    if (window._radarChartInstance) window._radarChartInstance.destroy();
+
+    // 🧩 Buat chart dengan ukuran kecil dan proporsional
+    window._radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: player1,
+                    data: norm1,
+                    backgroundColor: 'rgba(59, 130, 246, 0.25)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    fill: true
+                },
+                {
+                    label: player2,
+                    data: norm2,
+                    backgroundColor: 'rgba(239, 68, 68, 0.25)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 2,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // biar fleksibel (bisa dikecilin)
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    suggestedMax: 100,
+                    ticks: {
+                        stepSize: 25,
+                        callback: v => v + '%'
+                    },
+                    pointLabels: {
+                        font: { size: 11, weight: '500' },
+                        color: '#1e3a8a'
+                    },
+                    grid: { circular: true }
+                }
+            },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const datasetIndex = context.datasetIndex;
+                            const rawVal = datasetIndex === 0 ? data1[idx] : data2[idx];
+                            return `${context.dataset.label}: ${rawVal}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Initialize event listeners
