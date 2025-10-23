@@ -6,7 +6,7 @@
 
   <!-- Back to Database Button -->
   <div class="flex justify-between items-center mb-6">
-    <a href="{% url 'PlayerClub_Data:database_home' %}" 
+    <a href="{% url 'PlayerClub_Data:database_home' %}"
        class="flex items-center gap-2 text-blue-800 font-semibold hover:text-blue-600 transition">
       ← Back to Database
     </a>
@@ -16,16 +16,16 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-blue-800">Player List</h1>
     {% if is_admin %}
-    <a href="{% url 'PlayerClub_Data:player_create' %}" 
+    <a href="{% url 'PlayerClub_Data:player_create' %}"
        class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg shadow transition">
-       ➕ Add Player
+       + Add Player
     </a>
     {% endif %}
   </div>
 
-  <!-- Player Table -->
+  <!-- Player Table (AJAX populated) -->
   <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse">
+    <table class="w-full text-left border-collapse" id="players-table">
       <thead>
         <tr class="bg-blue-100 text-blue-800">
           <th class="p-3">Name</th>
@@ -33,37 +33,60 @@
           <th class="p-3">Position</th>
           <th class="p-3">Goals</th>
           <th class="p-3">Assists</th>
-          <th class="p-3">Cards</th>
+          <th class="p-3">Nation</th>
           {% if is_admin %}<th class="p-3">Actions</th>{% endif %}
         </tr>
       </thead>
-      <tbody>
-        {% for p in players %}
-        <tr class="border-b hover:bg-gray-50 transition">
-          <td class="p-3 font-medium text-gray-800">{{ p.name }}</td>
-          <td class="p-3">{{ p.club.name|default:"-" }}</td>
-          <td class="p-3">{{ p.position|default:"-" }}</td>
-          <td class="p-3">{{ p.total_goals }}</td>
-          <td class="p-3">{{ p.total_assists }}</td>
-          <td class="p-3">
-            🟨 {{ p.yellow_cards }} | 🟥 {{ p.red_cards }}
-          </td>
-          {% if is_admin %}
-          <td class="p-3 flex gap-2">
-            <a href="{% url 'PlayerClub_Data:player_update' p.pk %}" 
-               class="bg-yellow-400 hover:bg-yellow-300 text-white px-3 py-1 rounded-md text-sm">✏️</a>
-            <a href="{% url 'PlayerClub_Data:player_delete' p.pk %}" 
-               class="bg-red-500 hover:bg-red-400 text-white px-3 py-1 rounded-md text-sm">🗑️</a>
-          </td>
-          {% endif %}
-        </tr>
-        {% empty %}
+      <tbody id="player-rows">
         <tr>
-          <td colspan="7" class="text-center py-5 text-gray-500">No players found.</td>
+          <td colspan="7" class="text-center py-5 text-gray-500">Loading players…</td>
         </tr>
-        {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+<script>
+  (function() {
+    const rowsEl = document.getElementById('player-rows');
+    const url = "{% url 'PlayerClub_Data:get_all_player' %}";
+    const IS_ADMIN = {{ is_admin|yesno:"true,false" }};
+    const editTpl = "{% url 'PlayerClub_Data:player_update' 0 %}";
+    const delTpl = "{% url 'PlayerClub_Data:player_delete' 0 %}";
+    const makeUrl = (tpl, id) => tpl.replace(/\/0\//, `/${id}/`);
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(payload => {
+        const data = (payload && payload.data) || [];
+        if (!Array.isArray(data) || data.length === 0) {
+          rowsEl.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-gray-500">No players found.</td></tr>';
+          return;
+        }
+        const html = data.map(p => {
+          const safe = (v) => (v === null || v === undefined || v === '' ? '-' : String(v));
+          let row = `<tr class=\"border-b hover:bg-gray-50 transition\">`
+               + `<td class=\"p-3 font-medium text-gray-800\">${safe(p.name)}</td>`
+               + `<td class=\"p-3\">${safe(p.club)}</td>`
+               + `<td class=\"p-3\">${safe(p.position)}</td>`
+               + `<td class=\"p-3\">${safe(p.goals)}</td>`
+               + `<td class=\"p-3\">${safe(p.assists)}</td>`
+               + `<td class=\"p-3\">${safe(p.nation)}</td>`;
+          if (IS_ADMIN) {
+            const editUrl = makeUrl(editTpl, p.id);
+            const delUrl = makeUrl(delTpl, p.id);
+            row += `<td class=\"p-3 flex gap-2\">`
+                + `<a href=\"${editUrl}\" class=\"bg-yellow-400 hover:bg-yellow-300 text-white px-3 py-1 rounded-md text-sm\">✏️</a>`
+                + `<a href=\"${delUrl}\" class=\"bg-red-500 hover:bg-red-400 text-white px-3 py-1 rounded-md text-sm\">🗑️</a>`
+                + `</td>`;
+          }
+          row += `</tr>`;
+          return row;
+        }).join('');
+        rowsEl.innerHTML = html;
+      })
+      .catch(() => {
+        rowsEl.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-red-600">Failed to load players.</td></tr>';
+      });
+  })();
+  </script>
 {% endblock %}
