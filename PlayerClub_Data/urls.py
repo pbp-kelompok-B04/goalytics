@@ -10,6 +10,7 @@ from PlayerClub_Data.views import (
     club_delete,
     database_home,
     get_all_player,
+    get_all_club,
 )
 
 app_name = 'PlayerClub_Data'
@@ -18,6 +19,7 @@ urlpatterns = [
     path('database/', database_home, name='database_home'),
     path('players/', player_list, name='player_list'),
     path('api/players/', get_all_player, name='get_all_player'),
+    path('api/clubs/', get_all_club, name='get_all_club'),
     path('players/add/', player_create, name='player_create'),
     path('players/<int:pk>/edit/', player_update, name='player_update'),
     path('players/<int:pk>/delete/', player_delete, name='player_delete'),
