@@ -7,29 +7,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Goalytics | {% block title %}{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.11.1/dist/full.min.css" />
   {% block meta %}{% endblock meta %}
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-slate-50 text-slate-900">
+  <div class="min-h-screen flex flex-col md:flex-row bg-slate-50">
+    {% include 'navbar.html' %}
 
-  {% include 'navbar.html' %}
-
-  {# ✅ Toast - di kanan bawah & tidak tampil di login/register #}
-  {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
-    <div id="alert-container" class="fixed bottom-4 right-4 space-y-3 z-50">
-      {% for message in messages %}
-        <div class="alert px-4 py-3 rounded-lg shadow-lg text-white transform transition-all duration-500 ease-out
-                    translate-x-10 opacity-0
-                    {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %}">
-          {{ message }}
+    <div class="flex-1 min-w-0">
+      {# Toast - di kanan bawah & tidak tampil di login/register #}
+      {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
+        <div id="alert-container" class="fixed bottom-4 right-4 space-y-3 z-50">
+          {% for message in messages %}
+            <div class="alert px-4 py-3 rounded-lg shadow-lg text-white transform transition-all duration-500 ease-out
+                        translate-x-10 opacity-0
+                        {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
         </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+      {% endif %}
 
-  {% block content %}{% endblock %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
 
   <script>
-    // 🎬 Animasi masuk
+    // dYZ� Animasi masuk
     window.addEventListener('DOMContentLoaded', () => {
       const alerts = document.querySelectorAll('.alert');
       alerts.forEach((alert, index) => {
@@ -40,7 +44,7 @@
       });
     });
 
-    // ⏳ Auto hilang
+    // �?3 Auto hilang
     setTimeout(() => {
       const alerts = document.querySelectorAll('.alert');
       alerts.forEach(alert => {
