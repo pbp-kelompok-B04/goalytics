@@ -36,6 +36,7 @@
     {% endif %}
 
     <div class="relative grid gap-6 md:grid-cols-[1fr_auto_1fr]">
+      <!-- Player 1 -->
       <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between gap-3">
           <div>
@@ -64,10 +65,12 @@
         </div>
       </article>
 
+      <!-- VS desktop -->
       <div class="hidden md:flex items-center justify-center">
         <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow">VS</span>
       </div>
 
+      <!-- Player 2 -->
       <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between gap-3">
           <div>
@@ -96,11 +99,13 @@
         </div>
       </article>
 
+      <!-- VS mobile -->
       <div class="md:hidden flex items-center justify-center">
         <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow">VS</span>
       </div>
     </div>
 
+    <!-- Compare button -->
     <div class="flex flex-wrap items-center justify-center gap-3">
       <button id="compare-btn" type="button" onclick="comparePlayers()" disabled
               class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300">
@@ -112,14 +117,38 @@
       <p class="text-xs text-slate-500">Select a player in each column to enable the comparison.</p>
     </div>
 
+    <!-- Hasil perbandingan -->
     <section id="results-section" class="space-y-6">
       <div id="results-placeholder" class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">
         Comparison results will appear here once two players are selected.
       </div>
     </section>
+
+    <!-- Link ke history -->
+    <div class="text-center">
+      <a href="{% url 'comparison_history' %}"
+         class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg transition">
+        📊 View My Comparison History
+      </a>
+    </div>
+
+    {% if user.is_authenticated %}
+    <!-- Save Comparison Section (muncul setelah compare sukses) -->
+    <div id="save-comparison-section" class="max-w-4xl mx-auto px-6 py-8 text-center hidden">
+      <div class="bg-white p-6 rounded-2xl shadow-md">
+        <h3 class="text-xl font-bold text-slate-900 mb-3">Save This Comparison</h3>
+        <p class="text-slate-600 mb-4">Simpan perbandingan ini ke history untuk referensi nanti.</p>
+        <button type="button" onclick="openSaveComparisonModal()"
+                class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition">
+          💾 Save Comparison
+        </button>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </section>
 
+<!-- Overlay Loading (pakai yang sudah ada) -->
 <div id="loading" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60">
   <div class="flex items-center gap-3 rounded-2xl bg-white px-6 py-4 shadow-xl">
     <span class="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-l-slate-900"></span>
@@ -127,6 +156,7 @@
   </div>
 </div>
 
+<!-- Add Player Modal -->
 <div id="addPlayerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
   <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
     <div class="flex items-center justify-between">
@@ -161,6 +191,7 @@
   </div>
 </div>
 
+<!-- Delete Player Modal -->
 <div id="deletePlayerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
   <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
     <div class="flex items-center justify-between">
@@ -179,6 +210,32 @@
         <button type="button" id="confirmDeleteBtn" onclick="confirmDeletePlayer()" disabled class="rounded-2xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:bg-slate-300">Delete</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Save Comparison Modal -->
+<div id="saveComparisonModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
+  <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-lg font-semibold text-slate-900">Save Comparison</h3>
+      <button type="button" onclick="closeSaveComparisonModal()" class="text-slate-400 hover:text-slate-700">&times;</button>
+    </div>
+    <form id="saveComparisonForm" class="mt-2 space-y-4">
+      {% csrf_token %}
+      <label class="block text-sm">
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes (opsional)</span>
+        <textarea name="notes" placeholder="Tambahkan catatan singkat"
+                  class="mt-1 w-full p-3 border rounded-xl h-28 focus:ring-2 focus:ring-slate-200 focus:outline-none"></textarea>
+      </label>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeSaveComparisonModal()"
+                class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300">Cancel</button>
+        <button type="submit"
+                class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+          Save Comparison
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -260,7 +317,7 @@ function selectPlayer(player, playerNum) {
   if (suggestionsEl) suggestionsEl.classList.add('hidden');
   if (selectedCard && name && details) {
     name.textContent = player.name;
-    details.textContent = `${player.club} &middot; ${player.position}`;
+    details.textContent = `${player.club} · ${player.position}`;
     selectedCard.classList.remove('hidden');
   }
   updateCompareButton();
@@ -298,6 +355,9 @@ async function comparePlayers() {
     resultsSection.innerHTML = data.html;
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     renderRadarChart();
+
+    // Tampilkan blok "Save Comparison" setelah hasil muncul
+    document.getElementById('save-comparison-section')?.classList.remove('hidden');
   } catch (error) {
     alert(error.message || 'Unable to compare players');
   } finally {
@@ -406,24 +466,34 @@ document.addEventListener('click', event => {
   }
 });
 
+// ===== Modals: Add/Delete/Save =====
 function openAddPlayerModal() {
   document.getElementById('addPlayerModal')?.classList.remove('hidden');
 }
-
 function closeAddPlayerModal() {
   document.getElementById('addPlayerModal')?.classList.add('hidden');
 }
-
 function openDeletePlayerModal() {
   document.getElementById('deletePlayerModal')?.classList.remove('hidden');
 }
-
 function closeDeletePlayerModal() {
   document.getElementById('deletePlayerModal')?.classList.add('hidden');
   playerToDelete = null;
   document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'disabled');
 }
+function openSaveComparisonModal() {
+  const m = document.getElementById('saveComparisonModal');
+  m?.classList.remove('hidden');
+  m?.classList.add('flex');
+}
+function closeSaveComparisonModal() {
+  const m = document.getElementById('saveComparisonModal');
+  if (!m) return;
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
 
+// ===== Delete Player search & action =====
 const deletePlayerInput = document.getElementById('deletePlayerSearch');
 if (deletePlayerInput) {
   deletePlayerInput.addEventListener('input', debounce(handleDeleteSearch, 300));
@@ -496,25 +566,45 @@ async function confirmDeletePlayer() {
   }
 }
 
-document.getElementById('addPlayerForm')?.addEventListener('submit', async event => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const formData = new FormData(form);
+// ===== Save Comparison submit =====
+document.getElementById('saveComparisonForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!selectedPlayers.player1 || !selectedPlayers.player2) {
+    alert('Pilih 2 pemain terlebih dahulu.');
+    return;
+  }
+
+  const form = e.currentTarget;
+  const notes = form.elements['notes']?.value || '';
+  const csrftoken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 
   try {
-    const response = await fetch('/comparison/players/', {
+    const res = await fetch('/comparison/api/save-comparison/', {
       method: 'POST',
-      body: formData,
-      headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') || '' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+      body: JSON.stringify({
+        player1_id: selectedPlayers.player1.id,
+        player2_id: selectedPlayers.player2.id,
+        notes: notes,
+      }),
+      credentials: 'include',
     });
-    const result = await response.json();
-    if (!result.success) throw new Error(result.error || 'Unable to add player');
 
-    alert(result.message || 'Player added');
+    const data = await res.json();
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Gagal menyimpan comparison');
+    }
+
+    closeSaveComparisonModal();
     form.reset();
-    closeAddPlayerModal();
-  } catch (error) {
-    alert(error.message || 'Unable to add player');
+    alert('Comparison berhasil disimpan!');
+    // Jika ingin langsung ke history:
+    // window.location.href = "{% url 'comparison_history' %}";
+  } catch (err) {
+    alert(err.message || 'Terjadi kesalahan saat menyimpan.');
   }
 });
 </script>

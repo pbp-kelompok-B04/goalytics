@@ -2,6 +2,7 @@
 {% with namespace=request.resolver_match.namespace|default:'' %}
 <nav id="sidebarShell" class="fixed left-0 top-0 h-screen w-72 flex flex-col border-r border-slate-200 bg-white overflow-y-auto no-scrollbar z-40">
   <div class="flex items-center justify-between px-6 py-4 md:py-8">
+    <a href="{% url 'main:home' %}" class="flex items-center gap-3 cursor-pointer">
     <div class="flex items-center gap-3">
       <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -14,6 +15,7 @@
         <p class="text-sm text-slate-500">Your football companion</p>
       </div>
     </div>
+  </a>
     <div class="flex items-center gap-2">
       <button id="sidebarCollapse" type="button" class="hidden md:inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
         <span class="sr-only">Collapse sidebar</span>
