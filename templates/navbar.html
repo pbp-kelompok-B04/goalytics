@@ -15,6 +15,7 @@
         <a href="{% url 'favorite_player:favorite_list' %}" class="hover:text-blue-300 transition">Favorite Players</a>
         <a href="{% url 'match_prediction:match_list' %}" class="hover:text-blue-300 transition">Match Prediction</a>
         <a href="{% url 'forum_home' %}" class="hover:text-blue-300 transition">Discussion</a>
+        <a href="{% url 'transfer_rumour:list' %}" class="hover:text-blue-300 transition">Transfer Rumours</a>
         <a href="{% url 'comparison' %}" class="hover:text-blue-300 transition">Comparison</a>
 
         {% if user.is_authenticated %}
@@ -68,6 +69,7 @@
     <a href="{% url 'favorite_player:favorite_list' %}" class="block px-4 py-2 hover:bg-blue-700">Favorite Players</a>
     <a href="{% url 'match_prediction:match_list' %}" class="block px-4 py-2 hover:bg-blue-700">Match Prediction</a>
     <a href="{% url 'forum_home' %}" class="block px-4 py-2 hover:bg-blue-700">Discussion</a>
+    <a href="{% url 'transfer_rumour:list' %}" class="block px-4 py-2 hover:bg-blue-700">Transfer Rumours</a>
     <a href="{% url 'comparison' %}" class="block px-4 py-2 hover:bg-blue-700">Comparison</a>
 
     {% if user.is_authenticated %}

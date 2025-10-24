@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'comparison',
     'users.apps.UsersConfig',
     'favorite_player.apps.FavoritePlayerConfig',
-    'forum'
+    'forum',
+    'transfer_rumour',
 ]
 
 MIDDLEWARE = [
