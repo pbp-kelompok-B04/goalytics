@@ -10,8 +10,9 @@
   {% block meta %}{% endblock meta %}
 </head>
 <body class="bg-gray-50 text-gray-900">
-
-  {% include 'navbar.html' %}
+  {% if not hide_navbar %}
+    {% include 'navbar.html' %}
+  {% endif %}
 
   {# ✅ Toast - di kanan bawah & tidak tampil di login/register #}
   {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
@@ -30,13 +31,16 @@
 
   {# ================================ #}
   {# ✅ MODAL PLACEHOLDER FOR AJAX FORMS #}
-  {# This is where forms like "Add Match" will appear #}
   {# ================================ #}
-  <div id="ajaxModal" class="hidden fixed inset-0 bg-black bg-opacity-40 justify-center items-center z-50">
-    <div id="ajaxModalContent" class="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
-      <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
-    </div>
-  </div>
+  <div id="ajaxModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-[9999]">
+  <div id="ajaxModalContent"
+        class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md relative overflow-hidden"
+        style="max-height: 90vh;">
+    <button id="closeModalBtn"
+            class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+  </div>
+</div>
 
   {# ================================ #}
   {# SCRIPTS #}

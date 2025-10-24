@@ -3,33 +3,7 @@
 {% block title %}Manage Match{% endblock %}
 {% block content %}
 
-<div class="max-w-3xl mx-auto mt-8 px-4">
-  <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-    <h1 class="text-2xl font-bold text-gray-800 mb-4">
-      {% if object %}Edit Match{% else %}Create New Match{% endif %}
-    </h1>
-
-    <!-- ✅ Ensure the form has class 'ajax-form' -->
-    <form method="post" action="{{ request.path }}" class="ajax-form space-y-4">
-      {% csrf_token %}
-
-      {# Render fields individually if you want better Tailwind styling #}
-      {% for field in form %}
-        <div class="flex flex-col">
-          {{ field.label_tag }}
-          {{ field|add_class:"border rounded-lg px-3 py-2" }}
-          {% if field.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ field.errors|join:", " }}</p>
-          {% endif %}
-        </div>
-      {% endfor %}
-
-      <button type="submit"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-        Save
-      </button>
-    </form>
-  </div>
-</div>
+{# CRITICAL FIX: Include the partial for the full page view #}
+{% include 'match_prediction/partials/match_form_partial.html' %}
 
 {% endblock %}

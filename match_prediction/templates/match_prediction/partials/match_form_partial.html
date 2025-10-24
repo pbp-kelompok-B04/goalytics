@@ -1,0 +1,27 @@
+{% load widget_tweaks %}
+
+<h1 class="text-xl font-semibold text-gray-800 mb-3">
+  {% if object %}Edit Match{% else %}Create New Match{% endif %}
+</h1>
+
+<form method="post" action="{{ request.path }}" class="ajax-form space-y-2 w-full">
+  {% csrf_token %}
+
+  {% for field in form %}
+    <div class="flex flex-col gap-1">
+      {{ field.label_tag }}
+      {{ field|add_class:"border rounded-md px-2 py-1 w-full text-sm" }}
+      
+      {% if field.errors %}
+        <p class="text-red-500 text-xs mt-0.5">{{ field.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <div class="flex justify-end pt-2">
+    <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium">
+      Save
+    </button>
+  </div>
+</form>

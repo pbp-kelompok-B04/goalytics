@@ -115,11 +115,15 @@ class MatchCreateView(CreateView):
 
     def get(self, request, *args, **kwargs):
         # Handle AJAX GET: return form HTML only
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # This check is reliable and avoids the 500 error
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
             form = self.form_class()
-            return render(request, self.template_name, {'form': form})
+            # CRITICAL FIX: Render the new partial template
+            return render(request, 'match_prediction/partials/match_form_partial.html', {'form': form})
+            
+        # Handle standard GET: render the full page template
         return super().get(request, *args, **kwargs)
-
+    
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(is_admin_or_analyst), name='dispatch')
 class MatchUpdateView(UpdateView):
@@ -199,6 +203,7 @@ class MatchDeleteView(DeleteView):
 @login_required
 def add_prediction(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
+
     if request.method == 'POST':
         form = PredictionForm(request.POST)
         if form.is_valid():
@@ -207,10 +212,30 @@ def add_prediction(request, match_id):
             prediction.user = request.user
             prediction.save()
             messages.success(request, "Your prediction has been posted!")
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                from django.template.loader import render_to_string
+                html = render_to_string(
+                    'match_prediction/partials/prediction_list.html',
+                    {'match': match}
+                )
+                return JsonResponse({
+                    'message': "Prediction added successfully!",
+                    'updateTarget': '#predictionList',
+                    'html': html
+                })
+
             return redirect('match_detail', pk=match.id)
     else:
         form = PredictionForm()
-    return render(request, 'match_prediction/prediction_form.html', {'form': form, 'match': match})
+
+    # ✅ Render partial only if AJAX
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        template = 'match_prediction/partials/prediction_form_partial.html'
+    else:
+        template = 'match_prediction/prediction_form.html'
+
+    return render(request, template, {'form': form, 'match': match})
 
 
 @login_required
