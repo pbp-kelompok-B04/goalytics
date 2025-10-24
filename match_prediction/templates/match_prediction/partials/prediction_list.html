@@ -1,0 +1,37 @@
+{% load static %}
+
+{% for prediction in predictions %}
+  <div id="prediction-{{ prediction.id }}" class="border-b border-gray-100 pb-4 mb-4">
+    <div class="flex justify-between items-start">
+      <div>
+        <p class="text-gray-800 font-medium">
+          {{ prediction.user.username }} predicted:
+        </p>
+        <p class="text-gray-600 mt-1">
+          {{ prediction.predicted_home_score }} - {{ prediction.predicted_away_score }}
+        </p>
+        {% if prediction.explanation %}
+          <p class="text-gray-500 text-sm mt-1 italic">"{{ prediction.explanation }}"</p>
+        {% endif %}
+        <p class="text-xs text-gray-400 mt-2">
+          Posted on {{ prediction.created_at|date:"M d, Y H:i" }}
+        </p>
+      </div>
+
+      {% if user == prediction.user or user.profile.role == 'admin' or user.profile.role == 'analyst' %}
+        <div class="flex gap-3">
+          <button
+            data-ajax-url="{% url 'match_prediction:ajax_add_prediction' match.id %}"
+            class="text-blue-600 hover:underline text-sm"
+          >Edit</button>
+          <button
+            data-delete-url="{% url 'match_prediction:delete_prediction' prediction.id %}"
+            class="text-red-600 hover:underline text-sm"
+          >Delete</button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% empty %}
+  <p class="text-gray-500 text-center mt-6">No predictions yet. Be the first to predict!</p>
+{% endfor %}

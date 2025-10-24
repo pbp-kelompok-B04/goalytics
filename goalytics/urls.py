@@ -21,4 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
     path('users/', include('users.urls')),
+    path('matchprediction/', include('match_prediction.urls', namespace='match_prediction')),
+
 ]
