@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title|default:"Rumour Baru" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-10">
+  <div class="bg-white rounded-2xl shadow-lg p-8">
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">{{ form_title|default:"Tulis Transfer Rumour" }}</h1>
+        {% if form_description %}
+          <p class="text-gray-600 mt-2">{{ form_description }}</p>
+        {% endif %}
+      </div>
+      <a href="{% url 'transfer_rumour:list' %}" class="text-sm text-blue-600 hover:text-blue-700">Kembali</a>
+    </div>
+
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {% for field in form %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+            {{ field.label }}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
+          {% endif %}
+          {% if field.errors %}
+            <p class="text-sm text-red-600 mt-2">{{ field.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="flex items-center justify-end gap-3 pt-4">
+        <a href="{% url 'transfer_rumour:list' %}"
+           class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
+          Batal
+        </a>
+        <button type="submit"
+                class="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+          {{ submit_label|default:"Simpan Rumour" }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

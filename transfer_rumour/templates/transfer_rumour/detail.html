@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ rumour.title }}{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-4 py-10">
+  <div class="mb-6">
+    <a href="{% url 'transfer_rumour:list' %}" class="text-blue-600 hover:text-blue-700">&larr; Kembali</a>
+  </div>
+
+  {% if rumour.cover_image_url %}
+    <div class="mb-6 rounded-2xl overflow-hidden shadow-lg bg-gray-100">
+      <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
+           class="w-full h-72 object-cover object-center">
+    </div>
+  {% endif %}
+
+  <header class="mb-6">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ rumour.title }}</h1>
+    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+      <span>{{ rumour.created_at|date:"j M Y, H:i" }}</span>
+      <span>&middot;</span>
+      <span>Ditulis oleh {{ rumour.author.get_full_name|default:rumour.author.username }}</span>
+      {% if rumour.updated_at and rumour.updated_at|date:"U" > rumour.created_at|date:"U" %}
+        <span>&middot;</span>
+        <span>Diperbarui {{ rumour.updated_at|date:"j M Y, H:i" }}</span>
+      {% endif %}
+    </div>
+    {% if can_manage %}
+      <div class="flex flex-wrap items-center gap-3 mt-4">
+        <a href="{% url 'transfer_rumour:edit' rumour.slug %}"
+           class="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 transition">
+          Edit Rumour
+        </a>
+        <a href="{% url 'transfer_rumour:delete' rumour.slug %}"
+           class="inline-flex items-center gap-2 rounded-lg border border-red-500 px-4 py-2 text-red-500 font-semibold hover:bg-red-50 transition">
+          Hapus Rumour
+        </a>
+      </div>
+    {% endif %}
+  </header>
+
+  {% if rumour.summary %}
+    <p class="text-lg text-gray-700 bg-blue-50 border border-blue-100 rounded-lg px-5 py-3 mb-6">
+      {{ rumour.summary }}
+    </p>
+  {% endif %}
+
+  <div class="prose max-w-none text-gray-800 leading-relaxed">
+    {{ rumour.content|linebreaks }}
+  </div>
+
+  {% if rumour.source_url %}
+    <div class="mt-8">
+      <a href="{{ rumour.source_url }}" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
+        <span>Sumber berita</span>
+        <span>&#8599;</span>
+      </a>
+    </div>
+  {% endif %}
+</article>
+{% endblock %}
