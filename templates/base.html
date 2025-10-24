@@ -11,11 +11,10 @@
   {% block meta %}{% endblock meta %}
 </head>
 <body class="bg-slate-50 text-slate-900">
-  <div class="min-h-screen flex flex-col md:flex-row bg-slate-50">
+  <div id="appShell" class="min-h-screen flex flex-col md:flex-row bg-slate-50">
     {% include 'navbar.html' %}
 
-    <div class="flex-1 min-w-0">
-      {# Toast - di kanan bawah & tidak tampil di login/register #}
+    <div id="mainContent" class="flex-1 min-w-0">
       {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
         <div id="alert-container" class="fixed bottom-4 right-4 space-y-3 z-50">
           {% for message in messages %}
@@ -32,8 +31,15 @@
     </div>
   </div>
 
+  <button id="sidebarReopen" type="button"
+          class="fixed bottom-5 left-5 z-50 hidden rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-lg transition hover:border-slate-300 hover:text-slate-900">
+    <svg class="mr-2 inline-block h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 12h16m-7-7 7 7-7 7" />
+    </svg>
+    Open Menu
+  </button>
+
   <script>
-    // dYZ� Animasi masuk
     window.addEventListener('DOMContentLoaded', () => {
       const alerts = document.querySelectorAll('.alert');
       alerts.forEach((alert, index) => {
@@ -44,7 +50,6 @@
       });
     });
 
-    // �?3 Auto hilang
     setTimeout(() => {
       const alerts = document.querySelectorAll('.alert');
       alerts.forEach(alert => {
@@ -52,6 +57,48 @@
         setTimeout(() => alert.remove(), 500);
       });
     }, 3000);
+
+    (function () {
+      const sidebar = document.getElementById('sidebarShell');
+      const collapseBtn = document.getElementById('sidebarCollapse');
+      const reopenBtn = document.getElementById('sidebarReopen');
+      const storageKey = 'goalytics_sidebar_collapsed';
+      const classes = ['hidden', 'md:-translate-x-full'];
+
+      if (!sidebar || !reopenBtn) {
+        return;
+      }
+
+      function apply(collapsed, persist = true) {
+        classes.forEach(cls => sidebar.classList.toggle(cls, collapsed));
+        reopenBtn.classList.toggle('hidden', !collapsed);
+        if (persist && typeof localStorage !== 'undefined') {
+          localStorage.setItem(storageKey, collapsed ? 'true' : 'false');
+        }
+      }
+
+      const initial = typeof localStorage !== 'undefined' && localStorage.getItem(storageKey) === 'true';
+      apply(initial);
+      if (window.innerWidth < 768) {
+        apply(false, false);
+      }
+
+      collapseBtn?.addEventListener('click', () => {
+        const willCollapse = !sidebar.classList.contains('hidden');
+        apply(willCollapse);
+      });
+
+      reopenBtn.addEventListener('click', () => apply(false));
+
+      window.addEventListener('resize', () => {
+        if (window.innerWidth < 768) {
+          apply(false, false);
+        } else {
+          const stored = typeof localStorage !== 'undefined' && localStorage.getItem(storageKey) === 'true';
+          apply(stored, false);
+        }
+      });
+    })();
   </script>
 </body>
 </html>
