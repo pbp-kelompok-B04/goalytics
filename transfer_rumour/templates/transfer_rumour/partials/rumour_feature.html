@@ -1,4 +1,4 @@
-<article data-rumour-id="{{ rumour.id }}" class="grid gap-6 overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-slate-100 shadow-lg lg:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
+<article data-rumour-id="{{ rumour.id }}" class="grid gap-6 overflow-hidden rounded-3xl border border-slate-700 bg-black text-slate-100 shadow-lg lg:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
   <div class="relative bg-slate-800">
     {% if rumour.cover_image_url %}
       <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
@@ -48,7 +48,7 @@
       </a>
       {% if rumour.id in manageable_ids %}
         <div class="flex items-center gap-3 text-slate-400">
-          <a href="{% url 'transfer_rumour:edit' rumour.slug %}" class="hover:text-slate-200">Edit</a>
+          <a href="{% url 'transfer_rumour:edit' rumour.slug %}" data-rumour-edit data-rumour-edit-url="{% url 'transfer_rumour:edit' rumour.slug %}" class="hover:text-slate-200">Edit</a>
           <button type="button" data-rumour-delete data-delete-url="{% url 'transfer_rumour:delete' rumour.slug %}"
                   class="hover:text-slate-200">Hapus</button>
         </div>

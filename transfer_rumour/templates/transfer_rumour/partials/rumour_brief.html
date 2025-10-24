@@ -35,7 +35,7 @@
     </div>
     {% if rumour.id in manageable_ids %}
       <div class="mt-2 flex items-center gap-3 text-xs font-semibold text-slate-500">
-        <a href="{% url 'transfer_rumour:edit' rumour.slug %}" class="hover:text-white">Edit</a>
+        <a href="{% url 'transfer_rumour:edit' rumour.slug %}" data-rumour-edit data-rumour-edit-url="{% url 'transfer_rumour:edit' rumour.slug %}" class="hover:text-white">Edit</a>
         <button type="button" data-rumour-delete data-delete-url="{% url 'transfer_rumour:delete' rumour.slug %}"
                 class="hover:text-white">Hapus</button>
       </div>

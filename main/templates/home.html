@@ -2,55 +2,118 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<section class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white text-center py-20 px-4">
-  <h1 class="text-4xl md:text-6xl font-bold mb-4">Welcome to Goalytics</h1>
-  <p class="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
-    Analyze, predict, and discuss football like never before ⚽
-  </p>
-
-  <form method="POST" class="mt-8">
-    {% csrf_token %}
-    <button type="submit" 
-      class="bg-blue-500 hover:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition">
-      Get Started
-    </button>
-  </form>
-</section>
-
-<!-- Features -->
-<section class="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-
-  <!-- Favorite Players -->
-  <a href="{% if user.is_authenticated %}{% url 'favorite_player:favorite_list' %}{% else %}{% url 'users:login' %}{% endif %}"
-     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
-    <h3 class="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">Favorite Players</h3>
-    <p class="text-gray-600">Save and monitor your favorite football players easily.</p>
-  </a>
-
-  <!-- Match Prediction -->
-  <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition">
-    <h3 class="text-xl font-bold text-blue-800 mb-3">Match Prediction</h3>
-    <p class="text-gray-600">Predict outcomes with AI-assisted analytics and data insights.</p>
+<section class="relative overflow-hidden bg-black text-white">
+  <div class="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-16 sm:py-24">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div class="space-y-4">
+        <span class="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-white/70">Goalytics</span>
+        <h1 class="text-4xl font-semibold leading-tight md:text-6xl">Football intelligence made simple.</h1>
+        <p class="max-w-2xl text-sm text-white/70 md:text-base">Discover transfer whispers, explore player data, and join passionate discussions — all in one place. Sign in to unlock the full Goalytics experience.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{% url cta_url %}"
+           class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white px-5 py-3 text-sm font-semibold text-black shadow-lg transition hover:bg-white/90">
+          {{ cta_label }}
+        </a>
+      </div>
+    </div>
   </div>
-
-  <!-- Discussion Forum -->
-  <a href="{% if user.is_authenticated %}{% url 'forum_home' %}{% else %}{% url 'users:login' %}{% endif %}"
-     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
-    <h3 class="text-xl font-bold text-blue-800 mb-3">Discussion Forum</h3>
-    <p class="text-gray-600">Join passionate fans and discuss matches in real-time.</p>
-  </a>
-
-  <!-- Player Comparison -->
-  <a href="{% if user.is_authenticated %}{% url 'comparison' %}{% else %}{% url 'users:login' %}{% endif %}"
-     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
-    <h3 class="text-xl font-bold text-blue-800 mb-3">Player Comparison</h3>
-    <p class="text-gray-600">Compare player stats and performance side by side.</p>
-  </a>
-
 </section>
 
-<!-- Footer -->
-<footer class="bg-blue-900 text-white text-center py-6">
-  <p>© 2025 Goalytics — All rights reserved.</p>
-</footer>
+<section class="bg-white text-slate-900">
+  <div class="mx-auto max-w-6xl px-6 py-14 space-y-8">
+    <div class="flex flex-col gap-2">
+      <h2 class="text-2xl font-semibold">Transfer rumours snapshot</h2>
+      <p class="text-sm text-slate-500">Two hottest stories to start your day. Login to browse every rumour in detail.</p>
+    </div>
+    <div class="grid gap-6 md:grid-cols-2">
+      {% for rumour in rumour_highlights %}
+        <article class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+          <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span>{{ rumour.created_at|date:"j M Y" }}</span>
+            <span>&middot;</span>
+            <span>{{ rumour.author.get_full_name|default:rumour.author.username }}</span>
+          </div>
+          <h3 class="text-lg font-semibold text-slate-900 leading-snug">{{ rumour.title }}</h3>
+          <p class="text-sm text-slate-600">{{ rumour.summary|default:rumour.content|truncatechars:220 }}</p>
+          <a href="{% url cta_url %}"
+             class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 transition hover:text-black">
+            Login to read more
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </a>
+        </article>
+      {% empty %}
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+          Rumour feed is warming up. Check back later for the latest whispers.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="bg-slate-900 text-slate-100">
+  <div class="mx-auto max-w-6xl px-6 py-14 space-y-8">
+    <div class="flex flex-col gap-2">
+      <h2 class="text-2xl font-semibold">Player insights</h2>
+      <p class="text-sm text-slate-400">Preview the player database. Sign in to access complete metrics, comparisons, and scouting notes.</p>
+    </div>
+    <div class="grid gap-6 md:grid-cols-2">
+      {% for player in player_samples %}
+        <article class="flex flex-col gap-3 rounded-2xl border border-slate-700 bg-black/40 p-6">
+          <div class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ player.get_position_display|default:player.position|default:"Unknown" }}</div>
+          <h3 class="text-lg font-semibold text-white">{{ player.name }}</h3>
+          <p class="text-sm text-slate-400">{{ player.club.name|default:"Free Agent" }}</p>
+          <a href="{% url cta_url %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-200 transition hover:text-white">
+            Login to explore player data
+          </a>
+        </article>
+      {% empty %}
+        <div class="rounded-2xl border border-slate-700 bg-black/40 p-6 text-sm text-slate-400">
+          Player dataset is getting ready. Login to explore once available.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="bg-white text-slate-900">
+  <div class="mx-auto max-w-6xl px-6 py-14 space-y-8">
+    <div class="flex flex-col gap-2">
+      <h2 class="text-2xl font-semibold">Join the community forum</h2>
+      <p class="text-sm text-slate-500">A glimpse of what fans are talking about. Sign in to join the conversation.</p>
+    </div>
+    <div class="grid gap-6 md:grid-cols-2">
+      {% for post in forum_snippets %}
+        <article class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+          <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span>{{ post.author.username }}</span>
+            <span>&middot;</span>
+            <span>{{ post.created_at|timesince }} ago</span>
+          </div>
+          <h3 class="text-lg font-semibold text-slate-900 leading-snug">{{ post.title }}</h3>
+          <p class="text-sm text-slate-600">{{ post.content|truncatechars:200 }}</p>
+          <a href="{% url cta_url %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 transition hover:text-black">
+            Login to join the discussion
+          </a>
+        </article>
+      {% empty %}
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+          Discussions are quiet for now. Be the first to start a thread once you sign in.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="bg-black text-white">
+  <div class="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-16 text-center">
+    <h2 class="text-2xl font-semibold md:text-3xl">Ready to dive deeper?</h2>
+    <p class="max-w-2xl text-sm text-white/70 md:text-base">Create an account or sign in to unlock member-only features, personalization tools, and richer football insights.</p>
+    <a href="{% url cta_url %}" class="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-black">
+      {{ cta_label }}
+    </a>
+  </div>
+</section>
 {% endblock content %}
