@@ -3,68 +3,268 @@
 {% block title %}Transfer Rumours{% endblock %}
 
 {% block content %}
-<section class="max-w-5xl mx-auto px-4 py-10">
+<section class="max-w-5xl mx-auto px-4 py-10" data-rumour-section>
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Transfer Rumours</h1>
       <p class="text-gray-600 mt-2">Ikuti kabar terbaru pergerakan pemain dari para analis Goalytics.</p>
     </div>
     {% if can_publish %}
-      <a href="{% url 'transfer_rumour:create' %}"
-         class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700 transition">
+      <button type="button"
+              data-rumour-open-modal
+              class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700 transition">
         <span>+</span>
         <span>Tulis Rumour Baru</span>
-      </a>
+      </button>
+      <noscript>
+        <a href="{% url 'transfer_rumour:create' %}"
+           class="mt-2 inline-flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 transition">
+          Tulis Rumour Baru
+        </a>
+      </noscript>
     {% endif %}
   </div>
 
-  {% if rumours %}
-    <div class="grid gap-6">
-      {% for rumour in rumours %}
-        <article class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden">
-          {% if rumour.cover_image_url %}
-            <div class="h-48 w-full overflow-hidden bg-gray-100">
-              <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
-                   class="w-full h-full object-cover object-center">
-            </div>
-          {% endif %}
-          <div class="p-6 space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-              <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                <span>{{ rumour.created_at|date:"j M Y, H:i" }}</span>
-                <span>&middot;</span>
-                <span>Ditulis oleh {{ rumour.author.get_full_name|default:rumour.author.username }}</span>
-              </div>
-              {% if rumour.id in manageable_ids %}
-                <div class="flex items-center gap-3 text-sm font-semibold">
-                  <a href="{% url 'transfer_rumour:edit' rumour.slug %}" class="text-blue-600 hover:text-blue-700 transition">Edit</a>
-                  <a href="{% url 'transfer_rumour:delete' rumour.slug %}" class="text-red-500 hover:text-red-600 transition">Hapus</a>
-                </div>
-              {% endif %}
-            </div>
-            <h2 class="text-2xl font-semibold text-gray-900">
-              <a href="{% url 'transfer_rumour:detail' rumour.slug %}" class="hover:text-blue-600 transition">
-                {{ rumour.title }}
-              </a>
-            </h2>
-            {% if rumour.summary %}
-              <p class="text-gray-700 mt-3">{{ rumour.summary }}</p>
-            {% else %}
-              <p class="text-gray-700 mt-3">{{ rumour.content|truncatechars:200 }}</p>
-            {% endif %}
-            <div class="mt-4">
-              <a href="{% url 'transfer_rumour:detail' rumour.slug %}"
-                 class="text-blue-600 font-semibold hover:text-blue-700">Baca selengkapnya &rarr;</a>
-            </div>
-          </div>
-        </article>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="bg-white rounded-xl shadow-md p-10 text-center">
+  <div id="rumour-alert-container" class="space-y-4 mb-6"></div>
+
+  <div id="rumour-list" class="grid gap-6">
+    {% for rumour in rumours %}
+      {% include "transfer_rumour/partials/rumour_card.html" with rumour=rumour manageable_ids=manageable_ids %}
+    {% endfor %}
+  </div>
+
+  {% if not rumours %}
+    <div id="rumour-empty-state" class="bg-white rounded-xl shadow-md p-10 text-center">
       <h2 class="text-xl font-semibold text-gray-800 mb-2">Belum ada rumour.</h2>
       <p class="text-gray-600">Konten baru akan segera hadir. {% if can_publish %}Jadilah yang pertama membagikan rumor terbaru!{% endif %}</p>
     </div>
   {% endif %}
 </section>
+
+{% if can_publish and form %}
+  <div id="rumour-modal"
+       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 hidden z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-xl md:max-w-2xl relative max-h-[90vh] flex flex-col overflow-hidden">
+      <button type="button" data-rumour-close-modal
+              class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+      <div class="p-6 sm:p-8 overflow-y-auto">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Tulis Transfer Rumour</h2>
+        <p class="text-gray-600 mb-6">Isi detail rumour terbaru untuk dibagikan ke komunitas.</p>
+        <form id="rumour-form" method="post" action="{% url 'transfer_rumour:create' %}" class="space-y-6">
+          {% csrf_token %}
+          <div id="rumour-form-fields">
+            {% include "transfer_rumour/partials/form_fields.html" with form=form %}
+          </div>
+          <div class="flex items-center justify-end gap-3 pt-4">
+            <button type="button"
+                    data-rumour-close-modal
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
+              Batal
+            </button>
+            <button type="submit"
+                    class="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                    data-rumour-submit>
+              Simpan Rumour
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('rumour-modal');
+    const openBtn = document.querySelector('[data-rumour-open-modal]');
+    const closeButtons = document.querySelectorAll('[data-rumour-close-modal]');
+    const form = document.getElementById('rumour-form');
+    const formFieldsContainer = document.getElementById('rumour-form-fields');
+    const submitBtn = form ? form.querySelector('[data-rumour-submit]') : null;
+    let listContainer = document.getElementById('rumour-list');
+    const alertContainer = document.getElementById('rumour-alert-container');
+    let emptyState = document.getElementById('rumour-empty-state');
+    const section = document.querySelector('[data-rumour-section]');
+    const initialFormFieldsHtml = formFieldsContainer ? "{% filter escapejs %}{% include 'transfer_rumour/partials/form_fields.html' with form=form %}{% endfilter %}" : "";
+    const emptyStateHtml = "{% filter escapejs %}<div id='rumour-empty-state' class='bg-white rounded-xl shadow-md p-10 text-center'><h2 class='text-xl font-semibold text-gray-800 mb-2'>Belum ada rumour.</h2><p class='text-gray-600'>Konten baru akan segera hadir.{% if can_publish %} Jadilah yang pertama membagikan rumor terbaru!{% endif %}</p></div>{% endfilter %}";
+
+    const getCSRFToken = () => {
+      const input = form ? form.querySelector('input[name=\"csrfmiddlewaretoken\"]') : null;
+      return input ? input.value : '';
+    };
+
+    const parseJSON = async (response) => {
+      try {
+        return await response.json();
+      } catch (error) {
+        return null;
+      }
+    };
+
+    const showAlert = (message, type = 'success') => {
+      if (!alertContainer) return;
+      const wrapper = document.createElement('div');
+      const baseClasses = 'px-4 py-3 rounded-lg shadow transition-opacity duration-500';
+      const colorClasses = type === 'success'
+        ? 'bg-green-500 text-white'
+        : 'bg-red-500 text-white';
+      wrapper.className = `${baseClasses} ${colorClasses}`;
+      wrapper.textContent = message;
+      alertContainer.appendChild(wrapper);
+      setTimeout(() => {
+        wrapper.style.opacity = '0';
+        setTimeout(() => wrapper.remove(), 500);
+      }, 3000);
+    };
+
+    const toggleModal = (visible) => {
+      if (!modal) return;
+      modal.classList.toggle('hidden', !visible);
+      if (visible) {
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+        const firstField = modal.querySelector('input, textarea, select');
+        firstField?.focus();
+      } else {
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('overflow-hidden');
+      }
+    };
+
+    const ensureEmptyState = () => {
+      if ((!listContainer || listContainer.children.length === 0) && !emptyState) {
+        const template = document.createElement('template');
+        template.innerHTML = emptyStateHtml;
+        const element = template.content.firstElementChild;
+        if (element) {
+          (section || document.body).appendChild(element);
+          emptyState = element;
+        }
+      }
+    };
+
+    if (openBtn) {
+      openBtn.addEventListener('click', () => {
+        toggleModal(true);
+      });
+    }
+
+    closeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        toggleModal(false);
+      });
+    });
+
+    if (modal) {
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+          toggleModal(false);
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          toggleModal(false);
+        }
+      });
+    }
+
+    const bindDeleteButtons = () => {
+      document
+        .querySelectorAll('[data-rumour-delete]')
+        .forEach((button) => {
+          if (button.dataset.bound === 'true') return;
+          button.dataset.bound = 'true';
+          button.addEventListener('click', async () => {
+            const deleteUrl = button.dataset.deleteUrl;
+            const card = button.closest('[data-rumour-id]');
+            if (!deleteUrl || !card) return;
+            const confirmed = confirm('Hapus rumour ini? Tindakan tidak dapat dibatalkan.');
+            if (!confirmed) return;
+            try {
+              const response = await fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'X-CSRFToken': getCSRFToken(),
+                },
+              });
+              const payload = await parseJSON(response);
+              if (!response.ok || !payload || !payload.success) {
+                throw new Error((payload && payload.message) || 'Gagal menghapus rumour.');
+              }
+              card.remove();
+              if (listContainer && listContainer.children.length === 0) {
+                ensureEmptyState();
+              }
+              showAlert((payload && payload.message) || 'Rumour berhasil dihapus.');
+            } catch (error) {
+              showAlert(error.message || 'Terjadi kesalahan saat menghapus rumour.', 'error');
+            }
+          });
+        });
+    };
+
+    bindDeleteButtons();
+
+    if (form) {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.action) return;
+        submitBtn?.setAttribute('disabled', 'true');
+        submitBtn?.classList.add('opacity-70', 'cursor-not-allowed');
+        try {
+          const formData = new FormData(form);
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData,
+          });
+          const payload = await parseJSON(response);
+          if (!response.ok || !payload || !payload.success) {
+            if (payload && payload.form_html && formFieldsContainer) {
+              formFieldsContainer.innerHTML = payload.form_html;
+            }
+            throw new Error((payload && payload.message) || 'Gagal menyimpan rumour.');
+          }
+          if (payload.card_html) {
+            if (emptyState) {
+              emptyState.remove();
+              emptyState = null;
+            }
+            const container = listContainer || (() => {
+              const newContainer = document.createElement('div');
+              newContainer.id = 'rumour-list';
+              newContainer.className = 'grid gap-6';
+              (section || document.body).appendChild(newContainer);
+              listContainer = newContainer;
+              return newContainer;
+            })();
+            const template = document.createElement('template');
+            template.innerHTML = payload.card_html.trim();
+            const cardElement = template.content.firstElementChild;
+            container.prepend(cardElement);
+            bindDeleteButtons();
+          }
+          form.reset();
+          if (formFieldsContainer && initialFormFieldsHtml) {
+            formFieldsContainer.innerHTML = initialFormFieldsHtml;
+          }
+          showAlert((payload && payload.message) || 'Rumour transfer berhasil dibuat.');
+          toggleModal(false);
+        } catch (error) {
+          if (!error.message.includes('Gagal menyimpan') && !error.message.includes('Terjadi kesalahan')) {
+            showAlert('Terjadi kesalahan saat memproses permintaan.', 'error');
+          } else {
+            showAlert(error.message, 'error');
+          }
+        } finally {
+          submitBtn?.removeAttribute('disabled');
+          submitBtn?.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}

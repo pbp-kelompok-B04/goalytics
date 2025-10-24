@@ -269,6 +269,7 @@ def delete_prediction(request, pk):
 
 # --- UPVOTE VIEW ---
 
+
 @login_required
 def toggle_upvote(request, prediction_id):
     prediction = get_object_or_404(Prediction, id=prediction_id, is_deleted=False)
@@ -281,9 +282,10 @@ def toggle_upvote(request, prediction_id):
     else:
         messages.success(request, "You upvoted this prediction!")
 
-    # Recalculate count for display
-    prediction.recalc_upvote_count()
-    return redirect('match_detail', pk=prediction.match.id)
+    # Recalculate count for display (this is fine, calls model method)
+    prediction.recalc_upvote_count() 
+    # FIX: Use namespaced URL for robustness
+    return redirect('match_prediction:match_detail', pk=prediction.match.id)
 
 @login_required
 def ajax_add_prediction(request, match_id):
