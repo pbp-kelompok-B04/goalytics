@@ -15,8 +15,7 @@ from django.db.models import Count
 
 # --- Role helpers ---
 def is_admin_or_analyst(user):
-    return True
-    # return getattr(getattr(user, 'profile', None), 'role', None) in ['admin', 'analyst']
+    return getattr(getattr(user, 'profile', None), 'role', None) in ['admin', 'analyst']
 
 
 
@@ -74,7 +73,7 @@ class MatchDetailView(DetailView):
         return context
 
 
-@method_decorator(user_passes_test(lambda u: True), name='dispatch')  # allow all users for testing
+@method_decorator(user_passes_test(is_admin_or_analyst), name='dispatch')  
 class MatchCreateView(CreateView):
     model = Match
     form_class = MatchForm
