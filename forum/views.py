@@ -8,7 +8,6 @@ from django.views.decorators.http import require_http_methods
 from urllib.parse import quote
 import json
 
-
 def _avatar_for_user(user):
     profile = getattr(user, "profile", None)
     avatar = getattr(profile, "profile_picture", None) if profile else None
@@ -17,9 +16,16 @@ def _avatar_for_user(user):
     fallback_source = (user.get_full_name() or "").strip() or user.username or "User"
     return f"https://ui-avatars.com/api/?name={quote(fallback_source)}"
 
-
 def forum_home(request):
-    return render(request, "forum_home.html")
+    is_admin = False
+    if request.user.is_authenticated:
+        profile = getattr(request.user, "profile", None)
+        if getattr(profile, "role", "") == "admin":
+            is_admin = True
+    context = {
+        "forum_is_admin": is_admin,
+    }
+    return render(request, "forum_home.html", context)
 
 def forum_post_detail(request, post_id):
     return render(request, "post_detail.html", {"post_id": post_id})
@@ -138,7 +144,6 @@ def get_post_comment(request, post_id):
         else:
             roots.append((comment.created_at, data))
 
-    # Replies were appended in chronological order; maintain that for nested
     def sort_replies(node):
         node["replies"].sort(key=lambda item: created_lookup.get(item["id"]))
         for child in node["replies"]:
@@ -340,7 +345,6 @@ def update_post(request, post_id):
         "league": post.league,
     })
 
-
 @login_required
 @require_http_methods(["POST"])
 def update_comment(request, comment_id):
@@ -411,5 +415,4 @@ def delete_comment(request, comment_id):
     return JsonResponse({
         'message': 'Komentar berhasil dihapus'
     }, status=200)
-
 

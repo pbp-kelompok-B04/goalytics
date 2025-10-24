@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'favorite_player.apps.FavoritePlayerConfig',
     'forum',
     'transfer_rumour',
+ 
 ]
 
 MIDDLEWARE = [
@@ -160,4 +161,5 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = 'users:login'
+LOGIN_URL = '/users/login/'
+LOGIN_REDIRECT_URL = '/'

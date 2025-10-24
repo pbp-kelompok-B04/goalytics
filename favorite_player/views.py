@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Avg
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -46,12 +47,21 @@ def favorite_list(request):
             'limited': limited,
         })
 
+    favorite_count = favorites.count()
+    avg_pass_accuracy = favorites.aggregate(avg_pass=Avg('player__pass_accuracy'))['avg_pass'] or 0
+    unique_team_count = len({club_name for club_name in favorites.values_list('player__club__name', flat=True) if club_name})
+
     context = {
         'favorites': favorites,
         'players': players,
         'favorite_ids': favorite_ids,
         'search_query': query,
         'players_limited': limited,
+        'favorite_stats': {
+            'count': favorite_count,
+            'avg_rating': round(avg_pass_accuracy) if avg_pass_accuracy else 0,
+            'teams': unique_team_count,
+        },
     }
     return render(request, 'favorite_list.html', context)
 

@@ -80,8 +80,9 @@ def search_users(request):
 
     qs = qs.order_by('user__username')
 
-    paginator = Paginator(qs, 12)  # 12 kartu per halaman
+    paginator = Paginator(qs, 12)  # 12 cards per page
     page_obj = paginator.get_page(request.GET.get('page'))
+    active_filters = sum(1 for value in (q, league, position) if value)
 
     context = {
         'page_obj': page_obj,
@@ -90,6 +91,8 @@ def search_users(request):
         'position': position,
         'LEAGUE_CHOICES': Profile.LEAGUE_CHOICES,
         'POSITION_CHOICES': Profile.POSITION_CHOICES,
+        'active_filters': active_filters,
+        'results_count': paginator.count,
     }
     return render(request, 'search.html', context)
 
@@ -127,6 +130,12 @@ def search_users_api(request):
             "favorite_league": p.get_favorite_league_display() if p.favorite_league else None,
             "preferred_position": p.get_preferred_position_display() if p.preferred_position else None,
             "avatar": p.profile_picture,
+            "role": p.role or "",
+            "bio": (p.bio or "").strip(),
+            "member_since": p.user.date_joined.strftime("%B %Y") if p.user.date_joined else "",
+            "instagram_url": p.instagram_url,
+            "x_url": p.x_url,
+            "website_url": p.website_url,
         })
 
     return JsonResponse({"results": results})

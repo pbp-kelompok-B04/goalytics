@@ -1,0 +1,58 @@
+<article data-rumour-id="{{ rumour.id }}" class="grid gap-6 overflow-hidden rounded-3xl border border-slate-700 bg-black text-slate-100 shadow-lg lg:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
+  <div class="relative bg-slate-800">
+    {% if rumour.cover_image_url %}
+      <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
+           class="h-full w-full object-cover object-center">
+    {% else %}
+      <div class="flex h-full min-h-[220px] items-center justify-center text-slate-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M3 12h18M12 21V3" />
+        </svg>
+      </div>
+    {% endif %}
+    <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+  </div>
+  <div class="flex flex-col justify-between gap-6 p-6 sm:p-8">
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <span class="inline-flex items-center gap-2 rounded-full border border-slate-600 px-3 py-1 text-slate-200">Top rumour</span>
+        <span>{{ rumour.created_at|date:"j M Y, H:i" }}</span>
+      </div>
+      <h2 class="text-3xl font-semibold text-white md:text-4xl">
+        <a href="{% url 'transfer_rumour:detail' rumour.slug %}" class="hover:text-slate-200">{{ rumour.title }}</a>
+      </h2>
+      <p class="text-sm text-slate-400">Sumber: {{ rumour.source_name|default:rumour.source_url|default:"Tidak diketahui" }}</p>
+      <p class="text-base text-slate-200">{{ rumour.summary|default:rumour.content|truncatechars:220 }}</p>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 1.5" />
+          </svg>
+          {{ rumour.created_at|timesince }} ago
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ rumour.author.get_full_name|default:rumour.author.username }}
+        </span>
+      </div>
+      <a href="{% url 'transfer_rumour:detail' rumour.slug %}"
+         class="inline-flex items-center gap-2 rounded-xl border border-slate-600 px-4 py-2 text-slate-100 transition hover:bg-slate-800">
+        Baca selengkapnya
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+      {% if rumour.id in manageable_ids %}
+        <div class="flex items-center gap-3 text-slate-400">
+          <a href="{% url 'transfer_rumour:edit' rumour.slug %}" data-rumour-edit data-rumour-edit-url="{% url 'transfer_rumour:edit' rumour.slug %}" class="hover:text-slate-200">Edit</a>
+          <button type="button" data-rumour-delete data-delete-url="{% url 'transfer_rumour:delete' rumour.slug %}"
+                  class="hover:text-slate-200">Hapus</button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</article>
