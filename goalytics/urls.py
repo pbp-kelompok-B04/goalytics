@@ -21,9 +21,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
     path('users/', include('users.urls')),
+    path('matchprediction/', include('match_prediction.urls', namespace='match_prediction')),
     path('adminpanel/', include('adminpanel.urls')),
     path('comparison/', include('comparison.urls')),
     path('data/', include('PlayerClub_Data.urls')),
     path('favorite/', include('favorite_player.urls')), 
-    path('forum/', include('forum.urls'))
+    path('forum/', include('forum.urls')),
+    path('transfer-rumours/', include('transfer_rumour.urls')),
 ]
