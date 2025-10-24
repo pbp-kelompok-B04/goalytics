@@ -7,6 +7,7 @@ from PlayerClub_Data.models import Player, Club
 import json
 import traceback
 from django.utils.safestring import mark_safe
+from .models import SavedComparison
 
 def comparison_view(request):
     return render(request, 'comparison/comparison.html')
@@ -119,6 +120,7 @@ def get_max_values():
     }
 
 def compare_players_api(request):
+    """API untuk compare players - SESUAIKAN DENGAN MODEL BARU"""
     try:
         player1_id = request.GET.get('player1_id')
         player2_id = request.GET.get('player2_id')
@@ -126,27 +128,109 @@ def compare_players_api(request):
         player1 = Player.objects.get(id=player1_id)
         player2 = Player.objects.get(id=player2_id)
         
-        # Get position-specific stats
-        player1_stats = get_position_stats(player1)
-        player2_stats = get_position_stats(player2)
+        # Stats yang akan ditampilkan di comparison
+        player1_stats = {
+            'goals': player1.goals or 0,
+            'assists': player1.assists or 0,
+            'xg': player1.xg or 0,
+            'npxg': player1.npxg or 0,
+            'xag': player1.xag or 0,
+            'Progressive_Carries': player1.Progressive_Carries or 0,
+            'Progressive_Passes': player1.Progressive_Passes or 0,
+            'Progressive_Receptions': player1.Progressive_Receptions or 0,
+            'passes_completed': player1.passes_completed or 0,
+            'passes_attempted': player1.passes_attempted or 0,
+            'pass_accuracy': player1.pass_accuracy or 0,
+            'tackles': player1.tackles or 0,
+            'tackles_won': player1.tackles_won or 0,
+            'challenges_won': player1.challenges_won or 0,
+            'challenges_attempted': player1.challenges_attempted or 0,
+            'blocks': player1.blocks or 0,
+            'clearances': player1.clearances or 0,
+            'saves': player1.saves or 0,
+            'save_percentage': player1.save_percentage or 0,
+            'clean_sheets': player1.clean_sheets or 0,
+            'clean_sheet_percentage': player1.clean_sheet_percentage or 0,
+        }
         
-        # Get max values
-        max_values = get_max_values()
-
+        player2_stats = {
+            'goals': player2.goals or 0,
+            'assists': player2.assists or 0,
+            'xg': player2.xg or 0,
+            'npxg': player2.npxg or 0,
+            'xag': player2.xag or 0,
+            'Progressive_Carries': player2.Progressive_Carries or 0,
+            'Progressive_Passes': player2.Progressive_Passes or 0,
+            'Progressive_Receptions': player2.Progressive_Receptions or 0,
+            'passes_completed': player2.passes_completed or 0,
+            'passes_attempted': player2.passes_attempted or 0,
+            'pass_accuracy': player2.pass_accuracy or 0,
+            'tackles': player2.tackles or 0,
+            'tackles_won': player2.tackles_won or 0,
+            'challenges_won': player2.challenges_won or 0,
+            'challenges_attempted': player2.challenges_attempted or 0,
+            'blocks': player2.blocks or 0,
+            'clearances': player2.clearances or 0,
+            'saves': player2.saves or 0,
+            'save_percentage': player2.save_percentage or 0,
+            'clean_sheets': player2.clean_sheets or 0,
+            'clean_sheet_percentage': player2.clean_sheet_percentage or 0,
+        }
+        
+        # Calculate max values untuk progress bars
+        max_values = {
+            'goals': max(player1_stats['goals'], player2_stats['goals']) or 1,
+            'assists': max(player1_stats['assists'], player2_stats['assists']) or 1,
+            'xg': max(player1_stats['xg'], player2_stats['xg']) or 1,
+            'npxg': max(player1_stats['npxg'], player2_stats['npxg']) or 1,
+            'xag': max(player1_stats['xag'], player2_stats['xag']) or 1,
+            'Progressive_Carries': max(player1_stats['Progressive_Carries'], player2_stats['Progressive_Carries']) or 1,
+            'Progressive_Passes': max(player1_stats['Progressive_Passes'], player2_stats['Progressive_Passes']) or 1,
+            'Progressive_Receptions': max(player1_stats['Progressive_Receptions'], player2_stats['Progressive_Receptions']) or 1,
+            'passes_completed': max(player1_stats['passes_completed'], player2_stats['passes_completed']) or 1,
+            'passes_attempted': max(player1_stats['passes_attempted'], player2_stats['passes_attempted']) or 1,
+            'pass_accuracy': max(player1_stats['pass_accuracy'], player2_stats['pass_accuracy']) or 1,
+            'tackles': max(player1_stats['tackles'], player2_stats['tackles']) or 1,
+            'tackles_won': max(player1_stats['tackles_won'], player2_stats['tackles_won']) or 1,
+            'challenges_won': max(player1_stats['challenges_won'], player2_stats['challenges_won']) or 1,
+            'challenges_attempted': max(player1_stats['challenges_attempted'], player2_stats['challenges_attempted']) or 1,
+            'blocks': max(player1_stats['blocks'], player2_stats['blocks']) or 1,
+            'clearances': max(player1_stats['clearances'], player2_stats['clearances']) or 1,
+            'saves': max(player1_stats['saves'] or 0, player2_stats['saves'] or 0) or 1,
+            'save_percentage': max(player1_stats['save_percentage'] or 0, player2_stats['save_percentage'] or 0) or 1,
+            'clean_sheets': max(player1_stats['clean_sheets'] or 0, player2_stats['clean_sheets'] or 0) or 1,
+            'clean_sheet_percentage': max(player1_stats['clean_sheet_percentage'] or 0, player2_stats['clean_sheet_percentage'] or 0) or 1,
+        }
+        
+        # Radar chart data (hanya untuk players dengan position sama)
         same_position = player1.position == player2.position
-
-        # Radar chart data (only if same position)
         radar_labels = []
         radar_data1 = []
         radar_data2 = []
         radar_max = []
-
+        
         if same_position:
-            radar_labels = list(player1_stats.keys())
-            radar_data1 = [player1_stats[k] or 0 for k in radar_labels]
-            radar_data2 = [player2_stats.get(k, 0) or 0 for k in radar_labels]
-            radar_max = [max_values.get(k, 1) or 1 for k in radar_labels]
-
+            if player1.position == 'FW':
+                radar_labels = ['goals', 'assists', 'xg', 'npxg', 'xag']
+                radar_data1 = [player1_stats['goals'], player1_stats['assists'], player1_stats['xg'], player1_stats['npxg'], player1_stats['xag']]
+                radar_data2 = [player2_stats['goals'], player2_stats['assists'], player2_stats['xg'], player2_stats['npxg'], player2_stats['xag']]
+                radar_max = [max_values['goals'], max_values['assists'], max_values['xg'], max_values['npxg'], max_values['xag']]
+            elif player1.position == 'MF':
+                radar_labels = ['goals', 'assists', 'Progressive_Passes', 'pass_accuracy', 'xag']
+                radar_data1 = [player1_stats['goals'], player1_stats['assists'], player1_stats['Progressive_Passes'], player1_stats['pass_accuracy'], player1_stats['xag']]
+                radar_data2 = [player2_stats['goals'], player2_stats['assists'], player2_stats['Progressive_Passes'], player2_stats['pass_accuracy'], player2_stats['xag']]
+                radar_max = [max_values['goals'], max_values['assists'], max_values['Progressive_Passes'], max_values['pass_accuracy'], max_values['xag']]
+            elif player1.position == 'DF':
+                radar_labels = ['tackles', 'tackles_won', 'blocks', 'clearances', 'challenges_won']
+                radar_data1 = [player1_stats['tackles'], player1_stats['tackles_won'], player1_stats['blocks'], player1_stats['clearances'], player1_stats['challenges_won']]
+                radar_data2 = [player2_stats['tackles'], player2_stats['tackles_won'], player2_stats['blocks'], player2_stats['clearances'], player2_stats['challenges_won']]
+                radar_max = [max_values['tackles'], max_values['tackles_won'], max_values['blocks'], max_values['clearances'], max_values['challenges_won']]
+            elif player1.position == 'GK':
+                radar_labels = ['saves', 'save_percentage', 'clean_sheets', 'clean_sheet_percentage']
+                radar_data1 = [player1_stats['saves'], player1_stats['save_percentage'], player1_stats['clean_sheets'], player1_stats['clean_sheet_percentage']]
+                radar_data2 = [player2_stats['saves'], player2_stats['save_percentage'], player2_stats['clean_sheets'], player2_stats['clean_sheet_percentage']]
+                radar_max = [max_values['saves'], max_values['save_percentage'], max_values['clean_sheets'], max_values['clean_sheet_percentage']]
+        
         context = {
             'player1': player1,
             'player2': player2,
@@ -154,22 +238,17 @@ def compare_players_api(request):
             'player2_stats': player2_stats,
             'max_values': max_values,
             'same_position': same_position,
-            'radar_labels': mark_safe(json.dumps(radar_labels)),
-            'radar_data1': mark_safe(json.dumps(radar_data1)),
-            'radar_data2': mark_safe(json.dumps(radar_data2)),
-            'radar_max': mark_safe(json.dumps(radar_max)),
+            'radar_labels': json.dumps(radar_labels),
+            'radar_data1': json.dumps(radar_data1),
+            'radar_data2': json.dumps(radar_data2),
+            'radar_max': json.dumps(radar_max),
         }
+        
         html = render_to_string('comparison/comparison_results.html', context)
         
         return JsonResponse({
             'success': True,
-            'html': html,
-            'radar_labels': radar_labels,
-            'radar_data1': radar_data1,
-            'radar_data2': radar_data2,
-            'radar_max': radar_max,
-            'player1_name': player1.name,
-            'player2_name': player2.name,
+            'html': html
         })
         
     except Player.DoesNotExist:
@@ -178,11 +257,9 @@ def compare_players_api(request):
             'error': 'Player not found'
         }, status=404)
     except Exception as e:
-        print("❌ Error comparing players:", str(e))
-        traceback.print_exc()
         return JsonResponse({
             'success': False,
-            'error': f'Server error: {str(e)}'
+            'error': 'Server error'
         }, status=500)
 
 # Admin functions
@@ -264,3 +341,103 @@ def delete_player(request, player_id):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+@login_required
+def save_comparison(request):
+    """Save comparison to user's history"""
+    if request.method == 'POST':
+        try:
+            player1_id = request.POST.get('player1_id')
+            player2_id = request.POST.get('player2_id')
+            notes = request.POST.get('notes', '')
+            
+            player1 = Player.objects.get(id=player1_id)
+            player2 = Player.objects.get(id=player2_id)
+            
+            # Save comparison
+            comparison, created = SavedComparison.objects.get_or_create(
+                user=request.user,
+                player1=player1,
+                player2=player2,
+                defaults={'notes': notes}
+            )
+            
+            if not created:
+                # Update notes if comparison already exists
+                comparison.notes = notes
+                comparison.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Comparison saved successfully!' if created else 'Comparison updated successfully!',
+                'comparison_id': comparison.id
+            })
+            
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+@login_required
+def comparison_history(request):
+    """Halaman untuk melihat history comparisons"""
+    return render(request, 'comparison/comparison_history.html')
+
+@login_required
+def get_saved_comparisons(request):
+    """API untuk get saved comparisons user"""
+    comparisons = SavedComparison.objects.filter(user=request.user)
+    
+    comparisons_data = []
+    for comp in comparisons:
+        comparisons_data.append({
+            'id': comp.id,
+            'player1': {
+                'id': comp.player1.id,
+                'name': comp.player1.name,
+                'club': comp.player1.club.name if comp.player1.club else 'No Club',
+                'position': comp.player1.position
+            },
+            'player2': {
+                'id': comp.player2.id,
+                'name': comp.player2.name,
+                'club': comp.player2.club.name if comp.player2.club else 'No Club', 
+                'position': comp.player2.position
+            },
+            'created_at': comp.created_at.strftime('%d %b %Y, %H:%M'),
+            'notes': comp.notes
+        })
+    
+    return JsonResponse({'comparisons': comparisons_data})
+
+@login_required
+def delete_saved_comparison(request, comparison_id):
+    """Delete saved comparison"""
+    try:
+        comparison = SavedComparison.objects.get(id=comparison_id, user=request.user)
+        player1_name = comparison.player1.name
+        player2_name = comparison.player2.name
+        comparison.delete()
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'Comparison {player1_name} vs {player2_name} deleted successfully!'
+        })
+    except SavedComparison.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Comparison not found'})
+
+def get_player_by_id(request, player_id):
+    """Get player by ID"""
+    try:
+        player = Player.objects.get(id=player_id)
+        player_data = {
+            'id': player.id,
+            'name': player.name,
+            'club': player.club.name if player.club else 'No Club',
+            'position': player.position or 'Unknown'
+        }
+        return JsonResponse({'player': player_data})
+    except Player.DoesNotExist:
+        return JsonResponse({'error': 'Player not found'}, status=404)
