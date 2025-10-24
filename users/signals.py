@@ -12,7 +12,7 @@ def create_default_admins(sender, **kwargs):
                     password="project-admin"
                 )
                 Profile.objects.create(user=user, role='admin')
-                print(f"✅ Created admin user: {username}")
+                print(f"Created admin user: {username}")
     except (OperationalError, ProgrammingError):
         # Happens before first migration — safe to ignore
         pass
