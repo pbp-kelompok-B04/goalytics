@@ -3,61 +3,107 @@
 {% block title %}{{ rumour.title }}{% endblock %}
 
 {% block content %}
-<article class="max-w-3xl mx-auto px-4 py-10">
-  <div class="mb-6">
-    <a href="{% url 'transfer_rumour:list' %}" class="text-blue-600 hover:text-blue-700">&larr; Kembali</a>
-  </div>
-
-  {% if rumour.cover_image_url %}
-    <div class="mb-6 rounded-2xl overflow-hidden shadow-lg bg-gray-100">
-      <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
-           class="w-full h-72 object-cover object-center">
-    </div>
-  {% endif %}
-
-  <header class="mb-6">
-    <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ rumour.title }}</h1>
-    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-      <span>{{ rumour.created_at|date:"j M Y, H:i" }}</span>
-      <span>&middot;</span>
-      <span>Ditulis oleh {{ rumour.author.get_full_name|default:rumour.author.username }}</span>
-      {% if rumour.updated_at and rumour.updated_at|date:"U" > rumour.created_at|date:"U" %}
-        <span>&middot;</span>
-        <span>Diperbarui {{ rumour.updated_at|date:"j M Y, H:i" }}</span>
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto max-w-5xl space-y-10">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <a href="{% url 'transfer_rumour:list' %}"
+         class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Semua Rumour
+      </a>
+      {% if can_manage %}
+        <div class="flex flex-wrap items-center gap-2 text-sm font-semibold">
+          <a href="{% url 'transfer_rumour:edit' rumour.slug %}"
+             class="inline-flex items-center gap-2 rounded-xl border border-blue-600 px-4 py-2 text-blue-600 transition hover:bg-blue-50">
+            Edit
+          </a>
+          <a href="{% url 'transfer_rumour:delete' rumour.slug %}"
+             class="inline-flex items-center gap-2 rounded-xl border border-rose-500 px-4 py-2 text-rose-500 transition hover:bg-rose-50">
+            Hapus
+          </a>
+        </div>
       {% endif %}
     </div>
-    {% if can_manage %}
-      <div class="flex flex-wrap items-center gap-3 mt-4">
-        <a href="{% url 'transfer_rumour:edit' rumour.slug %}"
-           class="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 transition">
-          Edit Rumour
-        </a>
-        <a href="{% url 'transfer_rumour:delete' rumour.slug %}"
-           class="inline-flex items-center gap-2 rounded-lg border border-red-500 px-4 py-2 text-red-500 font-semibold hover:bg-red-50 transition">
-          Hapus Rumour
-        </a>
+
+    <article class="space-y-8">
+      <header class="space-y-4">
+        <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">
+          Rumour Transfer
+        </span>
+        <h1 class="text-3xl font-bold text-slate-900 md:text-4xl">{{ rumour.title }}</h1>
+        <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <span>{{ rumour.created_at|date:"j M Y, H:i" }}</span>
+          <span>&middot;</span>
+          <span>{{ rumour.author.get_full_name|default:rumour.author.username }}</span>
+          {% if rumour.updated_at and rumour.updated_at|date:"U" > rumour.created_at|date:"U" %}
+            <span>&middot;</span>
+            <span>Diperbarui {{ rumour.updated_at|date:"j M Y, H:i" }}</span>
+          {% endif %}
+        </div>
+      </header>
+
+      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <div class="bg-slate-100">
+            {% if rumour.cover_image_url %}
+              <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
+                   class="h-full w-full object-cover object-center">
+            {% else %}
+              <div class="flex h-full min-h-[240px] items-center justify-center text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M3 12h18M12 21V3" />
+                </svg>
+              </div>
+            {% endif %}
+          </div>
+          <div class="flex flex-col justify-between gap-6 p-6 md:p-8">
+            {% if rumour.summary %}
+              <div class="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-slate-700">
+                {{ rumour.summary }}
+              </div>
+            {% endif %}
+            <div class="space-y-3 text-sm text-slate-500">
+              <p>Sumber: <span class="font-semibold text-slate-700">{{ rumour.source_name|default:rumour.source_url|default:"Tidak diketahui" }}</span></p>
+              <p>Slug: <span class="font-mono text-slate-600">{{ rumour.slug }}</span></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <span>Bagikan</span>
+              <div class="flex items-center gap-2 text-slate-500">
+                <a href="https://twitter.com/intent/tweet?text={{ rumour.title|urlencode }}&url={{ request.build_absolute_uri }}" target="_blank" rel="noopener"
+                   class="hover:text-slate-900 transition">X</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener"
+                   class="hover:text-slate-900 transition">Facebook</a>
+                <button type="button" onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}')" class="hover:text-slate-900 transition">
+                  Salin tautan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    {% endif %}
-  </header>
 
-  {% if rumour.summary %}
-    <p class="text-lg text-gray-700 bg-blue-50 border border-blue-100 rounded-lg px-5 py-3 mb-6">
-      {{ rumour.summary }}
-    </p>
-  {% endif %}
+      <div class="prose max-w-none text-slate-800 prose-headings:text-slate-900 prose-a:text-slate-900">
+        {{ rumour.content|linebreaks }}
+      </div>
 
-  <div class="prose max-w-none text-gray-800 leading-relaxed">
-    {{ rumour.content|linebreaks }}
+      {% if rumour.source_url %}
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex sm:items-center sm:justify-between">
+          <div class="space-y-1 text-sm text-slate-500">
+            <p class="font-semibold text-slate-900">Sumber berita</p>
+            <p>{{ rumour.source_name|default:rumour.source_url }}</p>
+          </div>
+          <a href="{{ rumour.source_url }}" target="_blank" rel="noopener"
+             class="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 sm:mt-0">
+            Buka tautan
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 17l10-10m0 0H9m8 0v8" />
+            </svg>
+          </a>
+        </div>
+      {% endif %}
+    </article>
   </div>
-
-  {% if rumour.source_url %}
-    <div class="mt-8">
-      <a href="{{ rumour.source_url }}" target="_blank" rel="noopener"
-         class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
-        <span>Sumber berita</span>
-        <span>&#8599;</span>
-      </a>
-    </div>
-  {% endif %}
-</article>
+</section>
 {% endblock %}

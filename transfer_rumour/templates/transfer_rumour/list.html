@@ -27,9 +27,26 @@
 
   <div id="rumour-alert-container" class="space-y-4 mb-6"></div>
 
-  <div id="rumour-list" class="grid gap-6">
+  <div id="rumour-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
     {% for rumour in rumours %}
-      {% include "transfer_rumour/partials/rumour_card.html" with rumour=rumour manageable_ids=manageable_ids %}
+      {% if forloop.first %}
+        <article class="rumour-card rumour-card-feature lg:col-span-4 sm:col-span-2"
+                 data-rumour-id="{{ rumour.id }}">
+          {% include "transfer_rumour/partials/rumour_feature.html" with rumour=rumour manageable_ids=manageable_ids %}
+        </article>
+      {% elif forloop.counter <= 4 %}
+        <article class="rumour-card rumour-card-stack" data-rumour-id="{{ rumour.id }}">
+          {% include "transfer_rumour/partials/rumour_brief.html" with rumour=rumour manageable_ids=manageable_ids %}
+        </article>
+      {% elif forloop.counter <= 6 %}
+        <article class="rumour-card rumour-card-split sm:col-span-2 lg:col-span-2" data-rumour-id="{{ rumour.id }}">
+          {% include "transfer_rumour/partials/rumour_split.html" with rumour=rumour manageable_ids=manageable_ids %}
+        </article>
+      {% else %}
+        <article class="rumour-card rumour-card-stack" data-rumour-id="{{ rumour.id }}">
+          {% include "transfer_rumour/partials/rumour_brief.html" with rumour=rumour manageable_ids=manageable_ids %}
+        </article>
+      {% endif %}
     {% endfor %}
   </div>
 
@@ -40,6 +57,39 @@
     </div>
   {% endif %}
 </section>
+
+<style>
+  .rumour-card img { transition: transform 0.3s ease; }
+  .rumour-card:hover img { transform: scale(1.02); }
+
+  @media (max-width: 639px) {
+    #rumour-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .rumour-card-feature {
+      grid-column: span 2 / span 2;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+    .rumour-card-feature .grid {
+      grid-template-columns: 160px minmax(0, 1fr);
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 640px) and (max-width: 1023px) {
+    #rumour-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #rumour-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>
 
 {% if can_publish and form %}
   <div id="rumour-modal"
