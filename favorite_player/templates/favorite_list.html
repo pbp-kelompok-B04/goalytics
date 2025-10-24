@@ -23,16 +23,22 @@
         {% for favorite in favorites %}
           <li class="bg-blue-50/60 border border-blue-100 rounded-xl p-5 flex flex-col gap-4 shadow-sm hover:shadow-lg transition">
             <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold">
+            <div class="w-14 h-14 h-14 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center">
+            {% if favorite.player.image_url %}
+                <img src="{{ favorite.player.image_url }}" alt="{{ favorite.player.name }}" class="w-full h-full object-cover">
+            {% else %}
+                <span class="text-white text-xl font-semibold">
                 {{ favorite.player.name|slice:":2" }}
-              </div>
-              <div>
-                <p class="font-semibold text-gray-900">{{ favorite.player.name }}</p>
-                <p class="text-sm text-gray-500">{{ favorite.player.club.name|default:"Free Agent" }}</p>
-                <p class="text-xs text-gray-400 uppercase tracking-wide">
-                  {{ favorite.player.get_position_display|default:favorite.player.position|default:"-" }}
-                </p>
-              </div>
+                </span>
+            {% endif %}
+            </div>
+                <div>
+                    <p class="font-semibold text-gray-900">{{ favorite.player.name }}</p>
+                    <p class="text-sm text-gray-500">{{ favorite.player.club.name|default:"Free Agent" }}</p>
+                    <p class="text-xs text-gray-400 uppercase tracking-wide">
+                    {{ favorite.player.get_position_display|default:favorite.player.position|default:"-" }}
+                    </p>
+                </div>
             </div>
             <form method="post" action="{% url 'favorite_player:remove_favorite' favorite.player.id %}">
               {% csrf_token %}
