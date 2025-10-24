@@ -28,14 +28,18 @@
     </div>
     {% if can_manage %}
       <div class="flex flex-wrap items-center gap-3 mt-4">
-        <a href="{% url 'transfer_rumour:edit' rumour.slug %}"
-           class="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 transition">
+        <button type="button"
+                data-rumour-edit-open
+                data-edit-url="{% url 'transfer_rumour:edit' rumour.slug %}"
+                class="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 transition">
           Edit Rumour
-        </a>
-        <a href="{% url 'transfer_rumour:delete' rumour.slug %}"
-           class="inline-flex items-center gap-2 rounded-lg border border-red-500 px-4 py-2 text-red-500 font-semibold hover:bg-red-50 transition">
+        </button>
+        <button type="button"
+                data-rumour-delete
+                data-delete-url="{% url 'transfer_rumour:delete' rumour.slug %}"
+                class="inline-flex items-center gap-2 rounded-lg border border-red-500 px-4 py-2 text-red-500 font-semibold hover:bg-red-50 transition">
           Hapus Rumour
-        </a>
+        </button>
       </div>
     {% endif %}
   </header>
@@ -50,7 +54,7 @@
     {{ rumour.content|linebreaks }}
   </div>
 
-  {% if rumour.source_url %}
+{% if rumour.source_url %}
     <div class="mt-8">
       <a href="{{ rumour.source_url }}" target="_blank" rel="noopener"
          class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
@@ -60,4 +64,176 @@
     </div>
   {% endif %}
 </article>
+
+{% if can_manage %}
+  <div id="rumour-edit-modal"
+       class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 hidden z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-xl md:max-w-2xl relative max-h-[90vh] flex flex-col overflow-hidden">
+      <button type="button" data-rumour-edit-close
+              class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+      <div class="p-6 sm:p-8 overflow-y-auto">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Edit Transfer Rumour</h2>
+        <p class="text-gray-600 mb-6">Perbarui detail rumour perpindahan pemain.</p>
+        <form id="rumour-edit-form" method="post" class="space-y-6">
+          {% csrf_token %}
+          <div id="rumour-edit-form-fields"></div>
+          <div class="flex items-center justify-end gap-3 pt-4">
+            <button type="button"
+                    data-rumour-edit-close
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition">
+              Batal
+            </button>
+            <button type="submit"
+                    class="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                    data-rumour-edit-submit>
+              Simpan Perubahan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% if can_manage %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const editModal = document.getElementById('rumour-edit-modal');
+    const openBtn = document.querySelector('[data-rumour-edit-open]');
+    const closeButtons = document.querySelectorAll('[data-rumour-edit-close]');
+    const form = document.getElementById('rumour-edit-form');
+    const formFieldsContainer = document.getElementById('rumour-edit-form-fields');
+    const submitBtn = form ? form.querySelector('[data-rumour-edit-submit]') : null;
+    const deleteButton = document.querySelector('[data-rumour-delete]');
+    const deleteUrl = deleteButton ? deleteButton.dataset.deleteUrl : null;
+    const getCSRFToken = () => {
+      const input = form ? form.querySelector('input[name="csrfmiddlewaretoken"]') : null;
+      return input ? input.value : '';
+    };
+
+    const parseJSON = async (response) => {
+      try {
+        return await response.json();
+      } catch (error) {
+        return null;
+      }
+    };
+
+    const toggleModal = (visible) => {
+      if (!editModal) return;
+      editModal.classList.toggle('hidden', !visible);
+      if (visible) {
+        editModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+        const firstField = editModal.querySelector('input, textarea, select');
+        firstField?.focus();
+      } else {
+        editModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('overflow-hidden');
+      }
+    };
+
+    const loadForm = async () => {
+      if (!openBtn) return;
+      const editUrl = openBtn.dataset.editUrl;
+      if (!editUrl) return;
+      try {
+        const response = await fetch(editUrl, {
+          method: 'GET',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+        const payload = await parseJSON(response);
+        if (!response.ok || !payload || !payload.success) {
+          throw new Error((payload && payload.message) || 'Gagal memuat formulir.');
+        }
+        formFieldsContainer.innerHTML = payload.form_html;
+        form.setAttribute('action', payload.action || editUrl);
+        toggleModal(true);
+      } catch (error) {
+        alert(error.message || 'Terjadi kesalahan saat memuat formulir.');
+      }
+    };
+
+    if (openBtn) {
+      openBtn.addEventListener('click', loadForm);
+    }
+
+    closeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        toggleModal(false);
+      });
+    });
+
+    if (editModal) {
+      editModal.addEventListener('click', (event) => {
+        if (event.target === editModal) {
+          toggleModal(false);
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          toggleModal(false);
+        }
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const action = form.getAttribute('action') || (openBtn ? openBtn.dataset.editUrl : "{{ rumour.get_absolute_url }}");
+        submitBtn?.setAttribute('disabled', 'true');
+        submitBtn?.classList.add('opacity-70', 'cursor-not-allowed');
+        try {
+          const formData = new FormData(form);
+          const response = await fetch(action, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData,
+          });
+          const payload = await parseJSON(response);
+          if (!response.ok || !payload || !payload.success) {
+            if (payload && payload.form_html) {
+              formFieldsContainer.innerHTML = payload.form_html;
+            }
+            throw new Error((payload && payload.message) || 'Gagal memperbarui rumour.');
+          }
+          window.location.reload();
+        } catch (error) {
+          alert(error.message || 'Terjadi kesalahan saat menyimpan rumour.');
+        } finally {
+          submitBtn?.removeAttribute('disabled');
+          submitBtn?.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    if (deleteButton && deleteUrl) {
+      deleteButton.addEventListener('click', async () => {
+        const confirmed = confirm('Hapus rumour ini? Tindakan tidak dapat dibatalkan.');
+        if (!confirmed) return;
+        try {
+          const response = await fetch(deleteUrl, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': getCSRFToken(),
+            },
+          });
+          const payload = await parseJSON(response);
+          if (!response.ok || !payload || !payload.success) {
+            throw new Error((payload && payload.message) || 'Gagal menghapus rumour.');
+          }
+          window.location.href = "{% url 'transfer_rumour:list' %}";
+        } catch (error) {
+          alert(error.message || 'Terjadi kesalahan saat menghapus rumour.');
+        }
+      });
+    }
+  });
+</script>
+{% endif %}
 {% endblock %}
