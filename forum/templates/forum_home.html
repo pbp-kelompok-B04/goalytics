@@ -300,8 +300,7 @@
 
   const listUrl = "{% url 'get_all_post' %}";
   const createUrl = "{% url 'create_post' %}";
-  const detailTemplate = "{% url 'forum_post_detail' 0 %}";
-  const profileTemplate = "{% url 'users:profile' 'USERNAME_PLACEHOLDER' %}";
+  // detailTemplate and profileTemplate are already declared earlier to avoid redeclaration
 
   const leagueSelect = document.getElementById('league-filter');
   const sortSelect = document.getElementById('sort-order');
@@ -608,6 +607,12 @@
     }
   }
 
+  const detailTemplate = "{% url 'forum_post_detail' 0 %}";
+  const profileTemplate = "{% url 'users:profile' 'USERNAME_PLACEHOLDER' %}";
+
+  function buildDetailUrl(postId) {
+  return detailTemplate.replace("0/", `${postId}/`);
+}
   function displayPosts(posts) {
     if (!postsListElement) {
       return;
