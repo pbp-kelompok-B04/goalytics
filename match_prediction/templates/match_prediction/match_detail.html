@@ -60,4 +60,160 @@
   </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Buat modal & toast kalau belum ada ---
+  function ensureModalShell() {
+    if (!document.getElementById('ajaxModal')) {
+      document.body.insertAdjacentHTML('beforeend', `
+<div id="ajaxModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+      <h2 class="text-xl font-semibold text-slate-900">Form</h2>
+      <button id="ajaxModalClose" class="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800" aria-label="Close modal">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div id="ajaxModalBody" class="px-6 py-6"></div>
+  </div>
+</div>
+<div id="toast" class="fixed top-24 right-6 z-[70] hidden items-center gap-3 rounded-2xl border border-slate-200 bg-slate-900/95 px-5 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-sm">
+  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+  </svg>
+  <span id="toastMessage">Saved!</span>
+</div>
+      `);
+      const m = document.getElementById('ajaxModal');
+      document.getElementById('ajaxModalClose').addEventListener('click', closeModal);
+      m.addEventListener('click', (e)=>{ if (e.target===m) closeModal(); });
+      window.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeModal(); });
+    }
+  }
+
+  function grab() {
+    return {
+      modal: document.getElementById('createMatchModal') || document.getElementById('ajaxModal'),
+      body:  document.getElementById('createMatchBody')  || document.getElementById('ajaxModalBody'),
+      toast: document.getElementById('toast'),
+      toastMsg: document.getElementById('toastMessage'),
+    };
+  }
+
+  function openModal(){ ensureModalShell(); const {modal}=grab(); modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); }
+  function closeModal(){ const {modal,body}=grab(); if(modal){ modal.classList.add('hidden'); modal.classList.remove('flex'); } if(body){ body.innerHTML=''; } document.body.classList.remove('overflow-hidden'); }
+
+  function showToast(msg, isError=false){
+    ensureModalShell();
+    const {toast,toastMsg}=grab();
+    if(!toast) return alert(msg||'Done');
+    toastMsg.textContent = msg || 'Done';
+    if(isError){ toast.classList.add('bg-rose-500'); } else { toast.classList.remove('bg-rose-500'); }
+    toast.classList.remove('hidden'); toast.classList.add('flex');
+    setTimeout(()=>{ toast.classList.add('hidden'); toast.classList.remove('flex'); }, 2500);
+  }
+
+  function getCookie(name){ const v=`; ${document.cookie}`.split(`; ${name}=`); if(v.length===2) return decodeURIComponent(v.pop().split(';').shift()); }
+  const csrftoken = getCookie('csrftoken');
+
+  async function loadForm(url){
+    ensureModalShell();
+    const {body}=grab();
+    openModal();
+    body.innerHTML = '<div class="py-8 text-center text-sm text-slate-500">Loading…</div>';
+    const res  = await fetch(url, { headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'include' });
+    const html = await res.text();
+    body.innerHTML = html;
+    const form = body.querySelector('form');
+    if(form) bindAjax(form, url);
+  }
+
+  function bindAjax(form, url){
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const res = await fetch(url, {
+        method:'POST',
+        headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': csrftoken||'' },
+        credentials:'include',
+        body: new FormData(form)
+      });
+      const ctype = res.headers.get('content-type')||'';
+      if(ctype.includes('application/json')){
+        const data = await res.json();
+        if(data.updateTarget && data.html){
+          const t = document.querySelector(data.updateTarget);
+          if(t) t.innerHTML = data.html;
+        }
+        showToast(data.message || 'Saved');
+        closeModal();
+      } else {
+        const html = await res.text(); // form error → kirim balik HTML form
+        const {body}=grab();
+        body.innerHTML = html;
+        bindAjax(body.querySelector('form'), url);
+      }
+    });
+  }
+
+  // + Add Prediction
+  const addPredBtn = document.querySelector('button[data-ajax-url][data-update-target="#predictionList"]');
+  addPredBtn?.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const url = addPredBtn.dataset.ajaxUrl;
+    if(url) loadForm(url);
+  });
+
+  // Delegasi tombol di dalam #predictionList (Edit/Delete/Upvote)
+  const predList = document.getElementById('predictionList');
+  predList?.addEventListener('click', (e)=>{
+    const el = e.target.closest('.js-edit-prediction, .js-delete-prediction, .js-upvote-btn');
+    if(!el) return;
+
+    // Edit
+    if(el.classList.contains('js-edit-prediction')){
+      e.preventDefault();
+      const url = el.dataset.ajaxUrl;
+      if(url) loadForm(url);
+      return;
+    }
+    // Delete
+    if(el.classList.contains('js-delete-prediction')){
+      e.preventDefault();
+      const url = el.dataset.deleteUrl;
+      if(!url) return;
+      if(!confirm('Delete this prediction?')) return;
+      fetch(url, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrftoken||''}, credentials:'include' })
+        .then(r=>r.json())
+        .then(data=>{
+          if(data.updateTarget && data.html){
+            const t = document.querySelector(data.updateTarget);
+            if(t) t.innerHTML = data.html;
+          }
+          showToast(data.message || 'Deleted');
+        });
+      return;
+    }
+    // Upvote
+    if(el.classList.contains('js-upvote-btn')){
+      e.preventDefault();
+      const url = el.dataset.upvoteUrl;
+      const id  = el.dataset.predictionId;
+      fetch(url, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrftoken||''}, credentials:'include' })
+        .then(r=>r.json())
+        .then(data=>{
+          if(typeof data.new_count !== 'undefined' && id){
+            const cnt = document.getElementById('upvote-count-'+id);
+            if(cnt) cnt.textContent = data.new_count;
+          }
+          showToast(data.message || 'Updated');
+        });
+    }
+  });
+});
+</script>
+
+
+
 {% endblock %}

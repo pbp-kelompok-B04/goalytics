@@ -240,39 +240,34 @@ def add_prediction(request, match_id):
 
 @login_required
 def edit_prediction(request, pk):
-    """Handle prediction editing via AJAX or normal page."""
     prediction = get_object_or_404(Prediction, pk=pk, is_deleted=False)
-    if prediction.user != request.user and not is_admin_or_analyst(request.user):
-        return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+    match = prediction.match
 
-    # ---- POST: update prediction ----
+    # GET (AJAX) → kirim HTML form ke modal
+    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = PredictionForm(instance=prediction)
+        return render(request, 'match_prediction/prediction_form.html', {
+            'form': form, 'object': prediction, 'match': match
+        })
+
+    # POST (AJAX) → simpan & kembalikan list terbaru
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = PredictionForm(request.POST, instance=prediction)
         if form.is_valid():
             form.save()
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Prediction updated successfully!',
-                'updateTarget': f'#prediction-{prediction.id}',  # reload just this prediction div
-            })
-        # return form HTML with errors if invalid
-        return render(request, 'match_prediction/prediction_form.html', {
-            'form': form,
-            'object': prediction,
-            'match': prediction.match
-        }, status=400)
+            predictions = match.predictions.filter(is_deleted=False).select_related('user')
+            new_list_html = render_to_string(
+                'match_prediction/partials/prediction_list.html',
+                {'predictions': predictions, 'match': match, 'request': request, 'user': request.user},
+                request=request
+            )
+            return JsonResponse({'status':'success','message':'Prediction updated successfully!','updateTarget':'#predictionList','html':new_list_html})
+        return render(request, 'match_prediction/prediction_form.html', {'form': form, 'object': prediction, 'match': match}, status=400)
 
-    # ---- GET: return form HTML ----
-    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        form = PredictionForm(instance=prediction)
-        return render(request, 'match_prediction/prediction_form.html', {
-            'form': form,
-            'object': prediction,
-            'match': prediction.match
-        })
+    # Fallback non-AJAX
+    form = PredictionForm(instance=prediction)
+    return render(request, 'match_prediction/prediction_form.html', {'form': form, 'object': prediction, 'match': match})
 
-    # fallback for invalid requests
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
 @login_required

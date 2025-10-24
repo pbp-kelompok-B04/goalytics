@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      {% if user == prediction.user or user.profile.role in ['admin','analyst'] %}
+      {% if user == prediction.user or user.profile.role == 'admin' or user.profile.role == 'analyst' %}
         <div class="flex gap-3">
           <button
             class="js-edit-prediction inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm"

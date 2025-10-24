@@ -1,8 +1,7 @@
-{# templates/match_prediction/match_list.html #}
+{# templates/match_prediction/match_detail.html #}
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}Match Forums{% endblock %}
+{% block title %}{{ match.home_club.name }} vs {{ match.away_club.name }}{% endblock %}
 
 {% block content %}
 <section class="w-full px-4 py-6 sm:px-8 lg:px-12">
