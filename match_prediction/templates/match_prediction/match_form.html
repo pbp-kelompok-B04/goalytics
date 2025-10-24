@@ -1,6 +1,6 @@
+{% load static %}
 
-
-<form method="post" id="matchCreateForm" class="space-y-5">
+<form method="post" id="matchForm" class="space-y-5">
   {% csrf_token %}
 
   {# error non-field #}
@@ -10,7 +10,7 @@
     </div>
   {% endif %}
 
-  {# Pakai form bawaan per-field (lebih rapi daripada as_p) #}
+  {# render per-field #}
   {% for field in form %}
     <label class="block space-y-1">
       <span class="text-sm font-semibold text-slate-700">{{ field.label }}</span>
@@ -34,7 +34,17 @@
 
 <script>
   document.getElementById('match-modal-close-proxy')?.addEventListener('click', () => {
-    const closer = document.getElementById('closeCreateMatch') || document.getElementById('match-modal-close');
-    closer?.click();
+    (document.getElementById('ajaxModalClose') || document.getElementById('closeCreateMatch'))?.click();
   });
+
+  (function styleFields(rootId){
+    const root = document.getElementById(rootId);
+    if(!root) return;
+    const base = "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200";
+    root.querySelectorAll('input:not([type=checkbox]):not([type=radio]), select, textarea').forEach(el=>{
+      if(!el.className || !/rounded-2xl|rounded-xl|rounded-lg/.test(el.className)){
+        el.className = (el.className ? el.className + ' ' : '') + base;
+      }
+    });
+  })('matchForm');
 </script>
