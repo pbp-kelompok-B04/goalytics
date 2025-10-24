@@ -2,23 +2,54 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="flex justify-center items-center h-screen bg-gray-100">
-  <form method="POST" class="bg-white p-8 rounded-lg shadow-md w-96">
-    {% csrf_token %}
-    <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">Login to Goalytics</h2>
+<section class="min-h-screen bg-slate-100 flex items-center justify-center px-4 py-10">
+  <div class="w-full max-w-md">
+    <div class="rounded-3xl border border-slate-200 bg-white/95 p-8 shadow-xl backdrop-blur">
+      <div class="mb-6 space-y-2 text-center">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M8 4h8l1 7a4 4 0 0 1-4 4v4l-2 1-2-1v-4a4 4 0 0 1-4-4l1-7z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-semibold text-slate-900">Welcome back</h1>
+        <p class="text-sm text-slate-500">Sign in to continue your Goalytics experience.</p>
+      </div>
 
-    {% for message in messages %}
-      <p class="text-red-500 text-center mb-2">{{ message }}</p>
-    {% endfor %}
+      {% if messages %}
+        <div class="mb-4 space-y-2">
+          {% for message in messages %}
+            <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-    <input type="text" name="username" placeholder="Username" class="w-full p-2 mb-3 border rounded" required>
-    <input type="password" name="password" placeholder="Password" class="w-full p-2 mb-5 border rounded" required>
+      <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        <label class="block text-left text-sm font-medium text-slate-600">
+          Username
+          <input type="text" name="username" placeholder="Enter your username" required
+                 class="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+        </label>
+        <label class="block text-left text-sm font-medium text-slate-600">
+          Password
+          <input type="password" name="password" placeholder="Enter your password" required
+                 class="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+        </label>
 
-    <button type="submit" class="w-full bg-blue-700 text-white py-2 rounded hover:bg-blue-800 transition">Login</button>
+        <button type="submit"
+                class="w-full rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800">
+          Sign In
+        </button>
+      </form>
 
-    <p class="mt-4 text-center text-sm">Don't have an account? 
-      <a href="{% url 'users:register' %}" class="text-blue-600 hover:underline">Register</a>
-    </p>
-  </form>
-</div>
+      <p class="mt-6 text-center text-sm text-slate-500">
+        Don't have an account?
+        <a href="{% url 'users:register' %}" class="font-semibold text-slate-900 hover:underline">Create one</a>
+      </p>
+    </div>
+  </div>
+</section>
 {% endblock %}
