@@ -46,7 +46,9 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Total Posts</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+              {% if forum_is_admin or not request.user.is_authenticated %}Total Posts{% else %}Your Posts{% endif %}
+            </p>
             <p id="stat-total-posts" class="text-2xl font-semibold text-slate-900">0</p>
           </div>
         </div>
@@ -59,7 +61,9 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Total Likes</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+              {% if forum_is_admin or not request.user.is_authenticated %}Total Likes{% else %}Your Likes{% endif %}
+            </p>
             <p id="stat-total-likes" class="text-2xl font-semibold text-slate-900">0</p>
           </div>
         </div>
@@ -72,7 +76,9 @@
             </svg>
           </div>
           <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Active Now</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+              {% if forum_is_admin or not request.user.is_authenticated %}Active Now{% else %}Active Posts (6h){% endif %}
+            </p>
             <p id="stat-active-now" class="text-2xl font-semibold text-slate-900">0</p>
           </div>
         </div>
@@ -290,6 +296,7 @@
 
 <script>
   const isAuthenticated = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
+  const isAdminUser = ("{{ forum_is_admin|yesno:'true,false' }}" === "true");
   let currentLeague = '';
   let currentSort = 'newest';
   let showMyPostsOnly = false;
@@ -533,19 +540,30 @@
     if (!statTotalPosts || !statTotalLikes || !statActiveNow) {
       return;
     }
-    const totalPosts = posts.length;
-    const totalLikes = posts.reduce((sum, post) => sum + (post.like_count || 0), 0);
+    const useOwnStats = isAuthenticated && !isAdminUser;
+    const ownPosts = useOwnStats ? posts.filter(post => post.is_author) : posts;
+    const totalPosts = ownPosts.length;
+    const totalLikes = ownPosts.reduce((sum, post) => sum + (post.like_count || 0), 0);
     const activeCutoff = Date.now() - (1000 * 60 * 60 * 6);
-    const activeAuthors = new Set();
-    posts.forEach(post => {
-      const createdAt = new Date(post.created_at).getTime();
-      if (!Number.isNaN(createdAt) && createdAt >= activeCutoff && post.author) {
-        activeAuthors.add(post.author);
-      }
-    });
+    let activeValue = 0;
+    if (useOwnStats) {
+      activeValue = ownPosts.reduce((count, post) => {
+        const createdAt = new Date(post.created_at).getTime();
+        return count + (!Number.isNaN(createdAt) && createdAt >= activeCutoff ? 1 : 0);
+      }, 0);
+    } else {
+      const activeAuthors = new Set();
+      posts.forEach(post => {
+        const createdAt = new Date(post.created_at).getTime();
+        if (!Number.isNaN(createdAt) && createdAt >= activeCutoff && post.author) {
+          activeAuthors.add(post.author);
+        }
+      });
+      activeValue = activeAuthors.size;
+    }
     statTotalPosts.textContent = totalPosts;
     statTotalLikes.textContent = totalLikes;
-    statActiveNow.textContent = activeAuthors.size;
+    statActiveNow.textContent = activeValue;
   }
 
   function renderPosts() {
