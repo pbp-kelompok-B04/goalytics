@@ -2,185 +2,215 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-lg">
-  
-  <!-- BACK TO DASHBOARD BUTTON -->
-  <div class="flex justify-between items-center mb-6">
-    <a href="{% url 'main:dashboard' %}" 
-       class="flex items-center gap-2 text-blue-800 font-semibold hover:text-blue-600 transition">
-      ← Back to Dashboard
-    </a>
-  </div>
-
-  <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
-
-    <!-- LEFT: Profile Picture & Role -->
-    <div class="flex flex-col items-center w-full md:w-1/3">
-      {% if profile.profile_picture %}
-        <img src="{{ profile.profile_picture }}"
-             alt="Profile Picture"
-             class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4 object-cover">
-      {% else %}
-        <img src="https://ui-avatars.com/api/?name={{ profile.user.username|urlencode }}"
-             alt="Profile Picture"
-             class="w-40 h-40 rounded-full border-4 border-blue-500 shadow-md mb-4 object-cover">
-      {% endif %}
-
-      <h2 class="text-2xl font-bold text-blue-800">{{ profile.user.username }}</h2>
-      <p class="text-gray-500 text-sm mb-2">{{ profile.user.email }}</p>
-
-      <!-- ROLE TAG -->
-      <span class="
-        inline-block px-3 py-1 rounded-full text-sm font-medium mb-4
-        {% if profile.role == 'admin' %}
-          bg-red-100 text-red-700 border border-red-300
-        {% else %}
-          bg-blue-100 text-blue-800
-        {% endif %}
-      ">
-        {{ profile.role|title }}
-      </span>
-
-      <!-- FLAG & BLOCK WARNING -->
-      {% if profile.is_flagged %}
-        <div class="mt-1 text-sm text-red-600 font-medium">
-          🚨 Violated the regulation & terms
-        </div>
-      {% endif %}
-
-      {% if profile.is_blocked %}
-        <div class="mt-2 text-center bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-          This user is currently blocked.
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- RIGHT: Profile Info -->
-    <div class="flex-1 w-full">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-semibold text-gray-800">Profile Information</h3>
-
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto max-w-5xl space-y-8">
+    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div>
+        <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">Profile</h1>
+        <p class="text-slate-500">Manage your account settings and preferences.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'main:dashboard' %}" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200">
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Dashboard
+        </a>
         {% if is_owner %}
-          <button id="editBtn"
-                  class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+          <button id="editBtn" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300">
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-.879-9.121a2.121 2.121 0 1 1 3 3L13 15l-4 1 1-4 7.121-7.121z" />
+            </svg>
             Edit Profile
           </button>
         {% endif %}
       </div>
+    </div>
 
-      <div id="readView" class="space-y-5">
-        <div>
-          <p class="text-gray-700 font-semibold mb-1">Bio</p>
-          <p class="text-gray-600">{{ profile.bio|default:"No bio yet." }}</p>
-        </div>
-
-        <div>
-          <p class="text-gray-700 font-semibold mb-1">Favorite Team</p>
-          <p class="text-gray-600">
-            {% if profile.favorite_team %}{{ profile.favorite_team }}{% else %}-{% endif %}
-          </p>
-        </div>
-
-        <div>
-          <p class="text-gray-700 font-semibold mb-1">Favorite League</p>
-          <p class="text-gray-600">
-            {% if profile.favorite_league %}
-              {{ profile.get_favorite_league_display }}
-            {% else %}
-              -
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)]">
+      <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-6 md:flex-row md:gap-10">
+          <div class="flex flex-col items-center gap-4 md:w-64">
+            <div class="relative flex h-28 w-28 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-500 shadow-inner">
+              {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture }}" alt="{{ profile.user.get_full_name|default:profile.user.username }}" class="h-28 w-28 rounded-full object-cover" />
+              {% else %}
+                {{ profile.user.username|slice:':2'|upper }}
+              {% endif %}
+            </div>
+            <div class="text-center">
+              <h2 class="text-xl font-semibold text-slate-900">{{ profile.user.get_full_name|default:profile.user.username }}</h2>
+              <p class="text-sm text-slate-500">{{ profile.user.email|default:'No email provided' }}</p>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5V4H2v16h5" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v9m0 0-3-3m3 3 3-3" />
+              </svg>
+              {{ profile.role|default:'Member'|title }}
+            </span>
+            {% if profile.is_flagged %}
+              <p class="text-xs font-semibold text-rose-500">This account has active flags.</p>
             {% endif %}
-          </p>
-        </div>
-
-        <div>
-          <p class="text-gray-700 font-semibold mb-1">Preferred Position</p>
-          <p class="text-gray-600">
-            {% if profile.preferred_position %}
-              {{ profile.get_preferred_position_display }}
-            {% else %}
-              -
-            {% endif %}
-          </p>
-        </div>
-
-        <!-- SOCIAL ICONS -->
-        {% if profile.instagram_url or profile.x_url or profile.website_url %}
-        <div class="mt-2">
-          <p class="text-gray-700 font-semibold mb-2">Socials</p>
-          <div class="flex items-center gap-3">
-            {% if profile.instagram_url %}
-              <a href="{{ profile.instagram_url }}" target="_blank" class="group w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition">
-                <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <rect x="3" y="3" width="18" height="18" rx="5"></rect>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                </svg>
-              </a>
-            {% endif %}
-
-            {% if profile.x_url %}
-              <a href="{{ profile.x_url }}" target="_blank" class="group w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition">
-                <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.244 2H21l-6.59 7.523L22.5 22h-6.937l-5.43-7.256L3.9 22H1.143l7.12-8.128L1.5 2h6.937l4.98 6.65L18.244 2Zm-2.431 18.285h1.925L7.275 3.643H5.35l10.463 16.642Z"/>
-                </svg>
-              </a>
-            {% endif %}
-
-            {% if profile.website_url %}
-              <a href="{{ profile.website_url }}" target="_blank" class="group w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition">
-                <svg class="w-5 h-5 text-gray-600 group-hover:text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M2 12h20"></path>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                </svg>
-              </a>
+            {% if profile.is_blocked %}
+              <p class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-500">This user is currently blocked.</p>
             {% endif %}
           </div>
-        </div>
-        {% endif %}
 
-        <div class="pt-2">
-          <p class="text-gray-500 text-sm">Member since {{ user.date_joined|date:"F j, Y" }}</p>
-        </div>
-      </div>
+          <div class="flex-1 space-y-6">
+            <section class="rounded-3xl border border-slate-200 bg-slate-50/70 p-6">
+              <header class="mb-4 flex items-center gap-2 text-slate-500">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
+                </svg>
+                <span class="text-sm font-semibold uppercase tracking-wide">Personal Information</span>
+              </header>
+              <div id="readView" class="space-y-6">
+                <div class="rounded-2xl bg-white px-6 py-5 text-sm text-slate-600 shadow-sm">
+                  <p class="mb-2 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">Bio</p>
+                  <p>{{ profile.bio|default:"No bio yet." }}</p>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <div class="rounded-2xl bg-white px-6 py-5 text-sm shadow-sm">
+                    <p class="mb-1 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">Favorite Team</p>
+                    <p class="text-slate-700">{{ profile.favorite_team|default:'-' }}</p>
+                  </div>
+                  <div class="rounded-2xl bg-white px-6 py-5 text-sm shadow-sm">
+                    <p class="mb-1 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">Favorite League</p>
+                    <p class="text-slate-700">{% if profile.favorite_league %}{{ profile.get_favorite_league_display }}{% else %}-{% endif %}</p>
+                  </div>
+                  <div class="rounded-2xl bg-white px-6 py-5 text-sm shadow-sm">
+                    <p class="mb-1 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">Preferred Position</p>
+                    <p class="text-slate-700">{% if profile.preferred_position %}{{ profile.get_preferred_position_display }}{% else %}-{% endif %}</p>
+                  </div>
+                  <div class="rounded-2xl bg-white px-6 py-5 text-sm shadow-sm">
+                    <p class="mb-1 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">Member Since</p>
+                    <p class="text-slate-700">{{ user.date_joined|date:"F Y" }}</p>
+                  </div>
+                </div>
 
-      <!-- EDIT FORM -->
-      <form id="editForm" method="POST" class="space-y-5 hidden">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <div class="flex items-center gap-3">
-          <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg shadow transition">
-            Save Changes
-          </button>
-          <button type="button" id="cancelBtn"
-                  class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-5 rounded-lg transition">
-            Cancel
-          </button>
-        </div>
-      </form>
+                {% if profile.instagram_url or profile.x_url or profile.website_url %}
+                  <div class="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+                    <p class="mb-3 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">Social Links</p>
+                    <div class="flex flex-wrap items-center gap-3">
+                      {% if profile.instagram_url %}
+                        <a href="{{ profile.instagram_url }}" target="_blank" rel="noopener" class="group flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-900 hover:bg-slate-900 hover:text-white">
+                          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                            <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                          </svg>
+                        </a>
+                      {% endif %}
+                      {% if profile.x_url %}
+                        <a href="{{ profile.x_url }}" target="_blank" rel="noopener" class="group flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-900 hover:bg-slate-900 hover:text-white">
+                          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2H21l-6.59 7.523L22.5 22h-6.937l-5.43-7.256L3.9 22H1.143l7.12-8.128L1.5 2h6.937l4.98 6.65L18.244 2Zm-2.431 18.285h1.925L7.275 3.643H5.35l10.463 16.642Z"/>
+                          </svg>
+                        </a>
+                      {% endif %}
+                      {% if profile.website_url %}
+                        <a href="{{ profile.website_url }}" target="_blank" rel="noopener" class="group flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-900 hover:bg-slate-900 hover:text-white">
+                          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M2 12h20"></path>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                          </svg>
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
 
-      <!-- ADMIN CONTROLS -->
+              <form id="editForm" method="POST" class="hidden space-y-4">
+                {% csrf_token %}
+                <div class="grid gap-4 sm:grid-cols-2">
+                  {% for field in form %}
+                    <label class="flex flex-col gap-1 text-sm text-slate-600 {% if field.name == 'bio' %}sm:col-span-2{% endif %}">
+                      <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ field.label }}</span>
+                      {{ field }}
+                      {% if field.help_text %}
+                        <span class="text-xs text-slate-400">{{ field.help_text }}</span>
+                      {% endif %}
+                      {% for error in field.errors %}
+                        <span class="text-xs text-rose-500">{{ error }}</span>
+                      {% endfor %}
+                    </label>
+                  {% endfor %}
+                </div>
+                <div class="flex flex-wrap items-center gap-3 pt-2">
+                  <button type="submit" class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800">
+                    Save Changes
+                  </button>
+                  <button type="button" id="cancelBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </article>
+
       {% if user.profile.role == 'admin' and not is_owner %}
-        <div class="mt-6 flex gap-3">
-          <a href="{% url 'users:block_user' profile.user.username %}"
-             class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
-             {% if profile.is_blocked %}Unblock{% else %}Block{% endif %}
+        <div class="flex flex-wrap gap-3">
+          <a href="{% url 'users:block_user' profile.user.username %}" class="inline-flex items-center gap-2 rounded-2xl bg-rose-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-400">
+            {% if profile.is_blocked %}
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Unblock User
+            {% else %}
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636 5.636 18.364M5.636 5.636 18.364 18.364" />
+              </svg>
+              Block User
+            {% endif %}
           </a>
-          <a href="{% url 'users:flag_user' profile.user.username %}"
-             class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
-             {% if profile.is_flagged %}Unflag{% else %}Flag{% endif %}
+          <a href="{% url 'users:flag_user' profile.user.username %}" class="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-2 text-sm font-semibold text-amber-600 shadow-sm transition hover:border-amber-300 hover:text-amber-700">
+            {% if profile.is_flagged %}
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Remove Flag
+            {% else %}
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3l-8.47-14.14a2 2 0 0 0-3.42 0z" />
+              </svg>
+              Flag User
+            {% endif %}
           </a>
         </div>
       {% endif %}
     </div>
   </div>
-</div>
+</section>
 
 <script>
-  const editBtn   = document.getElementById('editBtn');
+  const editBtn = document.getElementById('editBtn');
   const cancelBtn = document.getElementById('cancelBtn');
-  const readView  = document.getElementById('readView');
-  const editForm  = document.getElementById('editForm');
+  const readView = document.getElementById('readView');
+  const editForm = document.getElementById('editForm');
+  const editFormFields = editForm?.querySelectorAll('input, select, textarea');
+
+  editFormFields?.forEach((field) => {
+    field.classList.add(
+      'rounded-2xl',
+      'border',
+      'border-slate-200',
+      'bg-slate-50',
+      'px-4',
+      'py-2.5',
+      'text-sm',
+      'text-slate-700',
+      'focus:border-slate-400',
+      'focus:bg-white',
+      'focus:outline-none',
+      'focus:ring-2',
+      'focus:ring-slate-200'
+    );
+  });
 
   function showEditMode() {
     readView.classList.add('hidden');
@@ -196,8 +226,10 @@
 
   editBtn?.addEventListener('click', showEditMode);
   cancelBtn?.addEventListener('click', hideEditMode);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !editForm.classList.contains('hidden')) hideEditMode();
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !editForm.classList.contains('hidden')) {
+      hideEditMode();
+    }
   });
 </script>
 {% endblock %}

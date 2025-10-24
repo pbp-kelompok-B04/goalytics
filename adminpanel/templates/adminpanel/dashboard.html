@@ -2,306 +2,386 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-10 space-y-10">
-  <div>
-    <h1 class="text-3xl font-bold text-blue-900">Admin Dashboard</h1>
-    <p class="text-gray-600 mt-2">Manage user roles and moderate club and player data from one place.</p>
-  </div>
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto max-w-7xl space-y-10">
+    <header class="space-y-3">
+      <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Administration</p>
+      <div class="space-y-2">
+        <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">Admin Dashboard</h1>
+        <p class="max-w-3xl text-sm text-slate-500 md:text-base">
+          Control membership, manage the player database, and keep an eye on community activity across Goalytics.
+        </p>
+      </div>
+    </header>
 
-  <div class="bg-white shadow rounded-xl p-4 sm:p-6">
-    <div class="flex flex-wrap gap-3 border-b border-blue-100 pb-4 mb-6">
-      <button type="button"
-              class="section-tab px-4 py-2 rounded-lg border border-blue-200 text-blue-700 font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-300"
-              data-target-section="users">
-        Users
-      </button>
-      <button type="button"
-              class="section-tab px-4 py-2 rounded-lg border border-blue-200 text-blue-700 font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-300"
-              data-target-section="clubs">
-        Clubs
-      </button>
-      <button type="button"
-              class="section-tab px-4 py-2 rounded-lg border border-blue-200 text-blue-700 font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-300"
-              data-target-section="players">
-        Players
-      </button>
-    </div>
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Users</p>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ stats.total_users }}</p>
+        <p class="mt-1 text-xs text-slate-500">Including blocked and flagged profiles.</p>
+      </article>
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-rose-400">Blocked Users</p>
+        <p class="mt-2 text-3xl font-semibold text-rose-600">{{ stats.blocked_users }}</p>
+        <p class="mt-1 text-xs text-slate-500">Accounts currently prevented from logging in.</p>
+        <p class="mt-1 text-xs text-slate-400">Flagged profiles: {{ stats.flagged_users }}</p>
+      </article>
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-400">Total Posts</p>
+        <p class="mt-2 text-3xl font-semibold text-amber-500">{{ stats.total_posts }}</p>
+        <p class="mt-1 text-xs text-slate-500">Forum discussions published by users.</p>
+      </article>
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-sky-400">Total Comments</p>
+        <p class="mt-2 text-3xl font-semibold text-sky-500">{{ stats.total_comments }}</p>
+        <p class="mt-1 text-xs text-slate-500">Replies and threaded discussions created so far.</p>
+      </article>
+    </section>
 
-    <div class="space-y-12">
-      <section class="admin-section space-y-6" data-section="users">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-gray-900">User Management</h2>
-            <p class="text-sm text-gray-500">Assign roles, flag, or block users.</p>
-          </div>
-          <div class="relative max-w-xs w-full">
-            <input type="text"
-                   placeholder="Search users..."
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                   data-search-input="users">
-            <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
-          </div>
+    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Data Management</h2>
+          <p class="text-sm text-slate-500">Switch between users, clubs, and players to manage records.</p>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-              <tr>
-                <th class="px-4 py-3">Username</th>
-                <th class="px-4 py-3">Email</th>
-                <th class="px-4 py-3">Role</th>
-                <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
-              {% for user in users %}
-                {% with profile=user.profile %}
-                <tr class="hover:bg-gray-50 transition" data-search-row="users">
-                  <td class="px-4 py-3 font-medium text-gray-900">{{ user.username }}</td>
-                  <td class="px-4 py-3">{{ user.email|default:"-" }}</td>
-                  <td class="px-4 py-3">
-                    <form method="post" action="{% url 'adminpanel:update_user_role' user.id %}" class="flex items-center gap-2">
-                      {% csrf_token %}
-                      <select name="role" class="border rounded-lg px-2 py-1 focus:ring focus:ring-blue-200"
-                              {% if user.username in locked_usernames %}disabled{% endif %}>
-                        {% for value, label in role_choices %}
-                          <option value="{{ value }}" {% if profile.role == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                      </select>
-                      <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-500 transition
-                                                 {% if user.username in locked_usernames %}opacity-60 cursor-not-allowed{% endif %}"
-                              {% if user.username in locked_usernames %}disabled{% endif %}>
-                        Update
-                      </button>
-                    </form>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                   {% if profile.is_blocked %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
-                        {% if profile.is_blocked %}Blocked{% else %}Active{% endif %}
-                      </span>
-                      {% if profile.is_flagged %}
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                          Flagged
+        <nav class="flex flex-wrap gap-2" role="tablist">
+          <button type="button" data-section-toggle="users"
+                  class="section-toggle inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                  aria-controls="section-users">
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            Users
+          </button>
+          <button type="button" data-section-toggle="clubs"
+                  class="section-toggle inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                  aria-controls="section-clubs">
+            <span class="h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
+            Clubs
+          </button>
+          <button type="button" data-section-toggle="players"
+                  class="section-toggle inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                  aria-controls="section-players">
+            <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            Players
+          </button>
+        </nav>
+      </div>
+
+      <div class="mt-6 space-y-10">
+        <section id="section-users" class="management-section space-y-5" data-section="users">
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">User Management</h3>
+              <p class="text-xs text-slate-500">Assign roles, flag, or block community members.</p>
+            </div>
+            <div class="relative md:w-72">
+              <input type="text" data-search-input="users" placeholder="Filter users..."
+                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 pr-10 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+              <span class="pointer-events-none absolute right-3 top-2.5 text-slate-300">&#128269;</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+              <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Username</th>
+                  <th class="px-4 py-3 text-left">Email</th>
+                  <th class="px-4 py-3 text-left">Role</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700" data-search-scope="users">
+                {% for user in users %}
+                  {% with profile=user.profile %}
+                  <tr data-search-row>
+                    <td class="px-4 py-3 font-semibold text-slate-900">{{ user.username }}</td>
+                    <td class="px-4 py-3">{{ user.email|default:"-" }}</td>
+                    <td class="px-4 py-3">
+                      <form method="post" action="{% url 'adminpanel:update_user_role' user.id %}" class="flex flex-wrap items-center gap-3">
+                        {% csrf_token %}
+
+                        <select name="role"
+                          class="select select-sm w-auto min-w-[8rem] rounded-xl border border-slate-300 bg-white text-slate-800 font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200 transition
+                          {% if user.username in locked_usernames %}opacity-60 cursor-not-allowed{% endif %}"
+                          {% if user.username in locked_usernames %}disabled{% endif %}>
+                          {% for value, label in role_choices %}
+                            <option value="{{ value }}" {% if profile.role == value %}selected{% endif %}>{{ label }}</option>
+                          {% endfor %}
+                        </select>
+
+                        <button type="submit"
+                          class="btn btn-sm rounded-xl bg-slate-900 text-white font-semibold px-4 py-2 shadow-md hover:bg-slate-800 transition
+                          {% if user.username in locked_usernames %}opacity-60 cursor-not-allowed{% endif %}"
+                          {% if user.username in locked_usernames %}disabled{% endif %}>
+                          Update
+                        </button>
+                      </form>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold {% if profile.is_blocked %}bg-rose-100 text-rose-600{% else %}bg-emerald-100 text-emerald-600{% endif %}">
+                          {% if profile.is_blocked %}Blocked{% else %}Active{% endif %}
                         </span>
-                      {% endif %}
-                    </div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex flex-wrap gap-2">
-                      <a href="{% url 'users:block_user' user.username %}?next={{ request.path }}"
-                         class="px-3 py-1 rounded-lg text-white transition
-                                {% if profile.is_blocked %}
-                                  bg-green-600 hover:bg-green-500
-                                {% else %}
-                                  bg-red-600 hover:bg-red-500
-                                {% endif %}">
-                        {% if profile.is_blocked %}Unblock{% else %}Block{% endif %}
-                      </a>
-                      <a href="{% url 'users:flag_user' user.username %}?next={{ request.path }}"
-                         class="px-3 py-1 rounded-lg text-white transition
-                                {% if profile.is_flagged %}
-                                  bg-gray-600 hover:bg-gray-500
-                                {% else %}
-                                  bg-yellow-500 hover:bg-yellow-400
-                                {% endif %}">
-                        {% if profile.is_flagged %}Unflag{% else %}Flag{% endif %}
-                      </a>
-                      <a href="{% url 'users:profile' user.username %}"
-                         class="px-3 py-1 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
-                        View Profile
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-                {% endwith %}
-              {% empty %}
-                <tr>
-                  <td colspan="5" class="px-4 py-6 text-center text-gray-500">No users found.</td>
-                </tr>
-              {% endfor %}
-              <tr data-no-results="users" class="hidden">
-                <td colspan="5" class="px-4 py-6 text-center text-gray-500">No users match your search.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+                        {% if profile.is_flagged %}
+                          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-600">Flagged</span>
+                        {% endif %}
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap gap-2">
+                        <a href="{% url 'users:profile' user.username %}"
+                           class="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">View</a>
+                        {% if not profile.is_blocked %}
+                          <a href="{% url 'users:block_user' user.username %}"
+                             class="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700">Block</a>
+                        {% else %}
+                          <a href="{% url 'users:block_user' user.username %}"
+                             class="inline-flex items-center gap-1 rounded-xl border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-600 transition hover:border-emerald-300 hover:text-emerald-700">Unblock</a>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                  {% endwith %}
+                {% empty %}
+                  <tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">No users available.</td></tr>
+                {% endfor %}
+                <tr data-empty-row class="hidden"><td colspan="5" class="px-4 py-6 text-center text-slate-500">No matching users found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <section class="admin-section space-y-6 hidden" data-section="clubs">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-gray-900">Club Management</h2>
-            <p class="text-sm text-gray-500">Add, edit, or remove clubs.</p>
-          </div>
-          <div class="flex items-center gap-3 w-full md:w-auto">
-            <div class="relative flex-1 md:flex-none md:w-64">
-              <input type="text"
-                     placeholder="Search clubs..."
-                     class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                     data-search-input="clubs">
-              <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
+        <section id="section-clubs" class="management-section hidden space-y-5" data-section="clubs">
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">Club Management</h3>
+              <p class="text-xs text-slate-500">Add, edit, or remove clubs referenced by player records.</p>
             </div>
-            <a href="{% url 'adminpanel:club_create' %}"
-               class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition">
-              + Add Club
-            </a>
+            <div class="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
+              <div class="relative md:w-64">
+                <input type="text" data-search-input="clubs" placeholder="Filter clubs..."
+                       class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 pr-10 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+                <span class="pointer-events-none absolute right-3 top-2.5 text-slate-300">&#128269;</span>
+              </div>
+              <a href="{% url 'adminpanel:club_create' %}"
+                 class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
+                + Add Club
+              </a>
+            </div>
           </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+              <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Club</th>
+                  <th class="px-4 py-3 text-left">Country</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700" data-search-scope="clubs">
+                {% for club in clubs %}
+                  <tr data-search-row>
+                    <td class="px-4 py-3 font-semibold text-slate-900">{{ club.name }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ club.country|default:"-" }}</td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap gap-2">
+                        <a href="{% url 'adminpanel:club_update' club.id %}"
+                           class="inline-flex items-center gap-1 rounded-xl border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-600 transition hover:border-amber-300 hover:text-amber-700">Edit</a>
+                        <a href="{% url 'adminpanel:club_delete' club.id %}"
+                           class="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700">Delete</a>
+                      </div>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" class="px-4 py-6 text-center text-slate-500">No clubs available.</td></tr>
+                {% endfor %}
+                <tr data-empty-row class="hidden"><td colspan="3" class="px-4 py-6 text-center text-slate-500">No matching clubs found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="section-players" class="management-section hidden space-y-5" data-section="players">
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">Player Management</h3>
+              <p class="text-xs text-slate-500">Search and update player data used across Goalytics.</p>
+            </div>
+            <div class="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
+              <div class="relative md:w-64">
+                <input type="text" data-search-input="players" placeholder="Filter players..."
+                       class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 pr-10 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+                <span class="pointer-events-none absolute right-3 top-2.5 text-slate-300">&#128269;</span>
+              </div>
+              <a href="{% url 'adminpanel:player_create' %}"
+                 class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
+                + Add Player
+              </a>
+            </div>
+          </div>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+              <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Name</th>
+                  <th class="px-4 py-3 text-left">Club</th>
+                  <th class="px-4 py-3 text-left">Position</th>
+                  <th class="px-4 py-3 text-left">Goals</th>
+                  <th class="px-4 py-3 text-left">Assists</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700" data-search-scope="players">
+                {% for player in players %}
+                  <tr data-search-row>
+                    <td class="px-4 py-3 font-semibold text-slate-900">{{ player.name }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ player.club.name|default:"Free Agent" }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ player.get_position_display|default:player.position|default:"-" }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ player.goals|default:"0" }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ player.assists|default:"0" }}</td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap gap-2">
+                        <a href="{% url 'adminpanel:player_update' player.id %}"
+                           class="inline-flex items-center gap-1 rounded-xl border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-600 transition hover:border-amber-300 hover:text-amber-700">Edit</a>
+                        <a href="{% url 'adminpanel:player_delete' player.id %}"
+                           class="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700">Delete</a>
+                      </div>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="6" class="px-4 py-6 text-center text-slate-500">No players available.</td></tr>
+                {% endfor %}
+                <tr data-empty-row class="hidden"><td colspan="6" class="px-4 py-6 text-center text-slate-500">No matching players found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+      <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <header class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Recent Posts</h2>
+            <p class="text-xs text-slate-500">Latest discussions created by the community.</p>
+          </div>
+          <a href="{% url 'forum_home' %}" class="text-xs font-semibold text-slate-500 hover:text-slate-900">View forum</a>
+        </header>
+        <div class="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th class="px-4 py-3">Name</th>
-                <th class="px-4 py-3">League</th>
-                <th class="px-4 py-3">Season</th>
-                <th class="px-4 py-3">Goals</th>
-                <th class="px-4 py-3">Assists</th>
-                <th class="px-4 py-3">Actions</th>
+                <th class="px-4 py-3 text-left">Post</th>
+                <th class="px-4 py-3 text-left">Author</th>
+                <th class="px-4 py-3 text-left">League</th>
+                <th class="px-4 py-3 text-left">Likes</th>
+                <th class="px-4 py-3 text-left">Comments</th>
+                <th class="px-4 py-3 text-left">Created</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
-              {% for club in clubs %}
-                <tr class="hover:bg-gray-50 transition" data-search-row="clubs">
-                  <td class="px-4 py-3 font-medium text-gray-900">{{ club.name }}</td>
-                  <td class="px-4 py-3">{{ club.league|default:"-" }}</td>
-                  <td class="px-4 py-3">{{ club.season|default:"-" }}</td>
-                  <td class="px-4 py-3">{{ club.total_goal|default:"0" }}</td>
-                  <td class="px-4 py-3">{{ club.total_assist|default:"0" }}</td>
-                  <td class="px-4 py-3">
-                    <div class="flex flex-wrap gap-2">
-                      <a href="{% url 'adminpanel:club_update' club.id %}"
-                         class="px-3 py-1 rounded-lg bg-yellow-400 text-white hover:bg-yellow-300 transition">Edit</a>
-                      <a href="{% url 'adminpanel:club_delete' club.id %}"
-                         class="px-3 py-1 rounded-lg bg-red-600 text-white hover:bg-red-500 transition">Delete</a>
-                    </div>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              {% for post in posts_recent %}
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-900">
+                    <a href="{% url 'forum_post_detail' post.id %}" class="hover:underline">{{ post.title }}</a>
                   </td>
+                  <td class="px-4 py-3 text-slate-500">{{ post.author.username }}</td>
+                  <td class="px-4 py-3 text-slate-500">{{ post.get_league_display }}</td>
+                  <td class="px-4 py-3 text-slate-500">{{ post.like_count|default:0 }}</td>
+                  <td class="px-4 py-3 text-slate-500">{{ post.comment_count|default:0 }}</td>
+                  <td class="px-4 py-3 text-xs text-slate-400">{{ post.created_at|date:"M j, Y H:i" }}</td>
                 </tr>
               {% empty %}
-                <tr>
-                  <td colspan="6" class="px-4 py-6 text-center text-gray-500">No clubs found.</td>
-                </tr>
+                <tr><td colspan="6" class="px-4 py-6 text-center text-slate-500">No posts available.</td></tr>
               {% endfor %}
-              <tr data-no-results="clubs" class="hidden">
-                <td colspan="6" class="px-4 py-6 text-center text-gray-500">No clubs match your search.</td>
-              </tr>
             </tbody>
           </table>
         </div>
-      </section>
+      </article>
 
-      <section class="admin-section space-y-6 hidden" data-section="players">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <header class="flex items-center justify-between">
           <div>
-            <h2 class="text-xl font-semibold text-gray-900">Player Management</h2>
-            <p class="text-sm text-gray-500">Update the player database from here.</p>
+            <h2 class="text-lg font-semibold text-slate-900">Recent Comments</h2>
+            <p class="text-xs text-slate-500">Latest replies across the forum.</p>
           </div>
-          <div class="flex items-center gap-3 w-full md:w-auto">
-            <div class="relative flex-1 md:flex-none md:w-64">
-              <input type="text"
-                     placeholder="Search players..."
-                     class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                     data-search-input="players">
-              <span class="absolute right-3 top-2.5 text-gray-400">🔍</span>
-            </div>
-            <a href="{% url 'adminpanel:player_create' %}"
-               class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition">
-              + Add Player
-            </a>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+        </header>
+        <div class="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th class="px-4 py-3">Name</th>
-                <th class="px-4 py-3">Club</th>
-                <th class="px-4 py-3">Position</th>
-                <th class="px-4 py-3">Goals</th>
-                <th class="px-4 py-3">Assists</th>
-                <th class="px-4 py-3">Actions</th>
+                <th class="px-4 py-3 text-left">Comment</th>
+                <th class="px-4 py-3 text-left">Author</th>
+                <th class="px-4 py-3 text-left">Post</th>
+                <th class="px-4 py-3 text-left">Likes</th>
+                <th class="px-4 py-3 text-left">Created</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
-              {% for player in players %}
-                <tr class="hover:bg-gray-50 transition" data-search-row="players">
-                  <td class="px-4 py-3 font-medium text-gray-900">{{ player.name }}</td>
-                  <td class="px-4 py-3">{{ player.club.name|default:"Free Agent" }}</td>
-                  <td class="px-4 py-3">{{ player.get_position_display|default:player.position|default:"-" }}</td>
-                  <td class="px-4 py-3">{{ player.goals|default:"0" }}</td>
-                  <td class="px-4 py-3">{{ player.assists|default:"0" }}</td>
-                  <td class="px-4 py-3">
-                    <div class="flex flex-wrap gap-2">
-                      <a href="{% url 'adminpanel:player_update' player.id %}"
-                         class="px-3 py-1 rounded-lg bg-yellow-400 text-white hover:bg-yellow-300 transition">Edit</a>
-                      <a href="{% url 'adminpanel:player_delete' player.id %}"
-                         class="px-3 py-1 rounded-lg bg-red-600 text-white hover:bg-red-500 transition">Delete</a>
-                    </div>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              {% for comment in comments_recent %}
+                <tr>
+                  <td class="px-4 py-3 text-slate-600">{{ comment.content|truncatechars:80 }}</td>
+                  <td class="px-4 py-3 text-slate-500">{{ comment.user.username }}</td>
+                  <td class="px-4 py-3 text-slate-500">
+                    <a href="{% url 'forum_post_detail' comment.post.id %}" class="hover:underline">{{ comment.post.title|truncatechars:40 }}</a>
                   </td>
+                  <td class="px-4 py-3 text-slate-500">{{ comment.like_count|default:0 }}</td>
+                  <td class="px-4 py-3 text-xs text-slate-400">{{ comment.created_at|date:"M j, Y H:i" }}</td>
                 </tr>
               {% empty %}
-                <tr>
-                  <td colspan="6" class="px-4 py-6 text-center text-gray-500">No players found.</td>
-                </tr>
+                <tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">No comments available.</td></tr>
               {% endfor %}
-              <tr data-no-results="players" class="hidden">
-                <td colspan="6" class="px-4 py-6 text-center text-gray-500">No players match your search.</td>
-              </tr>
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
+      </article>
+    </section>
   </div>
-</div>
+</section>
 
 <script>
 (function () {
-  const buttons = document.querySelectorAll('[data-target-section]');
+  const toggles = document.querySelectorAll('[data-section-toggle]');
   const sections = document.querySelectorAll('[data-section]');
+  const activeClass = ['bg-slate-900', 'text-white', 'shadow'];
 
-  function activateSection(target) {
+  function showSection(target) {
     sections.forEach(section => {
-      const isActive = section.dataset.section === target;
-      section.classList.toggle('hidden', !isActive);
+      const isTarget = section.dataset.section === target;
+      section.classList.toggle('hidden', !isTarget);
     });
-    buttons.forEach(btn => {
-      const isActive = btn.dataset.targetSection === target;
-      btn.classList.toggle('bg-blue-600', isActive);
-      btn.classList.toggle('text-white', isActive);
-      btn.classList.toggle('shadow', isActive);
-      btn.classList.toggle('border-blue-200', !isActive);
-      btn.classList.toggle('text-blue-700', !isActive);
+    toggles.forEach(button => {
+      const isTarget = button.dataset.sectionToggle === target;
+      activeClass.forEach(cls => button.classList.toggle(cls, isTarget));
+      button.classList.toggle('border-slate-200', !isTarget);
+      button.classList.toggle('text-slate-600', !isTarget);
     });
   }
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => activateSection(btn.dataset.targetSection));
-  });
-
-  if (buttons.length) {
-    activateSection(buttons[0].dataset.targetSection);
+  toggles.forEach(button => button.addEventListener('click', () => showSection(button.dataset.sectionToggle)));
+  if (toggles.length) {
+    showSection(toggles[0].dataset.sectionToggle);
   }
 
   document.querySelectorAll('[data-search-input]').forEach(input => {
     const scope = input.dataset.searchInput;
-    const rows = Array.from(document.querySelectorAll(`[data-search-row="${scope}"]`));
-    const noResultsRow = document.querySelector(`[data-no-results="${scope}"]`);
+    const section = input.closest('[data-section]');
+    const rows = section ? section.querySelectorAll('[data-search-row]') : [];
+    const emptyRow = section ? section.querySelector('[data-empty-row]') : null;
 
     input.addEventListener('input', () => {
       const term = input.value.trim().toLowerCase();
-      let visibleCount = 0;
+      let visible = 0;
       rows.forEach(row => {
         const matches = row.textContent.toLowerCase().includes(term);
         row.classList.toggle('hidden', !matches);
         if (matches) {
-          visibleCount += 1;
+          visible += 1;
         }
       });
-      if (noResultsRow && rows.length) {
-        const shouldShowEmpty = visibleCount === 0;
-        noResultsRow.classList.toggle('hidden', !shouldShowEmpty);
+      if (emptyRow) {
+        emptyRow.classList.toggle('hidden', visible !== 0);
       }
     });
   });

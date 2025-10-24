@@ -8,7 +8,7 @@
     Welcome back, {{ username }} 👋
   </h1>
   <p class="text-gray-600 mb-10 text-base md:text-lg">
-    Explore your football analytics tools below:
+    Explore your football analytics and other tools below:
   </p>
 
   <!-- Feature Grid -->
@@ -65,6 +65,34 @@
         <h2 class="text-2xl font-semibold mb-1">Player Comparison</h2>
         <p class="text-pink-100 text-sm leading-relaxed">
           Compare player stats and insights side by side.
+        </p>
+      </div>
+    </a>
+
+    <!-- Transfer Rumours -->
+    <a href="{% url 'transfer_rumour:list' %}"
+      class="group flex items-start gap-5 bg-gradient-to-br from-amber-500 to-orange-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
+        🔁
+      </div>
+      <div>
+        <h2 class="text-2xl font-semibold mb-1">Transfer Rumours</h2>
+        <p class="text-amber-100 text-sm leading-relaxed">
+          Stay updated with the latest transfer news and rumour.
+        </p>
+      </div>
+    </a>
+
+    <!-- Find Users -->
+    <a href="{% url 'users:search_users' %}"
+      class="group flex items-start gap-5 bg-gradient-to-br from-cyan-500 to-sky-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
+        🔍
+      </div>
+      <div>
+        <h2 class="text-2xl font-semibold mb-1">Find Users</h2>
+        <p class="text-cyan-100 text-sm leading-relaxed">
+          Search for other users and connect with them.
         </p>
       </div>
     </a>

@@ -3,535 +3,609 @@
 {% block title %}Player Comparison{% endblock %}
 
 {% block content %}
-<section class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white text-center py-20 px-4">
-  <h1 class="text-4xl md:text-5xl font-bold mb-4">Player Comparison</h1>
-  <p class="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
-    Compare stats between two football players ⚽
-  </p>
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto max-w-6xl space-y-10">
+    <header class="space-y-3">
+      <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Comparison</p>
+      <div class="space-y-2">
+        <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">Player Comparison</h1>
+        <p class="max-w-3xl text-base text-slate-500 md:text-lg">
+          Select two players to evaluate their performance across role-specific metrics. When both players share the same position we will plot their numbers on a radar chart for a quick visual snapshot.
+        </p>
+      </div>
+    </header>
 
-  <!-- Admin Controls (hanya visible untuk admin) -->
-{% if user.is_authenticated and user.profile.role == 'admin' %}
-<div class="max-w-4xl mx-auto mb-6 px-4">
-    <div class="bg-yellow-100 border border-yellow-400 rounded-lg p-4">
-        <h3 class="font-bold text-yellow-800 mb-2">Admin Controls</h3>
-        <button onclick="openAddPlayerModal()" class="bg-green-500 hover:bg-green-400 text-white font-semibold py-2 px-4 rounded mr-2">
-            + Add Player
-        </button>
-        <button onclick="openDeletePlayerModal()" class="bg-red-500 hover:bg-red-400 text-white font-semibold py-2 px-4 rounded">
-            🗑️ Delete Player
-        </button>
-    </div>
-</div>
-{% endif %}
-
-  <!-- Search Form -->
-  <div class="mt-8 max-w-4xl mx-auto">
-    <div class="flex flex-col md:flex-row gap-6 justify-center items-start">
-      <!-- Player 1 Search -->
-      <div class="flex-1 max-w-md">
-        <label class="block text-white text-sm font-medium mb-2">Player 1</label>
-        <div class="relative">
-          <input 
-            type="text" 
-            id="player1-search" 
-            placeholder="Search player..." 
-            class="w-full p-3 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            autocomplete="off"
-          >
-          <div id="player1-suggestions" class="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+    {% if user.is_authenticated and user.profile.role == 'admin' %}
+    <div class="rounded-3xl border border-amber-200 bg-amber-50 p-6">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-sm font-semibold uppercase tracking-wide text-amber-600">Admin controls</h2>
+          <p class="text-sm text-amber-600">Manage the player dataset used for comparison.</p>
         </div>
-        <div id="player1-selected" class="mt-3 hidden">
-          <div class="bg-blue-100 p-3 rounded-lg">
-            <div class="flex justify-between items-center">
-              <div>
-                <span id="player1-name" class="font-semibold text-blue-800"></span>
-                <span id="player1-details" class="text-sm text-blue-600 block"></span>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" onclick="openAddPlayerModal()" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400">
+            <span class="text-lg leading-none">+</span>
+            Add Player
+          </button>
+          <button type="button" onclick="openDeletePlayerModal()" class="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm transition hover:border-rose-300 hover:text-rose-700">
+            Remove Player
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="relative grid gap-6 md:grid-cols-[1fr_auto_1fr]">
+      <!-- Player 1 -->
+      <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Player 1</h2>
+            <p class="text-sm text-slate-500">Search by player name and pick the first contender.</p>
+          </div>
+        </div>
+        <div class="mt-4 space-y-3">
+          <div class="relative">
+            <input type="text" id="player1-search" placeholder="Search player..." autocomplete="off"
+                   class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+            <div id="player1-suggestions" class="absolute left-0 right-0 top-full z-10 mt-2 hidden max-h-60 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg"></div>
+          </div>
+          <div id="player1-selected" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 space-y-1">
+                <p id="player1-name" class="truncate text-sm font-semibold text-slate-900"></p>
+                <p id="player1-details" class="truncate text-xs text-slate-500"></p>
               </div>
-              <button onclick="clearPlayer(1)" class="text-red-500 hover:text-red-700">
-                ✕
+              <button type="button" onclick="clearPlayer(1)" class="text-slate-400 transition hover:text-rose-500">
+                <span class="sr-only">Remove player one</span>
+                &times;
               </button>
             </div>
           </div>
         </div>
+      </article>
+
+      <!-- VS desktop -->
+      <div class="hidden md:flex items-center justify-center">
+        <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow">VS</span>
       </div>
 
-      <!-- VS Badge -->
-      <div class="flex items-center justify-center py-8">
-        <span class="bg-red-500 text-white px-4 py-2 rounded-full font-bold text-lg">VS</span>
-      </div>
-
-      <!-- Player 2 Search -->
-      <div class="flex-1 max-w-md">
-        <label class="block text-white text-sm font-medium mb-2">Player 2</label>
-        <div class="relative">
-          <input 
-            type="text" 
-            id="player2-search" 
-            placeholder="Search player..." 
-            class="w-full p-3 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            autocomplete="off"
-          >
-          <div id="player2-suggestions" class="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+      <!-- Player 2 -->
+      <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Player 2</h2>
+            <p class="text-sm text-slate-500">Pick another player to complete the comparison.</p>
+          </div>
         </div>
-        <div id="player2-selected" class="mt-3 hidden">
-          <div class="bg-green-100 p-3 rounded-lg">
-            <div class="flex justify-between items-center">
-              <div>
-                <span id="player2-name" class="font-semibold text-green-800"></span>
-                <span id="player2-details" class="text-sm text-green-600 block"></span>
+        <div class="mt-4 space-y-3">
+          <div class="relative">
+            <input type="text" id="player2-search" placeholder="Search player..." autocomplete="off"
+                   class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+            <div id="player2-suggestions" class="absolute left-0 right-0 top-full z-10 mt-2 hidden max-h-60 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg"></div>
+          </div>
+          <div id="player2-selected" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 space-y-1">
+                <p id="player2-name" class="truncate text-sm font-semibold text-slate-900"></p>
+                <p id="player2-details" class="truncate text-xs text-slate-500"></p>
               </div>
-              <button onclick="clearPlayer(2)" class="text-red-500 hover:text-red-700">
-                ✕
+              <button type="button" onclick="clearPlayer(2)" class="text-slate-400 transition hover:text-rose-500">
+                <span class="sr-only">Remove player two</span>
+                &times;
               </button>
             </div>
           </div>
         </div>
+      </article>
+
+      <!-- VS mobile -->
+      <div class="md:hidden flex items-center justify-center">
+        <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow">VS</span>
       </div>
     </div>
 
-    <!-- Compare Button -->
-    <button 
-      id="compare-btn" 
-      onclick="comparePlayers()" 
-      disabled
-      class="mt-8 bg-blue-500 hover:bg-blue-400 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-lg shadow-md transition text-lg"
-    >
-      Compare Players
-    </button>
+    <!-- Compare button -->
+    <div class="flex flex-wrap items-center justify-center gap-3">
+      <button id="compare-btn" type="button" onclick="comparePlayers()" disabled
+              class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+        Compare Players
+      </button>
+      <p class="text-xs text-slate-500">Select a player in each column to enable the comparison.</p>
+    </div>
+
+    <!-- Hasil perbandingan -->
+    <section id="results-section" class="space-y-6">
+      <div id="results-placeholder" class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">
+        Comparison results will appear here once two players are selected.
+      </div>
+    </section>
+
+    <!-- Link ke history -->
+    <div class="text-center">
+      <a href="{% url 'comparison_history' %}"
+         class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg transition">
+        📊 View My Comparison History
+      </a>
+    </div>
+
+    {% if user.is_authenticated %}
+    <!-- Save Comparison Section (muncul setelah compare sukses) -->
+    <div id="save-comparison-section" class="max-w-4xl mx-auto px-6 py-8 text-center hidden">
+      <div class="bg-white p-6 rounded-2xl shadow-md">
+        <h3 class="text-xl font-bold text-slate-900 mb-3">Save This Comparison</h3>
+        <p class="text-slate-600 mb-4">Simpan perbandingan ini ke history untuk referensi nanti.</p>
+        <button type="button" onclick="openSaveComparisonModal()"
+                class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition">
+          💾 Save Comparison
+        </button>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </section>
 
-<!-- Results Section -->
-<section id="results-section" class="max-w-7xl mx-auto px-6 py-16">
-  <!-- Results will be loaded here by AJAX -->
-</section>
-
-<!-- Loading Spinner -->
-<div id="loading" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
-  <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-3">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    <span class="text-gray-700">Comparing players...</span>
+<!-- Overlay Loading (pakai yang sudah ada) -->
+<div id="loading" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60">
+  <div class="flex items-center gap-3 rounded-2xl bg-white px-6 py-4 shadow-xl">
+    <span class="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-l-slate-900"></span>
+    <span class="text-sm font-semibold text-slate-700">Comparing players...</span>
   </div>
 </div>
 
 <!-- Add Player Modal -->
-<div id="addPlayerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg w-96">
-        <h3 class="text-lg font-bold mb-4">Add New Player</h3>
-        <form id="addPlayerForm">
-            {% csrf_token %}
-            <input type="text" name="name" placeholder="Player Name" class="w-full p-2 border rounded mb-2" required>
-            <select name="position" class="w-full p-2 border rounded mb-2" required>
-                <option value="">Select Position</option>
-                <option value="GK">Goalkeeper</option>
-                <option value="DF">Defender</option>
-                <option value="MF">Midfielder</option>
-                <option value="FW">Forward</option>
-            </select>
-            <input type="text" name="club" placeholder="Club (optional)" class="w-full p-2 border rounded mb-4">
-            <div class="flex justify-end gap-2">
-                <button type="button" onclick="closeAddPlayerModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Player</button>
-            </div>
-        </form>
+<div id="addPlayerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+  <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-slate-900">Add New Player</h3>
+      <button type="button" onclick="closeAddPlayerModal()" class="text-slate-400 transition hover:text-slate-700">&times;</button>
     </div>
+    <form id="addPlayerForm" class="mt-4 space-y-4">
+      {% csrf_token %}
+      <label class="flex flex-col gap-1 text-sm text-slate-600">
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">Name</span>
+        <input type="text" name="name" required class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+      </label>
+      <label class="flex flex-col gap-1 text-sm text-slate-600">
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">Position</span>
+        <select name="position" required class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+          <option value="">Select position</option>
+          <option value="GK">Goalkeeper (GK)</option>
+          <option value="DF">Defender (DF)</option>
+          <option value="MF">Midfielder (MF)</option>
+          <option value="FW">Forward (FW)</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-sm text-slate-600">
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">Club</span>
+        <input type="text" name="club" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="Optional">
+      </label>
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="closeAddPlayerModal()" class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">Cancel</button>
+        <button type="submit" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">Save Player</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Delete Player Modal -->
-<div id="deletePlayerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg w-96">
-        <h3 class="text-lg font-bold mb-4">Delete Player</h3>
-        <div class="mb-4">
-            <input type="text" id="deletePlayerSearch" placeholder="Search player to delete..." class="w-full p-2 border rounded">
-            <div id="deletePlayerSuggestions" class="mt-1 max-h-40 overflow-y-auto hidden"></div>
-        </div>
-        <div class="flex justify-end gap-2">
-            <button type="button" onclick="closeDeletePlayerModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-            <button type="button" onclick="confirmDeletePlayer()" class="bg-red-500 text-white px-4 py-2 rounded" disabled id="confirmDeleteBtn">Delete</button>
-        </div>
+<div id="deletePlayerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+  <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-slate-900">Remove Player</h3>
+      <button type="button" onclick="closeDeletePlayerModal()" class="text-slate-400 transition hover:text-slate-700">&times;</button>
     </div>
+    <div class="mt-4 space-y-3">
+      <p class="text-sm text-slate-500">Search for a player and confirm to remove them from the dataset.</p>
+      <div class="relative">
+        <input type="text" id="deletePlayerSearch" placeholder="Search player to delete..." autocomplete="off"
+               class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+        <div id="deletePlayerSuggestions" class="absolute left-0 right-0 top-full z-10 mt-2 hidden max-h-48 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg"></div>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeDeletePlayerModal()" class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">Cancel</button>
+        <button type="button" id="confirmDeleteBtn" onclick="confirmDeletePlayer()" disabled class="rounded-2xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:bg-slate-300">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save Comparison Modal -->
+<div id="saveComparisonModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
+  <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-lg font-semibold text-slate-900">Save Comparison</h3>
+      <button type="button" onclick="closeSaveComparisonModal()" class="text-slate-400 hover:text-slate-700">&times;</button>
+    </div>
+    <form id="saveComparisonForm" class="mt-2 space-y-4">
+      {% csrf_token %}
+      <label class="block text-sm">
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes (opsional)</span>
+        <textarea name="notes" placeholder="Tambahkan catatan singkat"
+                  class="mt-1 w-full p-3 border rounded-xl h-28 focus:ring-2 focus:ring-slate-200 focus:outline-none"></textarea>
+      </label>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeSaveComparisonModal()"
+                class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300">Cancel</button>
+        <button type="submit"
+                class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+          Save Comparison
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Get base URL dynamically
-const BASE_URL = window.location.origin;
+let selectedPlayers = { player1: null, player2: null };
+let playerToDelete = null;
 
-// Global variables to store selected players
-let selectedPlayers = {
-    player1: null,
-    player2: null
+function debounce(fn, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+const searchInputs = {
+  1: document.getElementById('player1-search'),
+  2: document.getElementById('player2-search'),
 };
 
-// Debounce function untuk search
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+Object.entries(searchInputs).forEach(([key, input]) => {
+  if (!input) return;
+  input.addEventListener('input', event => searchPlayers(event.target.value.trim(), Number(key)));
+});
 
-// Search players function
-const searchPlayers = debounce(async (query, playerNum) => {
-    if (query.length < 2) {
-        document.getElementById(`player${playerNum}-suggestions`).classList.add('hidden');
-        return;
+const debouncedSearchPlayers = debounce(async (query, playerNum) => {
+  const suggestionsEl = document.getElementById(`player${playerNum}-suggestions`);
+  if (!suggestionsEl) return;
+
+  if (query.length < 2) {
+    suggestionsEl.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/comparison/api/player-search/?q=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Network error');
+
+    const data = await response.json();
+    suggestionsEl.innerHTML = '';
+
+    if (!data.players.length) {
+      suggestionsEl.innerHTML = '<div class="p-3 text-sm text-slate-500">No players found</div>';
+    } else {
+      data.players.forEach(player => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50';
+        option.innerHTML = `
+          <span class="font-semibold text-slate-900">${player.name}</span>
+          <span class="text-xs text-slate-500">${player.club} &middot; ${player.position}</span>
+        `;
+        option.addEventListener('click', () => selectPlayer(player, playerNum));
+        suggestionsEl.appendChild(option);
+      });
     }
 
-    try {
-        const response = await fetch(`/comparison/api/player-search/?q=${encodeURIComponent(query)}`);;
-        
-        if (!response.ok) {
-            throw new Error('Network error');
-        }
-        
-        const data = await response.json();
-        
-        const suggestionsContainer = document.getElementById(`player${playerNum}-suggestions`);
-        suggestionsContainer.innerHTML = '';
-        
-        if (data.players.length === 0) {
-            suggestionsContainer.innerHTML = '<div class="p-3 text-gray-500">No players found</div>';
-        } else {
-            data.players.forEach(player => {
-                const div = document.createElement('div');
-                div.className = 'p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200';
-                div.innerHTML = `
-                    <div class="font-semibold text-gray-800">${player.name}</div>
-                    <div class="text-sm text-gray-600">${player.club} • ${player.position}</div>
-                `;
-                div.onclick = () => selectPlayer(player, playerNum);
-                suggestionsContainer.appendChild(div);
-            });
-        }
-        
-        suggestionsContainer.classList.remove('hidden');
-    } catch (error) {
-        const suggestionsContainer = document.getElementById(`player${playerNum}-suggestions`);
-        suggestionsContainer.innerHTML = '<div class="p-3 text-red-500">Error searching players</div>';
-        suggestionsContainer.classList.remove('hidden');
-    }
+    suggestionsEl.classList.remove('hidden');
+  } catch (error) {
+    suggestionsEl.innerHTML = '<div class="p-3 text-sm text-rose-500">Unable to search players.</div>';
+    suggestionsEl.classList.remove('hidden');
+  }
 }, 300);
 
-// Select player function
+function searchPlayers(query, playerNum) {
+  debouncedSearchPlayers(query, playerNum);
+}
+
 function selectPlayer(player, playerNum) {
-    selectedPlayers[`player${playerNum}`] = player;
-    
-    // Update UI
-    document.getElementById(`player${playerNum}-search`).value = '';
-    document.getElementById(`player${playerNum}-suggestions`).classList.add('hidden');
-    document.getElementById(`player${playerNum}-selected`).classList.remove('hidden');
-    document.getElementById(`player${playerNum}-name`).textContent = player.name;
-    document.getElementById(`player${playerNum}-details`).textContent = `${player.club} • ${player.position}`;
-    
-    // Enable compare button jika kedua player sudah dipilih
-    updateCompareButton();
+  selectedPlayers[`player${playerNum}`] = player;
+  const selectedCard = document.getElementById(`player${playerNum}-selected`);
+  const details = document.getElementById(`player${playerNum}-details`);
+  const name = document.getElementById(`player${playerNum}-name`);
+  const input = document.getElementById(`player${playerNum}-search`);
+  const suggestionsEl = document.getElementById(`player${playerNum}-suggestions`);
+
+  if (input) input.value = '';
+  if (suggestionsEl) suggestionsEl.classList.add('hidden');
+  if (selectedCard && name && details) {
+    name.textContent = player.name;
+    details.textContent = `${player.club} · ${player.position}`;
+    selectedCard.classList.remove('hidden');
+  }
+  updateCompareButton();
 }
 
-// Clear selected player
 function clearPlayer(playerNum) {
-    selectedPlayers[`player${playerNum}`] = null;
-    document.getElementById(`player${playerNum}-selected`).classList.add('hidden');
-    updateCompareButton();
+  selectedPlayers[`player${playerNum}`] = null;
+  const selectedCard = document.getElementById(`player${playerNum}-selected`);
+  if (selectedCard) selectedCard.classList.add('hidden');
+  updateCompareButton();
 }
 
-// Update compare button state
 function updateCompareButton() {
-    const compareBtn = document.getElementById('compare-btn');
-    if (selectedPlayers.player1 && selectedPlayers.player2) {
-        compareBtn.disabled = false;
-    } else {
-        compareBtn.disabled = true;
-    }
+  const compareBtn = document.getElementById('compare-btn');
+  if (!compareBtn) return;
+  compareBtn.disabled = !(selectedPlayers.player1 && selectedPlayers.player2);
 }
 
-// Compare players function
 async function comparePlayers() {
-    if (!selectedPlayers.player1 || !selectedPlayers.player2) return;
-    
-    const loading = document.getElementById('loading');
-    const resultsSection = document.getElementById('results-section');
-    
-    loading.classList.remove('hidden');
-    
-    try {
-        const response = await fetch(
-        `/comparison/api/compare-players/?player1_id=${selectedPlayers.player1.id}&player2_id=${selectedPlayers.player2.id}`
-        );
-        
-        if (!response.ok) {
-            throw new Error('Network error');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            resultsSection.innerHTML = data.html;
-            resultsSection.classList.remove('hidden');
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
+  if (!selectedPlayers.player1 || !selectedPlayers.player2) return;
 
-            renderRadarChart();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    } catch (error) {
-        alert('Error comparing players');
-    } finally {
-        loading.classList.add('hidden');
-    }
+  const loading = document.getElementById('loading');
+  const resultsSection = document.getElementById('results-section');
+  if (!resultsSection) return;
+
+  loading?.classList.remove('hidden');
+
+  try {
+    const response = await fetch(`/comparison/api/compare-players/?player1_id=${selectedPlayers.player1.id}&player2_id=${selectedPlayers.player2.id}`);
+    if (!response.ok) throw new Error('Network error');
+
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || 'Comparison failed');
+
+    resultsSection.innerHTML = data.html;
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderRadarChart();
+
+    // Tampilkan blok "Save Comparison" setelah hasil muncul
+    document.getElementById('save-comparison-section')?.classList.remove('hidden');
+  } catch (error) {
+    alert(error.message || 'Unable to compare players');
+  } finally {
+    loading?.classList.add('hidden');
+  }
 }
 
 function renderRadarChart() {
-    const canvas = document.getElementById('radarChart');
-    if (!canvas) return;
+  const canvas = document.getElementById('radarChart');
+  if (!canvas || typeof Chart === 'undefined') return;
 
-    // Parse data dari atribut HTML
-    let labels = JSON.parse(canvas.dataset.labels);
-    const data1 = JSON.parse(canvas.dataset.data1);
-    const data2 = JSON.parse(canvas.dataset.data2);
-    const maxValues = JSON.parse(canvas.dataset.max);
-    const player1 = canvas.dataset.player1;
-    const player2 = canvas.dataset.player2;
+  const labels = JSON.parse(canvas.dataset.labels || '[]');
+  const data1 = JSON.parse(canvas.dataset.data1 || '[]');
+  const data2 = JSON.parse(canvas.dataset.data2 || '[]');
+  const maxValues = JSON.parse(canvas.dataset.max || '[]');
+  const player1 = canvas.dataset.player1 || 'Player 1';
+  const player2 = canvas.dataset.player2 || 'Player 2';
 
-    // ✨ Format label agar huruf besar setiap kata (hapus underscore/dash)
-       labels = labels.map(label => {
-        label = label.replace(/[_\-]/g, ' '); // Ganti _ dan - jadi spasi
-        let formatted = label
-            .split(' ')
-            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
+  const formattedLabels = labels.map(label => {
+    const cleaned = label.replace(/[_-]/g, ' ');
+    const capitalized = cleaned.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return capitalized
+      .replace('Xg', 'xG')
+      .replace('Npxg', 'NPxG')
+      .replace('Xag', 'xAG');
+  });
 
-        // Format khusus xG-family
-        formatted = formatted
-            .replace(/\bXg\b/g, 'xG')
-            .replace(/\bNpxg\b/g, 'NPxG')
-            .replace(/\bXag\b/g, 'xAG');
+  const norm1 = data1.map((value, index) => {
+    const max = maxValues[index] || 1;
+    return max > 0 ? (value / max) * 100 : 0;
+  });
+  const norm2 = data2.map((value, index) => {
+    const max = maxValues[index] || 1;
+    return max > 0 ? (value / max) * 100 : 0;
+  });
 
-        return formatted;
-    });
-    // Normalisasi nilai jadi persentase
-    const norm1 = data1.map((v, i) => maxValues[i] > 0 ? (v / maxValues[i]) * 100 : 0);
-    const norm2 = data2.map((v, i) => maxValues[i] > 0 ? (v / maxValues[i]) * 100 : 0);
+  const ctx = canvas.getContext('2d');
+  if (window._radarChartInstance) window._radarChartInstance.destroy();
 
-    const ctx = canvas.getContext('2d');
-    if (window._radarChartInstance) window._radarChartInstance.destroy();
-
-    // 🧩 Buat chart dengan ukuran kecil dan proporsional
-    window._radarChartInstance = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: player1,
-                    data: norm1,
-                    backgroundColor: 'rgba(59, 130, 246, 0.25)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 2,
-                    fill: true
-                },
-                {
-                    label: player2,
-                    data: norm2,
-                    backgroundColor: 'rgba(239, 68, 68, 0.25)',
-                    borderColor: 'rgba(239, 68, 68, 1)',
-                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
-                    borderWidth: 2,
-                    fill: true
-                }
-            ]
+  window._radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: formattedLabels,
+      datasets: [
+        {
+          label: player1,
+          data: norm1,
+          backgroundColor: 'rgba(59, 130, 246, 0.25)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+          fill: true,
+          borderWidth: 2,
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // biar fleksibel (bisa dikecilin)
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    suggestedMax: 100,
-                    ticks: {
-                        stepSize: 25,
-                        callback: v => v + '%'
-                    },
-                    pointLabels: {
-                        font: { size: 11, weight: '500' },
-                        color: '#1e3a8a'
-                    },
-                    grid: { circular: true }
-                }
+        {
+          label: player2,
+          data: norm2,
+          backgroundColor: 'rgba(239, 68, 68, 0.25)',
+          borderColor: 'rgba(239, 68, 68, 1)',
+          pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+          fill: true,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          beginAtZero: true,
+          suggestedMax: 100,
+          ticks: {
+            stepSize: 25,
+            callback: value => `${value}%`,
+          },
+          grid: { circular: true },
+          pointLabels: {
+            font: { size: 11, weight: '500' },
+            color: '#1f2937',
+          },
+        },
+      },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: context => {
+              const idx = context.dataIndex;
+              const datasetIndex = context.datasetIndex;
+              const rawValue = datasetIndex === 0 ? data1[idx] : data2[idx];
+              return `${context.dataset.label}: ${rawValue}`;
             },
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const idx = context.dataIndex;
-                            const datasetIndex = context.datasetIndex;
-                            const rawVal = datasetIndex === 0 ? data1[idx] : data2[idx];
-                            return `${context.dataset.label}: ${rawVal}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
+          },
+        },
+      },
+    },
+  });
 }
 
-// Initialize event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Player 1 search
-    document.getElementById('player1-search').addEventListener('input', (e) => {
-        searchPlayers(e.target.value, 1);
-    });
-    
-    // Player 2 search
-    document.getElementById('player2-search').addEventListener('input', (e) => {
-        searchPlayers(e.target.value, 2);
-    });
-    
-    // Hide suggestions when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.matches('#player1-search')) {
-            document.getElementById('player1-suggestions').classList.add('hidden');
-        }
-        if (!e.target.matches('#player2-search')) {
-            document.getElementById('player2-suggestions').classList.add('hidden');
-        }
-    });
+document.addEventListener('click', event => {
+  if (!event.target.closest('#player1-search')) {
+    document.getElementById('player1-suggestions')?.classList.add('hidden');
+  }
+  if (!event.target.closest('#player2-search')) {
+    document.getElementById('player2-suggestions')?.classList.add('hidden');
+  }
 });
 
-// ===== ADMIN FUNCTIONS =====
-let playerToDelete = null;
-
+// ===== Modals: Add/Delete/Save =====
 function openAddPlayerModal() {
-    document.getElementById('addPlayerModal').classList.remove('hidden');
+  document.getElementById('addPlayerModal')?.classList.remove('hidden');
 }
-
 function closeAddPlayerModal() {
-    document.getElementById('addPlayerModal').classList.add('hidden');
+  document.getElementById('addPlayerModal')?.classList.add('hidden');
 }
-
 function openDeletePlayerModal() {
-    document.getElementById('deletePlayerModal').classList.remove('hidden');
+  document.getElementById('deletePlayerModal')?.classList.remove('hidden');
 }
-
 function closeDeletePlayerModal() {
-    document.getElementById('deletePlayerModal').classList.add('hidden');
-    playerToDelete = null;
-    document.getElementById('confirmDeleteBtn').disabled = true;
+  document.getElementById('deletePlayerModal')?.classList.add('hidden');
+  playerToDelete = null;
+  document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'disabled');
+}
+function openSaveComparisonModal() {
+  const m = document.getElementById('saveComparisonModal');
+  m?.classList.remove('hidden');
+  m?.classList.add('flex');
+}
+function closeSaveComparisonModal() {
+  const m = document.getElementById('saveComparisonModal');
+  if (!m) return;
+  m.classList.add('hidden');
+  m.classList.remove('flex');
 }
 
-// Add Player Form Handler
-document.getElementById('addPlayerForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    
-    try {
-        const response = await fetch('/comparison/players/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            alert(result.message);
-            closeAddPlayerModal();
-            this.reset();
-        } else {
-            alert('Error: ' + result.error);
-        }
-    } catch (error) {
-        alert('Error adding player');
-    }
-});
+// ===== Delete Player search & action =====
+const deletePlayerInput = document.getElementById('deletePlayerSearch');
+if (deletePlayerInput) {
+  deletePlayerInput.addEventListener('input', debounce(handleDeleteSearch, 300));
+}
 
-// Delete Player Search
-document.getElementById('deletePlayerSearch').addEventListener('input', debounce(async function(e) {
-    const query = e.target.value;
-    
-    if (query.length < 2) {
-        document.getElementById('deletePlayerSuggestions').classList.add('hidden');
-        return;
+async function handleDeleteSearch(event) {
+  const query = event.target.value.trim();
+  const suggestionsEl = document.getElementById('deletePlayerSuggestions');
+  if (!suggestionsEl) return;
+
+  if (query.length < 2) {
+    suggestionsEl.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/comparison/api/player-search/?q=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Network error');
+
+    const data = await response.json();
+    suggestionsEl.innerHTML = '';
+
+    if (!data.players.length) {
+      suggestionsEl.innerHTML = '<div class="p-3 text-sm text-slate-500">No players found</div>';
+    } else {
+      data.players.forEach(player => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50';
+        option.innerHTML = `
+          <span class="font-semibold text-slate-900">${player.name}</span>
+          <span class="text-xs text-slate-500">${player.club} &middot; ${player.position}</span>
+        `;
+        option.addEventListener('click', () => selectPlayerForDelete(player));
+        suggestionsEl.appendChild(option);
+      });
     }
-    
-    try {
-        const response = await fetch(`/comparison/api/player-search/?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        const suggestionsContainer = document.getElementById('deletePlayerSuggestions');
-        suggestionsContainer.innerHTML = '';
-        
-        if (data.players.length === 0) {
-            suggestionsContainer.innerHTML = '<div class="p-3 text-gray-500">No players found</div>';
-        } else {
-            data.players.forEach(player => {
-                const div = document.createElement('div');
-                div.className = 'p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200';
-                div.innerHTML = `
-                    <div class="font-semibold text-gray-800">${player.name}</div>
-                    <div class="text-sm text-gray-600">${player.club} • ${player.position}</div>
-                `;
-                div.onclick = () => selectPlayerForDelete(player);
-                suggestionsContainer.appendChild(div);
-            });
-        }
-        
-        suggestionsContainer.classList.remove('hidden');
-    } catch (error) {
-        console.error('Search error:', error);
-    }
-}, 300));
+
+    suggestionsEl.classList.remove('hidden');
+  } catch (error) {
+    suggestionsEl.innerHTML = '<div class="p-3 text-sm text-rose-500">Unable to search players.</div>';
+    suggestionsEl.classList.remove('hidden');
+  }
+}
 
 function selectPlayerForDelete(player) {
-    playerToDelete = player;
-    document.getElementById('deletePlayerSearch').value = player.name;
-    document.getElementById('deletePlayerSuggestions').classList.add('hidden');
-    document.getElementById('confirmDeleteBtn').disabled = false;
+  playerToDelete = player;
+  const input = document.getElementById('deletePlayerSearch');
+  if (input) input.value = player.name;
+  document.getElementById('deletePlayerSuggestions')?.classList.add('hidden');
+  document.getElementById('confirmDeleteBtn')?.removeAttribute('disabled');
 }
 
 async function confirmDeletePlayer() {
-    if (!playerToDelete) return;
-    
-    if (!confirm(`Are you sure you want to delete ${playerToDelete.name}? This action cannot be undone.`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/comparison/players/${playerToDelete.id}/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            alert(result.message);
-            closeDeletePlayerModal();
-        } else {
-            alert('Error: ' + result.error);
-        }
-    } catch (error) {
-        alert('Error deleting player');
-    }
+  if (!playerToDelete) return;
+  if (!confirm(`Delete ${playerToDelete.name}? This action cannot be undone.`)) return;
+
+  try {
+    const response = await fetch(`/comparison/players/${playerToDelete.id}/`, {
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '' },
+    });
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Unable to delete player');
+
+    alert(result.message || 'Player deleted');
+    closeDeletePlayerModal();
+  } catch (error) {
+    alert(error.message || 'Unable to delete player');
+  }
 }
+
+// ===== Save Comparison submit =====
+document.getElementById('saveComparisonForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!selectedPlayers.player1 || !selectedPlayers.player2) {
+    alert('Pilih 2 pemain terlebih dahulu.');
+    return;
+  }
+
+  const form = e.currentTarget;
+  const notes = form.elements['notes']?.value || '';
+  const csrftoken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+  try {
+    const res = await fetch('/comparison/api/save-comparison/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+      body: JSON.stringify({
+        player1_id: selectedPlayers.player1.id,
+        player2_id: selectedPlayers.player2.id,
+        notes: notes,
+      }),
+      credentials: 'include',
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Gagal menyimpan comparison');
+    }
+
+    closeSaveComparisonModal();
+    form.reset();
+    alert('Comparison berhasil disimpan!');
+    // Jika ingin langsung ke history:
+    // window.location.href = "{% url 'comparison_history' %}";
+  } catch (err) {
+    alert(err.message || 'Terjadi kesalahan saat menyimpan.');
+  }
+});
 </script>
-
-<style>
-.progress-bar {
-  transition: width 0.5s ease-in-out;
-}
-</style>
-
-<footer class="bg-blue-900 text-white text-center py-6">
-  <p>© 2025 Goalytics — All rights reserved.</p>
-</footer>
-{% endblock content %}
+{% endblock %}

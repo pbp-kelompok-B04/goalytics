@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Rumour{% endblock %}
+
+{% block content %}
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6">
+    <div class="mb-4">
+      <h1 class="text-xl font-semibold text-slate-900">Edit Rumour</h1>
+      <p class="text-slate-500 text-sm">Perbarui informasi rumour lalu simpan.</p>
+    </div>
+    <form method="post" action="">
+      {% csrf_token %}
+      {# pakai partial field yang sama seperti di list.html #}
+      {% include "transfer_rumour/partials/form_fields.html" with form=form %}
+      <div class="mt-5 flex items-center gap-3">
+        <a href="{% url 'transfer_rumour:list' %}"
+           class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+          Cancel
+        </a>
+        <button type="submit"
+                class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
