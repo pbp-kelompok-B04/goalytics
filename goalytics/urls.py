@@ -25,5 +25,6 @@ urlpatterns = [
     path('comparison/', include('comparison.urls')),
     path('data/', include('PlayerClub_Data.urls')),
     path('favorite/', include('favorite_player.urls')), 
-    path('forum/', include('forum.urls'))
+    path('forum/', include('forum.urls')),
+    path('transfer-rumours/', include('transfer_rumour.urls')),
 ]
