@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Match Forums</h1>
+
+        {% if can_manage_matches %}
+          <button
+              id="add-match-btn"
+              data-ajax-url="{% url 'match_prediction:match_create' %}"
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+              + Add Match
+          </button>
+        {% endif %}
+    </div>
+
+    <!-- Match List Table -->
+    <div id="match-list">
+        {% include 'match_prediction/partials/match_list_table.html' %}
+    </div>
+</div>
+
+{% endblock %}
