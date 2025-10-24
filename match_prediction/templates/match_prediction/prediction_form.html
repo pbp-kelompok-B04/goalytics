@@ -1,39 +1,50 @@
-{% extends 'base.html' %}
-{% load widget_tweaks %}
-{% block title %}{% if object %}Edit Prediction{% else %}Add Prediction{% endif %}{% endblock %}
-{% block content %}
+{% load static %}
 
-<div class="max-w-md mx-auto mt-8 px-4">
-  <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-    <h1 class="text-2xl font-bold text-gray-800 mb-4">
-      {% if object %}Edit Prediction{% else %}Add Prediction{% endif %}
-    </h1>
+<form method="post" id="predictionForm" class="space-y-5">
+  {% csrf_token %}
 
-    <form method="post" action="{{ request.path }}" class="ajax-form space-y-4">
-      {% csrf_token %}
+  {# error non-field #}
+  {% if form.non_field_errors %}
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+    </div>
+  {% endif %}
 
-      {# Render each field individually with Tailwind styling #}
-      {% for field in form %}
-        <div class="flex flex-col">
-          {{ field.label_tag }}
-          {{ field|add_class:"border rounded-lg px-3 py-2" }}
-          {% if field.help_text %}
-            <p class="text-gray-400 text-sm mt-1">{{ field.help_text }}</p>
-          {% endif %}
-          {% if field.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ field.errors|join:", " }}</p>
-          {% endif %}
-        </div>
-      {% endfor %}
+  {# render per-field #}
+  {% for field in form %}
+    <label class="block space-y-1">
+      <span class="text-sm font-semibold text-slate-700">{{ field.label }}</span>
+      {{ field }}
+      {% if field.help_text %}<span class="text-xs text-slate-400">{{ field.help_text }}</span>{% endif %}
+      {% for e in field.errors %}<span class="block text-xs text-rose-600">{{ e }}</span>{% endfor %}
+    </label>
+  {% endfor %}
 
-      <div class="flex justify-end">
-        <button type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-          Save
-        </button>
-      </div>
-    </form>
+  <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
+    <button type="button" id="prediction-modal-close-proxy"
+            class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+      Cancel
+    </button>
+    <button type="submit"
+            class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800">
+      Save
+    </button>
   </div>
-</div>
+</form>
 
-{% endblock %}
+<script>
+  document.getElementById('prediction-modal-close-proxy')?.addEventListener('click', () => {
+    (document.getElementById('ajaxModalClose') || document.getElementById('closeCreateMatch'))?.click();
+  });
+
+  (function styleFields(rootId){
+    const root = document.getElementById(rootId);
+    if(!root) return;
+    const base = "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200";
+    root.querySelectorAll('input:not([type=checkbox]):not([type=radio]), select, textarea').forEach(el=>{
+      if(!el.className || !/rounded-2xl|rounded-xl|rounded-lg/.test(el.className)){
+        el.className = (el.className ? el.className + ' ' : '') + base;
+      }
+    });
+  })('predictionForm');
+</script>

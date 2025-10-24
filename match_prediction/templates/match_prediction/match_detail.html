@@ -1,63 +1,327 @@
 {% extends 'base.html' %}
-{% block title %}{{ match.home_club.name }} vs {{ match.away_club.name }}{% endblock %}
 {% load static %}
-{% block content %}
+{% block title %}{{ match.home_club.name }} vs {{ match.away_club.name }}{% endblock %}
 
-<div class="max-w-5xl mx-auto mt-8 px-4">
-  
-  <!-- Match Header -->
-  <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mb-6">
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-800">
-          ⚽ {{ match.home_club.name|default:"TBD" }}
-          <span class="text-gray-500">vs</span>
-          {{ match.away_club.name|default:"TBD" }}
-        </h1>
-        <p class="text-gray-500 text-sm mt-1">
-          {{ match.match_datetime|date:"M d, Y H:i" }} — {{ match.venue|default:"TBD Venue" }}
-        </p>
+{% block content %}
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-12">
+
+    <!-- Match Header Card -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="space-y-2">
+          <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">
+            ⚽ {{ match.home_club.name|default:"TBD" }}
+            <span class="mx-2 text-slate-400">vs</span>
+            {{ match.away_club.name|default:"TBD" }}
+          </h1>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-600">
+              <svg class="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 0 0 2-2v-8H3v8a2 2 0 0 0 2 2z"/>
+              </svg>
+              {{ match.match_datetime|date:"M d, Y H:i" }}
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-600">
+              <svg class="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+              </svg>
+              {{ match.venue|default:"TBD Venue" }}
+            </span>
+          </div>
+        </div>
+
+        {% if user.is_authenticated and user.profile.role == 'analyst' or user.profile.role == 'admin' %}
+        <div class="flex flex-wrap items-center gap-2 md:justify-end">
+          <button
+            type="button"
+            data-ajax-url="{% url 'match_prediction:match_edit' match.id %}"
+            class="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-200"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-.879-9.121a2.121 2.121 0 1 1 3 3L13 15l-4 1 1-4 7.121-7.121z"/>
+            </svg>
+            Edit Match
+          </button>
+
+          <button
+            type="button"
+            data-delete-url="{% url 'match_prediction:match_delete' match.id %}"
+            class="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12m-1 0-1 12H8L7 7m3 0V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Delete
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Predictions Card -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h2 class="text-2xl font-semibold text-slate-900">Predictions Forum</h2>
+
+        {% if user.is_authenticated and not user_prediction %}
+        <button
+          type="button"
+          data-ajax-url="{% url 'match_prediction:ajax_add_prediction' match.id %}"
+          class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/>
+          </svg>
+          Add Prediction
+        </button>
+        {% endif %}
       </div>
 
-      {% if user.is_authenticated and user.profile.role in 'admin analyst' %}
-        <div class="flex gap-2">
-          <button
-            data-ajax-url="{% url 'match_prediction:match_edit' match.id %}"
-            data-update-target="#match-list"
-            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm"
-          >Edit Match</button>
-
-          <button
-            data-delete-url="{% url 'match_prediction:match_delete' match.id %}"
-            data-update-target="#match-list"
-            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
-          >Delete Match</button>
-        </div>
-      {% endif %}
+      <!-- Prediction List -->
+      <div id="predictionList" class="mt-4">
+        {% include 'match_prediction/partials/prediction_list.html' %}
+      </div>
     </div>
   </div>
+</section>
 
-  <!-- Prediction Section -->
-  <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-semibold text-gray-800">Predictions Forum</h2>
-
-      {% if user.is_authenticated and not user_prediction %}
-        <button
-          data-ajax-url="{% url 'match_prediction:ajax_add_prediction' match.id %}"
-          data-update-target="#predictionList"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
-        >
-          + Add Prediction
-        </button>
-      {% endif %}
+<!-- Shared Modal & Toast (seragam dg forum_home) -->
+<div id="ajaxModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+      <h2 class="text-xl font-semibold text-slate-900">Form</h2>
+      <button id="ajaxModalClose" class="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800" aria-label="Close modal">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
     </div>
-
-    <!-- Prediction List -->
-      <div id="predictionList">
-      {% include 'match_prediction/partials/prediction_list.html' %} 
-    </div>
-  </div>
+    <div id="ajaxModalBody" class="px-6 py-6"></div>
+  </div>
 </div>
 
+<div id="toast" class="fixed top-24 right-6 z-50 hidden items-center gap-3 rounded-2xl border border-slate-200 bg-slate-900/95 px-5 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-sm">
+  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+  </svg>
+  <span id="toastMessage">Saved!</span>
+</div>
+
+<style>
+  @keyframes slide-in {
+    from { transform: translateX(300px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  .animate-slide-in { animation: slide-in 0.3s ease-out; }
+</style>
+
+<script>
+  // ===== Util: CSRF & Toast =====
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    if (!toast || !toastMessage) return;
+    toastMessage.textContent = message || 'Done';
+    toast.classList.remove('hidden');
+    toast.classList.add('flex', 'animate-slide-in');
+    if (isError) {
+      toast.classList.remove('bg-slate-900/95');
+      toast.classList.add('bg-rose-500');
+    } else {
+      toast.classList.remove('bg-rose-500');
+      toast.classList.add('bg-slate-900/95');
+    }
+    setTimeout(() => {
+      toast.classList.add('hidden');
+      toast.classList.remove('flex', 'animate-slide-in');
+    }, 2800);
+  }
+
+  // ===== Modal helpers (seragam dg forum) =====
+  function openModal() {
+    const m = document.getElementById('ajaxModal');
+    if (!m) return;
+    m.classList.remove('hidden'); m.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+  }
+  function closeModal() {
+    const m = document.getElementById('ajaxModal');
+    const body = document.getElementById('ajaxModalBody');
+    if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    if (body) { body.innerHTML = ''; }
+    document.body.classList.remove('overflow-hidden');
+  }
+  document.getElementById('ajaxModalClose')?.addEventListener('click', closeModal);
+  document.getElementById('ajaxModal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // ===== AJAX form loader (global function) =====
+  async function loadForm(url) {
+    const body = document.getElementById('ajaxModalBody');
+    if (!body) return;
+    openModal();
+    body.innerHTML = '<div class="py-8 text-center text-sm text-slate-500">Loading…</div>';
+    const res = await fetch(url, { headers: {'X-Requested-With': 'XMLHttpRequest'}, credentials: 'include' });
+    const html = await res.text();
+    body.innerHTML = html;
+    const form = body.querySelector('form');
+    if (form) bindAjax(form, url);
+  }
+
+  function bindAjax(form, url) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken || '' },
+        credentials: 'include',
+        body: new FormData(form)
+      });
+      const ctype = res.headers.get('content-type') || '';
+      if (ctype.includes('application/json')) {
+        const data = await res.json();
+        if (data.updateTarget && data.html) {
+          const t = document.querySelector(data.updateTarget);
+          if (t) t.innerHTML = data.html;
+        }
+        showToast(data.message || 'Saved');
+        closeModal();
+      } else {
+        // re-render form with errors
+        const html = await res.text();
+        const body = document.getElementById('ajaxModalBody');
+        if (body) {
+          body.innerHTML = html;
+          const next = body.querySelector('form');
+          if (next) bindAjax(next, url);
+        }
+      }
+    });
+  }
+
+  // ===== Page listeners =====
+  document.addEventListener('DOMContentLoaded', () => {
+    // Edit match
+    const editBtn = document.querySelector('button[data-ajax-url][data-delete-url=""]') || document.querySelector('button[data-ajax-url]:not([data-delete-url])');
+    // (selector fallback di atas santai saja; di bawah pakai query spesifik)
+    const editMatchBtn = document.querySelector('button[data-ajax-url][class*="border-amber"]');
+    if (editMatchBtn) {
+      editMatchBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const url = editMatchBtn.dataset.ajaxUrl;
+        if (url) loadForm(url);
+      });
+    }
+
+    // Delete match
+    const deleteMatchBtn = document.querySelector('button[data-delete-url]');
+    if (deleteMatchBtn) {
+      deleteMatchBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!confirm('Delete this match?')) return;
+        const url = deleteMatchBtn.dataset.deleteUrl;
+        if (!url) return;
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken || '' },
+            credentials: 'include'
+          });
+          const data = await res.json();
+          showToast(data.message || 'Deleted');
+          // Kembali ke list match setelah delete
+          window.location.href = "{% url 'match_prediction:match_list' %}";
+        } catch (err) {
+          showToast('Delete failed', true);
+        }
+      });
+    }
+
+    // Add prediction (modal)
+    const addPredBtn = document.querySelector('button[data-ajax-url][class*="bg-slate-900"]');
+    if (addPredBtn) {
+      addPredBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const url = addPredBtn.dataset.ajaxUrl;
+        if (url) loadForm(url);
+      });
+    }
+
+    // Delegasi aksi di list prediction
+    const predList = document.getElementById('predictionList');
+    predList?.addEventListener('click', (e) => {
+      const el = e.target.closest('.js-edit-prediction, .js-delete-prediction, .js-upvote-btn');
+      if (!el) return;
+
+      // Edit
+      if (el.classList.contains('js-edit-prediction')) {
+        e.preventDefault();
+        const url = el.dataset.ajaxUrl;
+        if (url) loadForm(url);
+        return;
+      }
+
+      // Delete
+      if (el.classList.contains('js-delete-prediction')) {
+        e.preventDefault();
+        const url = el.dataset.deleteUrl;
+        if (!url) return;
+        if (!confirm('Delete this prediction?')) return;
+        fetch(url, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken || '' },
+          credentials: 'include'
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.updateTarget && data.html) {
+            const t = document.querySelector(data.updateTarget);
+            if (t) t.innerHTML = data.html;
+          }
+          showToast(data.message || 'Deleted');
+        });
+        return;
+      }
+
+      // Upvote
+      if (el.classList.contains('js-upvote-btn')) {
+        e.preventDefault();
+        const url = el.dataset.upvoteUrl;
+        const id  = el.dataset.predictionId;
+        fetch(url, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken || '' },
+          credentials: 'include'
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (typeof data.new_count !== 'undefined' && id) {
+            const cnt = document.getElementById('upvote-count-' + id);
+            if (cnt) cnt.textContent = data.new_count;
+          }
+          showToast(data.message || 'Updated');
+        });
+      }
+    });
+  });
+</script>
 {% endblock %}
