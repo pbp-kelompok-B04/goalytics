@@ -4,21 +4,25 @@
 
       <!-- Logo -->
       <div class="flex-shrink-0">
-        <a href="{% url 'main:home' %}" class="text-2xl font-bold hover:text-blue-300 transition">
+        <a href="{% if user.is_authenticated %}{% url 'main:dashboard' %}{% else %}{% url 'main:home' %}{% endif %}"
+           class="text-2xl font-bold hover:text-blue-300 transition">
           ⚽ Goalytics
         </a>
       </div>
 
       <!-- Desktop Menu -->
       <div class="hidden md:flex items-center space-x-6">
-        <a href="#" class="hover:text-blue-300 transition">Favorite Players</a>
+        <a href="{% url 'favorite_player:favorite_list' %}" class="hover:text-blue-300 transition">Favorite Players</a>
         <a href="{% url 'match_prediction:match_list' %}" class="hover:text-blue-300 transition">Match Prediction</a>
-        <a href="#" class="hover:text-blue-300 transition">Discussion</a>
-        <a href="#" class="hover:text-blue-300 transition">Comparison</a>
+        <a href="{% url 'forum_home' %}" class="hover:text-blue-300 transition">Discussion</a>
+        <a href="{% url 'comparison' %}" class="hover:text-blue-300 transition">Comparison</a>
 
         {% if user.is_authenticated %}
-          <!-- Find Users hanya saat login -->
+          <!-- Find Users -->
           <a href="{% url 'users:search_users' %}" class="hover:text-blue-300 transition">Find Users</a>
+          {% if user.profile.role == 'admin' %}
+            <a href="{% url 'adminpanel:dashboard' %}" class="hover:text-blue-300 transition font-semibold text-white bg-white/20 px-3 py-1 rounded-lg">Admin Panel</a>
+          {% endif %}
 
           <!-- Profile Dropdown -->
           <div class="relative">
@@ -44,9 +48,9 @@
             </div>
           </div>
         {% else %}
-          <!-- Saat belum login: tombol Login, tanpa Find Users dan tanpa avatar -->
+          <!-- Saat belum login -->
           <a href="{% url 'users:login' %}" 
-             class="bg-white text-blue-900 font-semibold px-4 py-2 rounded-full shadow hover:bg-blue-100 transition">
+             class="bg-white text-blue-900 font-semibold px-4 py-2 rounded-full shadow hover:bg-blue-100 hover:shadow-blue-300/30 hover:scale-[1.03] transition-all duration-300">
             Login
           </a>
         {% endif %}
@@ -61,13 +65,16 @@
 
   <!-- Mobile Menu -->
   <div id="mobile-menu" class="hidden md:hidden bg-blue-800">
-    <a href="#" class="block px-4 py-2 hover:bg-blue-700">Favorite Players</a>
+    <a href="{% url 'favorite_player:favorite_list' %}" class="block px-4 py-2 hover:bg-blue-700">Favorite Players</a>
     <a href="{% url 'match_prediction:match_list' %}" class="block px-4 py-2 hover:bg-blue-700">Match Prediction</a>
-    <a href="#" class="block px-4 py-2 hover:bg-blue-700">Discussion</a>
-    <a href="#" class="block px-4 py-2 hover:bg-blue-700">Comparison</a>
+    <a href="{% url 'forum_home' %}" class="block px-4 py-2 hover:bg-blue-700">Discussion</a>
+    <a href="{% url 'comparison' %}" class="block px-4 py-2 hover:bg-blue-700">Comparison</a>
 
     {% if user.is_authenticated %}
       <a href="{% url 'users:search_users' %}" class="block px-4 py-2 hover:bg-blue-700">Find Users</a>
+      {% if user.profile.role == 'admin' %}
+        <a href="{% url 'adminpanel:dashboard' %}" class="block px-4 py-2 text-center font-semibold bg-white text-blue-900 rounded-md mx-4 my-2 shadow-md hover:shadow-blue-300/40 hover:bg-blue-100 transition-all duration-300">Admin Panel</a>
+      {% endif %}
       <a href="{% url 'users:profile' user.username %}" class="block px-4 py-2 border-t border-blue-700 hover:bg-blue-700">Profile</a>
       <a href="{% url 'users:logout' %}" class="block px-4 py-2 hover:bg-blue-700">Logout</a>
     {% else %}
@@ -80,7 +87,6 @@
 </nav>
 
 <script>
-  // Mobile menu toggle
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
   if (menuBtn && mobileMenu) {
@@ -89,7 +95,6 @@
     });
   }
 
-  // Profile dropdown (click toggle)
   const profileBtn = document.getElementById('profileBtn');
   const profileMenu = document.getElementById('profileMenu');
 

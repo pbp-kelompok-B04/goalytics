@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -8,6 +9,7 @@ from .models import Profile
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 def login_user(request):
     
@@ -152,3 +154,38 @@ def view_profile(request, username):
         "is_owner": is_owner,
         "form": form,
     })
+
+@login_required
+def toggle_block_user(request, username):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'admin':
+        messages.error(request, "Unauthorized.")
+        return redirect('users:search_users')
+
+    target = get_object_or_404(Profile, user__username=username)
+    target.is_blocked = not target.is_blocked
+    target.save()
+    messages.success(request, f"User '{username}' has been {'blocked' if target.is_blocked else 'unblocked'}.")
+    next_url = request.GET.get('next') or request.POST.get('next')
+    allowed_hosts = {request.get_host()}
+    allowed_hosts.update(settings.ALLOWED_HOSTS)
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=allowed_hosts):
+        return redirect(next_url)
+    return redirect('users:profile', username=username)
+
+
+@login_required
+def toggle_flag_user(request, username):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'admin':
+        messages.error(request, "Unauthorized.")
+        return redirect('users:search_users')
+
+    target = get_object_or_404(Profile, user__username=username)
+    target.is_flagged = not target.is_flagged
+    target.save()
+    messages.success(request, f"User '{username}' flag status updated.")
+    next_url = request.GET.get('next') or request.POST.get('next')
+    allowed_hosts = {request.get_host()}
+    allowed_hosts.update(settings.ALLOWED_HOSTS)
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=allowed_hosts):
+        return redirect(next_url)
+    return redirect('users:profile', username=username)

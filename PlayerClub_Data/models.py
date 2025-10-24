@@ -1,27 +1,64 @@
 from django.db import models
-# sementara gini dulu aja, nanti ditambah lagi
+
 class Club(models.Model):
-    id = models.IntegerField(primary_key=True)
+    league = models.CharField(max_length=100, default='Unknown')
+    season = models.CharField(max_length=20, default='2425')
     name = models.CharField(max_length=200, unique=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
-    code = models.CharField(max_length=50, blank=True, null=True)
-    stadium = models.CharField(max_length=200, blank=True, null=True)  
+    total_goal = models.IntegerField(default=0)
+    total_assist = models.IntegerField(default=0)
+    expected_xg = models.FloatField(default=0.0)
+    expected_xag = models.FloatField(default=0.0)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.league} {self.season})"
+
 
 class Player(models.Model):
-    id = models.IntegerField(primary_key=True)
+    POSITION_CHOICES = [
+        ('GK', 'Goalkeeper'),
+        ('DF', 'Defender'),
+        ('MF', 'Midfielder'),
+        ('FW', 'Forward'),
+    ]
+
     name = models.CharField(max_length=200)
-    club = models.ForeignKey(Club, on_delete=models.SET_NULL, null=True, blank=True, related_name='players')
+    nation = models.CharField(max_length=50, blank=True, null=True)
     position = models.CharField(max_length=50, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    height_cm = models.FloatField(blank=True, null=True)
-    total_goals = models.PositiveIntegerField(default=0)
-    total_assists = models.PositiveIntegerField(default=0)
-    yellow_cards = models.PositiveIntegerField(default=0)
-    red_cards = models.PositiveIntegerField(default=0)
-    total_win = models.PositiveIntegerField(default=0)
+    age = models.PositiveIntegerField(blank=True, null=True)
+    born = models.PositiveIntegerField(blank=True, null=True)
+    club = models.ForeignKey(Club, on_delete=models.SET_NULL, null=True, related_name='players')
+    image_url = models.URLField(blank=True, null=True)
+    
+    #stat umum
+    goals = models.FloatField(default=0)
+    assists = models.FloatField(default=0)
+    xg = models.FloatField(default=0)
+    npxg = models.FloatField(default=0)
+    xag = models.FloatField(default=0)
+
+    #stats progresi
+    Progressive_Carries = models.FloatField(default=0)
+    Progressive_Passes = models.FloatField(default=0)
+    Progressive_Receptions = models.FloatField(default=0)
+
+    #stats passing
+    passes_completed = models.PositiveIntegerField(default=0)
+    passes_attempted = models.PositiveIntegerField(default=0)
+    pass_accuracy = models.FloatField(blank=True, null=True)
+
+    # stats bertahan
+    tackles = models.PositiveIntegerField(default=0)
+    tackles_won = models.PositiveIntegerField(default=0)
+    challenges_won = models.PositiveIntegerField(default=0)
+    challenges_attempted = models.PositiveIntegerField(default=0)
+    blocks = models.PositiveIntegerField(default=0)
+    clearances = models.PositiveIntegerField(default=0)
+
+    #stats khusus kiper
+    saves = models.PositiveIntegerField(blank=True, null=True)
+    save_percentage = models.FloatField(blank=True, null=True)
+    clean_sheets = models.PositiveIntegerField(blank=True, null=True)
+    clean_sheet_percentage = models.FloatField(blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.position})"

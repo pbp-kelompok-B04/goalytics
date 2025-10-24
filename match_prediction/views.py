@@ -10,6 +10,7 @@ from .forms import MatchForm, PredictionForm
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db import IntegrityError
+from django.db.models import Count
 
 
 # --- Role helpers ---
@@ -45,10 +46,31 @@ class MatchDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         match = self.object
-        context['predictions'] = match.predictions.filter(is_deleted=False).select_related('user')
+        
+        # 1. Fetch all predictions for the match
+        predictions = match.predictions.filter(is_deleted=False).select_related('user')
+        
         if self.request.user.is_authenticated:
-            context['user_prediction'] = match.predictions.filter(user=self.request.user, is_deleted=False).first()
-            context['prediction_form'] = PredictionForm()
+            user = self.request.user
+            context['user_prediction'] = match.predictions.filter(user=user, is_deleted=False).first()
+            
+            # 2. CRITICAL STEP: Get a set of prediction IDs the user has upvoted
+            upvoted_ids = set(
+                PredictionUpvote.objects
+                .filter(user=user, prediction__in=predictions)
+                .values_list('prediction_id', flat=True)
+            )
+
+            # 3. Annotate the predictions with the upvoted status
+            for prediction in predictions:
+                # Add a new attribute that is DTL-safe
+                prediction.user_has_upvoted = prediction.id in upvoted_ids
+        else:
+            # If not authenticated, no one has upvoted
+            for prediction in predictions:
+                prediction.user_has_upvoted = False
+
+        context['predictions'] = predictions
         return context
 
 
@@ -326,19 +348,37 @@ def ajax_add_prediction(request, match_id):
 
 @login_required
 def ajax_toggle_upvote(request, prediction_id):
-    """Handle upvote toggle via AJAX."""
+    """
+    Toggles a user's upvote status on a prediction.
+    Must be called via POST and AJAX.
+    """
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         prediction = get_object_or_404(Prediction, id=prediction_id, is_deleted=False)
         user = request.user
-        upvote, created = PredictionUpvote.objects.get_or_create(prediction=prediction, user=user)
-        if not created:
-            upvote.delete()
-            status = 'removed'
+        
+        # Check if the user has already upvoted this prediction
+        upvote_link = PredictionUpvote.objects.filter(prediction=prediction, user=user).first()
+
+        if upvote_link:
+            # User has already upvoted: REMOVE upvote (downvote)
+            upvote_link.delete()
+            is_upvoted = False
         else:
-            status = 'added'
-        prediction.recalc_upvote_count()
+            # User has not upvoted: CREATE upvote
+            PredictionUpvote.objects.create(prediction=prediction, user=user)
+            is_upvoted = True
+        
+        # Recalculate and update the cached upvote_count field
+        # Use Count() for accurate and atomic calculation
+        new_count = PredictionUpvote.objects.filter(prediction=prediction).count()
+        prediction.upvote_count = new_count
+        prediction.save(update_fields=['upvote_count'])
+        
         return JsonResponse({
-            'status': status,
-            'upvote_count': prediction.upvote_count
+            'status': 'success',
+            'prediction_id': prediction_id,
+            'new_count': new_count,
+            'is_upvoted': is_upvoted
         })
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)

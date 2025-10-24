@@ -46,10 +46,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
-    'users',
+    'adminpanel.apps.AdminpanelConfig',
     'PlayerClub_Data.apps.PlayerclubDataConfig',
     'match_prediction',
     'widget_tweaks',
+    'comparison',
+    'users.apps.UsersConfig',
+    'favorite_player.apps.FavoritePlayerConfig',
+    'forum'
 ]
 
 MIDDLEWARE = [

@@ -2,31 +2,72 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto mt-10 bg-white shadow-lg rounded-xl p-8">
-    <h1 class="text-3xl font-bold text-blue-800 mb-4">Welcome back, {{ username }} 👋</h1>
-    <p class="text-gray-600 mb-8">Explore your football analytics tools below:</p>
+<div class="max-w-6xl mx-auto mt-12 bg-white shadow-lg rounded-2xl p-10">
+  <!-- Heading -->
+  <h1 class="text-3xl font-bold text-blue-800 mb-2">
+    Welcome back, {{ username }} 👋
+  </h1>
+  <p class="text-gray-600 mb-10 text-base md:text-lg">
+    Explore your football analytics tools below:
+  </p>
 
-    <!-- Feature Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="#" class="block bg-gradient-to-br from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white p-6 rounded-lg shadow transition">
-            <h2 class="text-xl font-semibold mb-2">⚽ Favorite Players</h2>
-            <p class="text-sm text-blue-100">View and manage your favorite football stars.</p>
-        </a>
+  <!-- Feature Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Favorite Players -->
+    <a href="{% url 'favorite_player:favorite_list' %}"
+      class="group flex items-start gap-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
+        ⚽
+      </div>
+      <div>
+        <h2 class="text-2xl font-semibold mb-1">Favorite Players</h2>
+        <p class="text-blue-100 text-sm leading-relaxed">
+          View and manage your favorite football stars.
+        </p>
+      </div>
+    </a>
 
-        <a href="{% url 'match_prediction:match_list' %}" class="block bg-gradient-to-br from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white p-6 rounded-lg shadow transition">
-            <h2 class="text-xl font-semibold mb-2">📊 Match Prediction</h2>
-            <p class="text-sm text-green-100">Predict outcomes and analyze match data.</p>
-        </a>
+    <!-- Match Prediction -->
+    <a href="{% url 'match_prediction:match_list' %}"
+      class="group flex items-start gap-5 bg-gradient-to-br from-emerald-500 to-green-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
+        📊
+      </div>
+      <div>
+        <h2 class="text-2xl font-semibold mb-1">Match Prediction</h2>
+        <p class="text-green-100 text-sm leading-relaxed">
+          Predict match outcomes and analyze performance data.
+        </p>
+      </div>
+    </a>
 
-        <a href="#" class="block bg-gradient-to-br from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white p-6 rounded-lg shadow transition">
-            <h2 class="text-xl font-semibold mb-2">💬 Discussion Forum</h2>
-            <p class="text-sm text-purple-100">Join discussions with fellow fans.</p>
-        </a>
+    <!-- Discussion Forum -->
+    <a href="{% url 'forum_home' %}"
+      class="group flex items-start gap-5 bg-gradient-to-br from-purple-500 to-indigo-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
+        💬
+      </div>
+      <div>
+        <h2 class="text-2xl font-semibold mb-1">Discussion Forum</h2>
+        <p class="text-purple-100 text-sm leading-relaxed">
+          Join discussions and connect with fellow fans.
+        </p>
+      </div>
+    </a>
 
-        <a href="#" class="block bg-gradient-to-br from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white p-6 rounded-lg shadow transition">
-            <h2 class="text-xl font-semibold mb-2">⚔️ Player Comparison</h2>
-            <p class="text-sm text-pink-100">Compare player stats and insights side by side.</p>
-        </a>
-    </div>
+    <!-- Player Comparison -->
+    <a href="{% url 'comparison' %}"
+      class="group flex items-start gap-5 bg-gradient-to-br from-pink-500 to-rose-600 text-white p-8 rounded-2xl shadow-md transform transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div class="flex items-center justify-center w-14 h-14 bg-white/20 rounded-xl group-hover:bg-white/30 transition text-4xl">
+        ⚔️
+      </div>
+      <div>
+        <h2 class="text-2xl font-semibold mb-1">Player Comparison</h2>
+        <p class="text-pink-100 text-sm leading-relaxed">
+          Compare player stats and insights side by side.
+        </p>
+      </div>
+    </a>
+  </div>
 </div>
 {% endblock %}

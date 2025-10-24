@@ -1,0 +1,42 @@
+{% if players %}
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for player in players %}
+      <div class="border border-gray-100 rounded-xl p-5 flex flex-col gap-3 hover:border-blue-200 hover:shadow-lg transition">
+        <div>
+          <p class="font-semibold text-gray-900">{{ player.name }}</p>
+          <p class="text-sm text-gray-500">{{ player.club.name|default:"Free Agent" }}</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide">
+            {{ player.get_position_display|default:player.position|default:"-" }}
+          </p>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500">
+          <span>Goals: {{ player.goals|default:"0" }}</span>
+          <span>Assists: {{ player.assists|default:"0" }}</span>
+        </div>
+        <form method="post"
+              action="{% url 'favorite_player:add_favorite' player.id %}"
+              data-favorite-form>
+          {% csrf_token %}
+          <button type="submit"
+                  class="w-full px-4 py-2 rounded-lg text-sm font-semibold transition
+                         {% if player.id in favorite_ids %}
+                           bg-green-500 text-white cursor-not-allowed opacity-80
+                         {% else %}
+                           bg-blue-600 text-white hover:bg-blue-500
+                         {% endif %}"
+                  {% if player.id in favorite_ids %}disabled{% endif %}
+                  data-player-id="{{ player.id }}">
+            {% if player.id in favorite_ids %}Added{% else %}Add to Favorites{% endif %}
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  {% if limited %}
+    <p class="text-xs text-gray-400 text-center mt-4">Showing first 50 matches. Refine your search to see more.</p>
+  {% endif %}
+{% else %}
+  <div class="text-center text-gray-600 py-10 border border-dashed border-blue-200 rounded-xl">
+    No players found for your search.
+  </div>
+{% endif %}

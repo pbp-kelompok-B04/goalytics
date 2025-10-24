@@ -3,70 +3,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Goalytics | {% block title %}{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  {% block meta %}{% endblock meta %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Goalytics | {% block title %}{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  {% block meta %}{% endblock meta %}
 </head>
 <body class="bg-gray-50 text-gray-900">
 
-  {% include 'navbar.html' %}
+  {% include 'navbar.html' %}
 
-  {# ✅ Toast - di kanan bawah & tidak tampil di login/register #}
-  {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
-    <div id="alert-container" class="fixed bottom-4 right-4 space-y-3 z-50">
-      {% for message in messages %}
-        <div class="alert px-4 py-3 rounded-lg shadow-lg text-white transform transition-all duration-500 ease-out
-                    translate-x-10 opacity-0
-                    {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+  {# ✅ Toast - di kanan bawah & tidak tampil di login/register #}
+  {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
+    <div id="alert-container" class="fixed bottom-4 right-4 space-y-3 z-50">
+      {% for message in messages %}
+        <div class="alert px-4 py-3 rounded-lg shadow-lg text-white transform transition-all duration-500 ease-out
+                    translate-x-10 opacity-0
+                    {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-  {% block content %}{% endblock %}
+  {% block content %}{% endblock %}
 
-  {# ================================ #}
-  {# ✅ MODAL PLACEHOLDER FOR AJAX FORMS #}
-  {# This is where forms like "Add Match" will appear #}
-  {# ================================ #}
-  <div id="ajaxModal" class="hidden fixed inset-0 bg-black bg-opacity-40 justify-center items-center z-50">
-    <div id="ajaxModalContent" class="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
-      <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
-    </div>
-  </div>
+  {# ================================ #}
+  {# ✅ MODAL PLACEHOLDER FOR AJAX FORMS #}
+  {# This is where forms like "Add Match" will appear #}
+  {# ================================ #}
+  <div id="ajaxModal" class="hidden fixed inset-0 bg-black bg-opacity-40 justify-center items-center z-50">
+    <div id="ajaxModalContent" class="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+      <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+  </div>
 
-  {# ================================ #}
-  {# ✅ ALERT ANIMATION SCRIPT (yours) #}
-  {# ================================ #}
+  {# ================================ #}
+  {# SCRIPTS #}
+  {# ================================ #}
+
+  {# 🛠️ ADDED: jQuery is required for the upvote and your existing ajax_handlers.js to work correctly #}
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+          integrity="sha256-/JqT3SQfawRz2Uks+3zL3wOkt6WbK0fCE7O6c4sVqJ0=" 
+          crossorigin="anonymous"></script>
+
+  {# ✅ ALERT ANIMATION SCRIPT (yours) #}
+  <script>
+    // 🎬 Animasi masuk
+    window.addEventListener('DOMContentLoaded', () => {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach((alert, index) => {
+        setTimeout(() => {
+          alert.classList.remove('translate-x-10', 'opacity-0');
+          alert.classList.add('translate-x-0', 'opacity-100');
+        }, index * 100);
+      });
+    });
+
+    // ⏳ Auto hilang
+    setTimeout(() => {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        alert.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => alert.remove(), 500);
+      });
+    }, 3000);
+  </script>
+
+  {# 🚀 ADDED: AJAX Upvote/Downvote Script #}
   <script>
-    // 🎬 Animasi masuk
-    window.addEventListener('DOMContentLoaded', () => {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach((alert, index) => {
-        setTimeout(() => {
-          alert.classList.remove('translate-x-10', 'opacity-0');
-          alert.classList.add('translate-x-0', 'opacity-100');
-        }, index * 100);
-      });
-    });
+    $(document).ready(function() {
+        // 1. Listen for clicks on any upvote button
+        $(document).on('click', '.js-upvote-btn', function(e) {
+            e.preventDefault();
+            var button = $(this);
+            var url = button.data('upvote-url');
+            var predictionId = button.data('prediction-id');
+            var countSpan = $('#upvote-count-' + predictionId);
 
-    // ⏳ Auto hilang
-    setTimeout(() => {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(alert => {
-        alert.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => alert.remove(), 500);
-      });
-    }, 3000);
+            // Get CSRF token from the DOM (assuming it's in a hidden input like most Django forms)
+            var csrftoken = $('[name=csrfmiddlewaretoken]').val();
+            if (!csrftoken) {
+                // Fallback for getting the CSRF token from the cookie
+                // This is needed if the user navigates directly without a form on the page
+                csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+            }
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    // Pass the CSRF token required by Django for POST requests
+                    csrfmiddlewaretoken: csrftoken 
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // 2. Update the count display
+                        countSpan.text(response.new_count);
+
+                        // 3. Update the button style (toggle state)
+                        if (response.is_upvoted) {
+                            button.removeClass('text-gray-500 hover:text-blue-600 hover:bg-gray-100')
+                                  .addClass('text-blue-600 bg-blue-100 hover:bg-blue-200');
+                        } else {
+                            button.removeClass('text-blue-600 bg-blue-100 hover:bg-blue-200')
+                                  .addClass('text-gray-500 hover:text-blue-600 hover:bg-gray-100');
+                        }
+                    } else {
+                        alert('Error toggling upvote: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                         alert('You must be logged in to upvote.');
+                    } else {
+                         alert('An unexpected error occurred. Please try again.');
+                    }
+                }
+            });
+        });
+    });
   </script>
 
-  {# ================================ #}
-  {# ✅ AJAX HANDLER SCRIPT IMPORT #}
-  {# Make sure your static file path is correct: static/js/ajax_handlers.js #}
-  {# ================================ #}
-  <script src="{% static 'js/ajax_handlers.js' %}"></script>
+  {# ================================ #}
+  {# ✅ AJAX HANDLER SCRIPT IMPORT #}
+  {# Make sure your static file path is correct: static/js/ajax_handlers.js #}
+  {# ================================ #}
+  <script src="{% static 'js/ajax_handlers.js' %}"></script>
+
+
 </body>
 </html>

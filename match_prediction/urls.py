@@ -22,4 +22,6 @@ urlpatterns = [
 
     # --- UPVOTE (non-AJAX fallback) ---
     path('prediction/<int:prediction_id>/upvote/', views.toggle_upvote, name='toggle_upvote'),
+
+    path('prediction/<int:prediction_id>/upvote/', views.ajax_toggle_upvote, name='ajax_toggle_upvote'),
 ]
