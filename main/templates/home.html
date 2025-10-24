@@ -2,55 +2,269 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<section class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white text-center py-20 px-4">
-  <h1 class="text-4xl md:text-6xl font-bold mb-4">Welcome to Goalytics</h1>
-  <p class="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
-    Analyze, predict, and discuss football like never before ⚽
-  </p>
 
-  <form method="POST" class="mt-8">
-    {% csrf_token %}
-    <button type="submit" 
-      class="bg-blue-500 hover:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition">
-      Get Started
-    </button>
-  </form>
-</section>
 
-<!-- Features -->
-<section class="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+<style>
+  @keyframes glowPulse {
+    0%   { opacity: .28; transform: translate(-50%, -50%) scale(1); }
+    50%  { opacity: .5;  transform: translate(-50%, -50%) scale(1.08); }
+    100% { opacity: .28; transform: translate(-50%, -50%) scale(1); }
+  }
+  .animate-glow {
+    animation: glowPulse 7s ease-in-out infinite;
+  }
 
-  <!-- Favorite Players -->
-  <a href="{% if user.is_authenticated %}{% url 'favorite_player:favorite_list' %}{% else %}{% url 'users:login' %}{% endif %}"
-     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
-    <h3 class="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">Favorite Players</h3>
-    <p class="text-gray-600">Save and monitor your favorite football players easily.</p>
-  </a>
+  @keyframes slowPan {
+    0%   { transform: translate3d(0,0,0) scale(1); }
+    50%  { transform: translate3d(-2%, -1%, 0) scale(1.02); }
+    100% { transform: translate3d(0,0,0) scale(1); }
+  }
+  .animate-slow-pan {
+    animation: slowPan 14s ease-in-out infinite;
+  }
 
-  <!-- Match Prediction -->
-  <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition">
-    <h3 class="text-xl font-bold text-blue-800 mb-3">Match Prediction</h3>
-    <p class="text-gray-600">Predict outcomes with AI-assisted analytics and data insights.</p>
+  .reveal {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+
+<section class="relative overflow-hidden bg-black text-white">
+
+  <div id="hero-spotlight"
+       class="pointer-events-none absolute inset-0 -z-10 transition-[background] duration-300"
+       style="background:
+         radial-gradient(580px circle at 50% 35%, rgba(255,255,255,.12), transparent 60%)
+       "></div>
+
+  <div class="pointer-events-none absolute inset-0 -z-20 animate-slow-pan"
+       style="background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(255,255,255,.045), transparent 60%),
+        radial-gradient(900px 500px at 90% 120%, rgba(255,255,255,.035), transparent 60%)
+       "></div>
+
+  <div class="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-20 sm:py-28">
+    <div class="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+      <div class="max-w-3xl space-y-6">
+        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-white/80 backdrop-blur reveal" data-reveal>
+          <span class="h-1.5 w-1.5 rounded-full bg-white/70"></span>
+          Goalytics
+        </span>
+
+        <h1 class="relative text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+          <span class="relative z-10">Football intelligence, simplified.</span>
+          <span aria-hidden="true"
+                class="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[220%] w-[120%] -translate-x-1/2 -translate-y-1/2 rounded-[64px] bg-white/10 blur-3xl animate-glow"></span>
+        </h1>
+
+        <p class="text-base/7 text-white/75 reveal" data-reveal>
+          Discover transfer whispers, explore player data, and join passionate discussions — all in one place.
+          Sign in to unlock the full Goalytics experience.
+        </p>
+
+        <div class="flex items-center gap-3 pt-1 reveal" data-reveal>
+          <a href="{% url cta_url %}"
+             class="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black shadow-lg shadow-white/10 ring-1 ring-white/20 transition hover:translate-y-[-2px] hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300">
+            {{ cta_label }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0-6-6m6 6-6 6"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="relative w-full max-w-md self-start md:self-center reveal" data-reveal>
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+          <div class="space-y-3">
+            <div class="text-xs font-semibold uppercase tracking-wide text-white/70">What you’ll get</div>
+            <ul class="space-y-2 text-sm text-white/80">
+              <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-white/70"></span> Transfer rumours with credibility signals</li>
+              <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-white/70"></span> Player metrics &amp; comparisons</li>
+              <li class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-white/70"></span> Community insights &amp; discussions</li>
+            </ul>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <!-- Discussion Forum -->
-  <a href="{% if user.is_authenticated %}{% url 'forum_home' %}{% else %}{% url 'users:login' %}{% endif %}"
-     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
-    <h3 class="text-xl font-bold text-blue-800 mb-3">Discussion Forum</h3>
-    <p class="text-gray-600">Join passionate fans and discuss matches in real-time.</p>
-  </a>
-
-  <!-- Player Comparison -->
-  <a href="{% if user.is_authenticated %}{% url 'comparison' %}{% else %}{% url 'users:login' %}{% endif %}"
-     class="block bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition transform hover:-translate-y-1 duration-300">
-    <h3 class="text-xl font-bold text-blue-800 mb-3">Player Comparison</h3>
-    <p class="text-gray-600">Compare player stats and performance side by side.</p>
-  </a>
-
 </section>
 
-<!-- Footer -->
-<footer class="bg-blue-900 text-white text-center py-6">
-  <p>© 2025 Goalytics — All rights reserved.</p>
-</footer>
+
+<section class="bg-white text-gray-900">
+  <div class="mx-auto max-w-7xl space-y-8 px-6 py-16">
+    <header class="flex flex-col gap-2 reveal" data-reveal>
+      <h2 class="text-2xl font-semibold tracking-tight">Transfer rumours snapshot</h2>
+      <p class="text-sm text-gray-500">Two hottest stories to start your day. Log in to browse every rumour in detail.</p>
+    </header>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      {% for rumour in rumour_highlights %}
+        <article class="group relative flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300 reveal" data-reveal>
+          <div class="flex items-center gap-3 text-xs font-medium text-gray-500">
+            <time datetime="{{ rumour.created_at|date:'Y-m-d' }}">{{ rumour.created_at|date:"j M Y" }}</time>
+            <span aria-hidden="true">•</span>
+            <span class="truncate">{{ rumour.author.get_full_name|default:rumour.author.username }}</span>
+          </div>
+          <h3 class="text-lg font-semibold leading-snug text-gray-900">{{ rumour.title }}</h3>
+          <p class="text-sm text-gray-600">{{ rumour.summary|default:rumour.content|truncatechars:220 }}</p>
+          <a href="{% url cta_url %}"
+             class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-gray-900 transition hover:translate-x-0.5 hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300">
+            Login to read more
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0-6-6m6 6-6 6"/>
+            </svg>
+          </a>
+        </article>
+      {% empty %}
+        <div class="rounded-2xl bg-white p-6 text-sm text-gray-500 shadow-sm ring-1 ring-gray-200 reveal in">
+          Rumour feed is warming up. Check back later for the latest whispers.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+
+<section class="bg-gray-950 text-gray-100">
+  <div class="mx-auto max-w-7xl space-y-8 px-6 py-16">
+    <header class="flex flex-col gap-2 reveal" data-reveal>
+      <h2 class="text-2xl font-semibold tracking-tight">Player insights</h2>
+      <p class="text-sm text-gray-400">Preview the player database. Sign in to access complete metrics, comparisons, and scouting notes.</p>
+    </header>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      {% for player in player_samples %}
+        <article class="relative flex flex-col gap-3 rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-700 hover:shadow-md reveal" data-reveal>
+          <div class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            {{ player.get_position_display|default:player.position|default:"Unknown" }}
+          </div>
+          <h3 class="text-lg font-semibold text-white">{{ player.name }}</h3>
+          <p class="text-sm text-gray-400">{{ player.club.name|default:"Free Agent" }}</p>
+          <a href="{% url cta_url %}"
+             class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-gray-100/90 transition hover:translate-x-0.5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500">
+            Login to explore player data
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0-6-6m6 6-6 6"/>
+            </svg>
+          </a>
+        </article>
+      {% empty %}
+        <div class="rounded-2xl border border-gray-800 bg-gray-900 p-6 text-sm text-gray-400 reveal in">
+          Player dataset is getting ready. Login to explore once available.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+
+<section class="bg-white text-gray-900">
+  <div class="mx-auto max-w-7xl space-y-8 px-6 py-16">
+    <header class="flex flex-col gap-2 reveal" data-reveal>
+      <h2 class="text-2xl font-semibold tracking-tight">Join the community forum</h2>
+      <p class="text-sm text-gray-500">A glimpse of what fans are talking about. Sign in to join the conversation.</p>
+    </header>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      {% for post in forum_snippets %}
+        <article class="relative flex flex-col gap-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300 reveal" data-reveal>
+          <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-500">
+            <span class="truncate">{{ post.author.username }}</span>
+            <span aria-hidden="true">•</span>
+            <span>{{ post.created_at|timesince }} ago</span>
+          </div>
+          <h3 class="text-lg font-semibold leading-snug text-gray-900">{{ post.title }}</h3>
+          <p class="text-sm text-gray-600">{{ post.content|truncatechars:200 }}</p>
+          <a href="{% url cta_url %}"
+             class="inline-flex w-fit items-center gap-2 text-sm font-semibold text-gray-900 transition hover:translate-x-0.5 hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300">
+            Login to join the discussion
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0-6-6m6 6-6 6"/>
+            </svg>
+          </a>
+        </article>
+      {% empty %}
+        <div class="rounded-2xl bg-white p-6 text-sm text-gray-500 shadow-sm ring-1 ring-gray-200 reveal in">
+          Discussions are quiet for now. Be the first to start a thread once you sign in.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+
+<section class="bg-black text-white">
+  <div class="mx-auto flex max-w-7xl flex-col items-center gap-5 px-6 py-16 text-center">
+    <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">Ready to dive deeper?</h2>
+    <p class="max-w-2xl text-sm text-white/75 md:text-base">
+      Create an account or sign in to unlock member-only features, personalization tools, and richer football insights.
+    </p>
+    <a href="{% url cta_url %}"
+       class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400">
+      {{ cta_label }}
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m0 0-6-6m6 6-6 6"/>
+      </svg>
+    </a>
+  </div>
+</section>
+
+
+<script>
+  (() => {
+    const layer = document.getElementById('hero-spotlight');
+    const hero  = layer?.parentElement;
+    if (!layer || !hero) return;
+
+    let x = 0.5, y = 0.35, raf;
+    const setBg = () => {
+      layer.style.background =
+        `radial-gradient(580px circle at ${x*100}% ${y*100}%, rgba(255,255,255,.12), transparent 60%)`;
+      raf = null;
+    };
+
+    const onMove = (e) => {
+      const r = hero.getBoundingClientRect();
+      x = (e.clientX - r.left) / r.width;
+      y = (e.clientY - r.top) / r.height;
+      if (!raf) raf = requestAnimationFrame(setBg);
+    };
+
+    hero.addEventListener('mousemove', onMove, { passive: true });
+
+    let t = 0;
+    const auto = () => {
+      if (t < 1) {
+        x = 0.5 + Math.sin(Date.now()/4000) * 0.05;
+        y = 0.32 + Math.cos(Date.now()/5000) * 0.03;
+        setBg();
+        requestAnimationFrame(auto);
+      }
+    };
+    auto();
+  })();
+
+  (() => {
+    const els = document.querySelectorAll('[data-reveal]');
+    const io  = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.16 });
+
+    els.forEach(el => {
+      el.classList.add('reveal');
+      io.observe(el);
+    });
+  })();
+</script>
+
 {% endblock content %}

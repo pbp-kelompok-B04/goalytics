@@ -4,9 +4,12 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.db.models import Count
+
 
 from PlayerClub_Data.forms import ClubForm, PlayerForm
 from PlayerClub_Data.models import Club, Player
+from forum.models import Post, Comment
 from users.models import ADMIN_USERNAMES, Profile
 
 
@@ -25,12 +28,34 @@ def dashboard(request):
     clubs = Club.objects.all().order_by("name")
     players = Player.objects.select_related("club").order_by("name")
 
+    posts_recent = (
+        Post.objects.select_related("author")
+        .annotate(comment_count=Count("comments", distinct=True), like_count=Count("likes", distinct=True))
+        .order_by("-created_at")[:8]
+    )
+    comments_recent = (
+        Comment.objects.select_related("user", "post")
+        .annotate(like_count=Count("likes", distinct=True))
+        .order_by("-created_at")[:8]
+    )
+
+    stats = {
+        "total_users": users.count(),
+        "blocked_users": users.filter(profile__is_blocked=True).count(),
+        "flagged_users": users.filter(profile__is_flagged=True).count(),
+        "total_posts": Post.objects.count(),
+        "total_comments": Comment.objects.count(),
+    }
+
     context = {
         "users": users,
         "role_choices": Profile.ROLE_CHOICES,
         "clubs": clubs,
         "players": players,
         "locked_usernames": ADMIN_USERNAMES,
+        "posts_recent": posts_recent,
+        "comments_recent": comments_recent,
+        "stats": stats,
     }
     return render(request, "adminpanel/dashboard.html", context)
 

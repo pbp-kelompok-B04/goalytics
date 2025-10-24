@@ -1,0 +1,9 @@
+<div>
+  <div class="flex items-center justify-between text-sm font-semibold text-slate-700">
+    <span>{{ label }}</span>
+    <span>{{ value|default:0 }}{% if suffix %}{{ suffix }}{% endif %}</span>
+  </div>
+  <div class="mt-2 h-2.5 rounded-full bg-slate-100">
+    <div class="progress-bar h-full rounded-full {{ color }}" style="width: {% if max_value %}{% widthratio value max_value 100 %}{% else %}0{% endif %}%"></div>
+  </div>
+</div>
