@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'favorite_player.apps.FavoritePlayerConfig',
     'forum',
     'transfer_rumour',
+ 
 ]
 
 MIDDLEWARE = [
