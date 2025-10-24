@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 
 
@@ -36,3 +37,6 @@ class TransferRumour(models.Model):
                 slug = f"{base_slug}-{suffix}"
             self.slug = slug
         super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("transfer_rumour:detail", kwargs={"slug": self.slug})
