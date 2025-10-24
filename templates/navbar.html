@@ -120,14 +120,9 @@
 
         <!-- Match Predictions -->
         <a href="{% url 'match_prediction:match_list' %}"
-           class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition
-                  {% if namespace == 'match_prediction' %}
-                    bg-slate-900 text-white shadow-lg
-                  {% else %}
-                    text-slate-600 hover:bg-slate-100 hover:text-slate-900
-                  {% endif %}">
-          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition
-                {% if namespace == 'match_prediction' %}bg-slate-800 text-white{% endif %}">
+        <a href="{% url 'match_prediction:match_list' %}"
+           class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M16 8a4 4 0 0 1-8 0m8 0a4 4 0 0 0-8 0m8 0c0 3.866-3.134 7-7 7m7-7h3m-10 7H5m4 0a7 7 0 0 1-7-7h3" />
@@ -135,9 +130,7 @@
           </span>
           <div>
             <p class="text-sm font-semibold">Match Predictions</p>
-            <p class="text-xs text-slate-500 {% if namespace == 'match_prediction' %}text-slate-200{% endif %}">
-              Analyze and predict match outcomes
-            </p>
+            <p class="text-xs text-slate-500">Preditct your match</p>
           </div>
         </a>
 
