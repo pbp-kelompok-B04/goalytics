@@ -17,37 +17,10 @@
           Posted on {{ prediction.created_at|date:"M d, Y H:i" }}
         </p>
 
-        <div class="flex items-center gap-2 mt-2">
-            {% if user.is_authenticated %}
-                <button
-                    data-prediction-id="{{ prediction.id }}"
-                    data-upvote-url="{% url 'match_prediction:ajax_toggle_upvote' prediction.id %}"
-                    class="js-upvote-btn flex items-center p-1 rounded transition 
-                           {% if prediction.user_has_upvoted %}
-                               text-blue-600 bg-blue-100 hover:bg-blue-200
-                           {% else %}
-                               text-gray-500 hover:text-blue-600 hover:bg-gray-100
-                           {% endif %}"
-                >
-                    <svg class="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M13 20h-2V8H6.5L12 3.5 17.5 8H13v12z"/>
-                    </svg>
-                    <span id="upvote-count-{{ prediction.id }}" class="ml-1 font-semibold">
-                        {{ prediction.upvote_count }}
-                    </span>
-                </button>
-            {% else %}
-                 <div class="flex items-center text-gray-500 p-1">
-                    <svg class="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M13 20h-2V8H6.5L12 3.5 17.5 8H13v12z"/>
-                    </svg>
-                    <span class="ml-1 font-semibold">
-                        {{ prediction.upvote_count }}
-                    </span>
-                 </div>
-            {% endif %}
-        </div>
-              </div>
+        <div class="flex items-center gap-2 mt-2">
+            {# Upvote feature removed per request. #}
+        </div>
+      </div>
 
       {% if user == prediction.user or user.profile.role == 'admin' or user.profile.role == 'analyst' %}
         <div class="flex gap-3">

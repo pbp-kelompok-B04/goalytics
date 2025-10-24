@@ -203,7 +203,6 @@ class MatchDeleteView(DeleteView):
 @login_required
 def add_prediction(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
-
     if request.method == 'POST':
         form = PredictionForm(request.POST)
         if form.is_valid():
@@ -212,30 +211,16 @@ def add_prediction(request, match_id):
             prediction.user = request.user
             prediction.save()
             messages.success(request, "Your prediction has been posted!")
-
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                from django.template.loader import render_to_string
-                html = render_to_string(
-                    'match_prediction/partials/prediction_list.html',
-                    {'match': match}
-                )
-                return JsonResponse({
-                    'message': "Prediction added successfully!",
-                    'updateTarget': '#predictionList',
-                    'html': html
-                })
-
             return redirect('match_detail', pk=match.id)
     else:
         form = PredictionForm()
 
-    # ✅ Render partial only if AJAX
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        template = 'match_prediction/partials/prediction_form_partial.html'
-    else:
-        template = 'match_prediction/prediction_form.html'
-
-    return render(request, template, {'form': form, 'match': match})
+    # 👇 Add this line
+    return render(request, 'match_prediction/prediction_form.html', {
+        'form': form,
+        'match': match,
+        'hide_navbar': True,  
+    })
 
 
 @login_required
