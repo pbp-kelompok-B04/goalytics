@@ -140,26 +140,53 @@ def rumour_update(request, slug):
         messages.error(request, "Anda tidak memiliki izin untuk mengubah rumour ini.")
         return redirect("transfer_rumour:detail", slug=rumour.slug)
 
+    if request.method == "GET":
+        form = TransferRumourForm(instance=rumour)
+        form_html = render_to_string(
+            "transfer_rumour/partials/form_fields.html",
+            {"form": form},
+            request=request,
+        )
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "success": True,
+                    "form_html": form_html,
+                    "action": request.build_absolute_uri(),
+                }
+            )
+        return redirect("transfer_rumour:detail", slug=rumour.slug)
+
     if request.method == "POST":
         form = TransferRumourForm(request.POST, instance=rumour)
         if form.is_valid():
-            form.save()
+            rumour = form.save()
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": "Rumour berhasil diperbarui.",
+                        "detail_url": rumour.get_absolute_url(),
+                    }
+                )
             messages.success(request, "Rumour berhasil diperbarui.")
             return redirect("transfer_rumour:detail", slug=rumour.slug)
-    else:
-        form = TransferRumourForm(instance=rumour)
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            form_html = render_to_string(
+                "transfer_rumour/partials/form_fields.html",
+                {"form": form},
+                request=request,
+            )
+            return JsonResponse(
+                {"success": False, "form_html": form_html, "message": "Validasi gagal. Periksa isian Anda."},
+                status=400,
+            )
+        messages.error(request, "Perbaruan rumour gagal. Periksa kembali input Anda.")
+        return redirect("transfer_rumour:detail", slug=rumour.slug)
 
-    return render(
-        request,
-        "transfer_rumour/form.html",
-        {
-            "form": form,
-            "form_title": "Edit Transfer Rumour",
-            "form_description": "Perbarui detail rumour perpindahan pemain.",
-            "submit_label": "Perbarui Rumour",
-            "is_update": True,
-        },
-    )
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"success": False, "message": "Method tidak diperbolehkan."}, status=405)
+    return redirect("transfer_rumour:detail", slug=rumour.slug)
 
 
 @login_required
