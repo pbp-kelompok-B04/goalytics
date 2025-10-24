@@ -9,7 +9,7 @@
     <header class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
       <div class="space-y-2">
         <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">Match Forums</h1>
-        <p class="max-w-xl text-base text-slate-500 md:text-lg">Kelola pertandingan via modal AJAX — tanpa pindah halaman.</p>
+        <p class="max-w-xl text-base text-slate-500 md:text-lg"></p>
       </div>
 
       {% if can_manage_matches %}
@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function closeModal(){ modal.classList.add('hidden'); modal.classList.remove('flex'); document.body.classList.remove('overflow-hidden'); bodyEl.innerHTML=''; }
 
   function getCookie(name){ const v=`; ${document.cookie}`.split(`; ${name}=`); if(v.length===2) return decodeURIComponent(v.pop().split(';').shift()); }
-  const csrftoken = getCookie('csrftoken');
 
   async function loadForm(url){
     bodyEl.innerHTML = '<div class="py-8 text-center text-sm text-slate-500">Loading…</div>';
