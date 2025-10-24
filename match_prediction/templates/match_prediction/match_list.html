@@ -3,8 +3,25 @@
 
 {% block content %}
 <div class="container mx-auto px-6 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">Match Forums</h1>
+<div class="relative mb-6">
+    <!-- Back button kiri -->
+    <div class="absolute left-0 top-0">
+        <a href="{% url 'main:dashboard' %}" 
+           class="flex items-center gap-2 text-blue-800 font-semibold hover:text-blue-600 transition">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Judul dan subjudul di tengah -->
+    <div class="flex flex-col items-center">
+        <h1 class="text-3xl font-bold text-blue-900 text-center mt-8">
+            Match Forums
+        </h1>
+        <p class="text-gray-500 text-center mt-2">
+            Join discussions, share insights, and stay updated with the latest football matches and events.
+        </p>
+    </div>
+</div>
 
         {% if can_manage_matches %}
           <button
