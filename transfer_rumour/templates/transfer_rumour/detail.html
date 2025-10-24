@@ -3,38 +3,47 @@
 {% block title %}{{ rumour.title }}{% endblock %}
 
 {% block content %}
-<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
-  <div class="mx-auto max-w-5xl space-y-10">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+<section class="bg-white text-slate-900">
+  <div class="mx-auto flex max-w-4xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
       <a href="{% url 'transfer_rumour:list' %}"
-         class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Semua Rumour
+        Semua rumour
       </a>
       {% if can_manage %}
-        <div class="flex flex-wrap items-center gap-2 text-sm font-semibold">
+        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
           <a href="{% url 'transfer_rumour:edit' rumour.slug %}"
-             class="inline-flex items-center gap-2 rounded-xl border border-blue-600 px-4 py-2 text-blue-600 transition hover:bg-blue-50">
-            Edit
-          </a>
+             class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-slate-700 transition hover:bg-slate-100">Edit</a>
           <a href="{% url 'transfer_rumour:delete' rumour.slug %}"
-             class="inline-flex items-center gap-2 rounded-xl border border-rose-500 px-4 py-2 text-rose-500 transition hover:bg-rose-50">
-            Hapus
-          </a>
+             class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-slate-700 transition hover:bg-slate-100">Hapus</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-slate-200">
+      {% if rumour.cover_image_url %}
+        <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
+             class="h-72 w-full object-cover object-center sm:h-[28rem]">
+      {% else %}
+        <div class="flex h-72 w-full items-center justify-center text-slate-400 sm:h-[28rem]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M3 12h18M12 21V3" />
+          </svg>
         </div>
       {% endif %}
     </div>
 
     <article class="space-y-8">
-      <header class="space-y-4">
-        <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">
-          Rumour Transfer
+      <header class="space-y-3">
+        <span class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Transfer rumour
         </span>
-        <h1 class="text-3xl font-bold text-slate-900 md:text-4xl">{{ rumour.title }}</h1>
-        <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-          <span>{{ rumour.created_at|date:"j M Y, H:i" }}</span>
+        <h1 class="text-3xl font-semibold leading-tight text-slate-900 md:text-4xl">{{ rumour.title }}</h1>
+        <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <span>{{ rumour.created_at|date:"j M Y · H:i" }}</span>
           <span>&middot;</span>
           <span>{{ rumour.author.get_full_name|default:rumour.author.username }}</span>
           {% if rumour.updated_at and rumour.updated_at|date:"U" > rumour.created_at|date:"U" %}
@@ -44,59 +53,45 @@
         </div>
       </header>
 
-      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div class="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          <div class="bg-slate-100">
-            {% if rumour.cover_image_url %}
-              <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
-                   class="h-full w-full object-cover object-center">
-            {% else %}
-              <div class="flex h-full min-h-[240px] items-center justify-center text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M3 12h18M12 21V3" />
-                </svg>
-              </div>
-            {% endif %}
-          </div>
-          <div class="flex flex-col justify-between gap-6 p-6 md:p-8">
-            {% if rumour.summary %}
-              <div class="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-slate-700">
-                {{ rumour.summary }}
-              </div>
-            {% endif %}
-            <div class="space-y-3 text-sm text-slate-500">
-              <p>Sumber: <span class="font-semibold text-slate-700">{{ rumour.source_name|default:rumour.source_url|default:"Tidak diketahui" }}</span></p>
-              <p>Slug: <span class="font-mono text-slate-600">{{ rumour.slug }}</span></p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <span>Bagikan</span>
-              <div class="flex items-center gap-2 text-slate-500">
-                <a href="https://twitter.com/intent/tweet?text={{ rumour.title|urlencode }}&url={{ request.build_absolute_uri }}" target="_blank" rel="noopener"
-                   class="hover:text-slate-900 transition">X</a>
-                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener"
-                   class="hover:text-slate-900 transition">Facebook</a>
-                <button type="button" onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}')" class="hover:text-slate-900 transition">
-                  Salin tautan
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {% if rumour.summary %}
+        <p class="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4 text-base text-slate-700">
+          {{ rumour.summary }}
+        </p>
+      {% endif %}
 
-      <div class="prose max-w-none text-slate-800 prose-headings:text-slate-900 prose-a:text-slate-900">
+      <div class="prose prose-gray max-w-none text-slate-800">
         {{ rumour.content|linebreaks }}
       </div>
 
+      <div class="flex flex-wrap items-center gap-4 border-y border-slate-200 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <span>Bagikan</span>
+        <div class="flex items-center gap-3 text-slate-600">
+          <a href="https://twitter.com/intent/tweet?text={{ rumour.title|urlencode }}&url={{ request.build_absolute_uri }}" target="_blank" rel="noopener"
+             class="transition hover:text-slate-900">X</a>
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener"
+             class="transition hover:text-slate-900">Facebook</a>
+          <button type="button" onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}')"
+                  class="transition hover:text-slate-900">Salin tautan</button>
+        </div>
+      </div>
+
+      <dl class="space-y-2 text-sm text-slate-500">
+        <div class="flex flex-wrap items-center gap-2">
+          <dt class="font-semibold text-slate-700">Sumber:</dt>
+          <dd>{{ rumour.source_name|default:rumour.source_url|default:"Tidak diketahui" }}</dd>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <dt class="font-semibold text-slate-700">Slug:</dt>
+          <dd class="font-mono text-slate-600">{{ rumour.slug }}</dd>
+        </div>
+      </dl>
+
       {% if rumour.source_url %}
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex sm:items-center sm:justify-between">
-          <div class="space-y-1 text-sm text-slate-500">
-            <p class="font-semibold text-slate-900">Sumber berita</p>
-            <p>{{ rumour.source_name|default:rumour.source_url }}</p>
-          </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4">
+          <p class="text-sm text-slate-600">Baca selengkapnya dari sumber utama.</p>
           <a href="{{ rumour.source_url }}" target="_blank" rel="noopener"
-             class="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 sm:mt-0">
-            Buka tautan
+             class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+            Kunjungi sumber
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7 17l10-10m0 0H9m8 0v8" />
             </svg>

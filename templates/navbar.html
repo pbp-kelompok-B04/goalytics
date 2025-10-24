@@ -1,6 +1,6 @@
 {% with url_name=request.resolver_match.url_name|default:'' %}
 {% with namespace=request.resolver_match.namespace|default:'' %}
-<nav id="sidebarShell" class="w-full md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 bg-white md:translate-x-0 transition-transform duration-200">
+<nav id="sidebarShell" class="fixed left-0 top-0 h-screen w-72 flex flex-col border-r border-slate-200 bg-white overflow-y-auto no-scrollbar z-40">
   <div class="flex items-center justify-between px-6 py-4 md:py-8">
     <div class="flex items-center gap-3">
       <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg">

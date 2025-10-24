@@ -8,13 +8,26 @@
   <title>Goalytics | {% block title %}{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.11.1/dist/full.min.css" />
+    <style>
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;  
+      scrollbar-width: none;     
+    }
+  </style>
   {% block meta %}{% endblock meta %}
+
 </head>
 <body class="bg-slate-50 text-slate-900">
-  <div id="appShell" class="min-h-screen flex flex-col md:flex-row bg-slate-50">
+  <div id="appShell" class="flex h-screen overflow-hidden bg-slate-50">
+    
+    <!-- Sidebar tetap di kiri -->
     {% include 'navbar.html' %}
-
-    <div id="mainContent" class="flex-1 min-w-0">
+    
+    <!-- Main content -->
+    <div id="mainContent" class="flex-1 overflow-y-auto no-scrollbar md-72">
       {% if messages and '/users/login' not in request.path and '/users/register' not in request.path %}
         <div id="alert-container" class="fixed bottom-4 right-4 space-y-3 z-50">
           {% for message in messages %}

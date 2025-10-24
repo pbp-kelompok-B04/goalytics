@@ -678,7 +678,7 @@
       ` : '';
 
       return `
-        <article onclick="window.location.href = buildDetailUrl(${post.id})" class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
+        <article onclick="handlePostClick(${post.id})" class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
           ${actionButtons}
           <div class="flex gap-4">
             <a href="${profileUrl}" onclick="event.stopPropagation();" class="flex-shrink-0">
@@ -930,6 +930,17 @@
     }
     return 'just now';
   }
+
+  function handlePostClick(postId) {
+    if (!isAuthenticated) {
+      const loginUrl = "{% url 'users:login' %}";
+      const postDetailUrl = buildDetailUrl(postId);
+      window.location.href = `${loginUrl}?next=${postDetailUrl}`;
+      return;
+    }
+    window.location.href = buildDetailUrl(postId);
+  }
+
 
   syncLeagueChips(currentLeague);
   syncSortChips(currentSort);

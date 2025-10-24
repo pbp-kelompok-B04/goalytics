@@ -349,23 +349,19 @@
     }
 
     function updateDetailPostLike(button, liked, count) {
-        if (!button) {
-            return;
-        }
-        const countValue = Number.isFinite(count) ? count : 0;
-        button.dataset.liked = liked ? 'true' : 'false';
-        button.dataset.count = String(countValue);
-        button.classList.remove('text-blue-600', 'text-gray-500');
-        button.classList.add(liked ? 'text-blue-600' : 'text-gray-500');
-        const icon = button.querySelector('svg');
-        if (icon) {
-            icon.classList.remove('text-blue-600', 'text-gray-400');
-            icon.classList.add(liked ? 'text-blue-600' : 'text-gray-400');
-        }
-        const countSpan = button.querySelector('.post-like-count');
-        if (countSpan) {
-            countSpan.textContent = countValue;
-        }
+    if (!button) return;
+    const countValue = Number.isFinite(count) ? count : 0;
+    button.dataset.liked = liked ? 'true' : 'false';
+    button.dataset.count = String(countValue);
+    button.classList.remove('text-rose-500', 'text-slate-500');
+    button.classList.add(liked ? 'text-rose-500' : 'text-slate-500');
+    const icon = button.querySelector('svg');
+    if (icon) {
+        icon.classList.remove('text-rose-500', 'text-slate-400');
+        icon.classList.add(liked ? 'text-rose-500' : 'text-slate-400');
+    }
+    const countSpan = button.querySelector('.post-like-count');
+    if (countSpan) countSpan.textContent = countValue;
     }
 
     async function toggleDetailPostLike(event) {
@@ -405,24 +401,21 @@
     }
 
     function updateCommentLikeButton(button, liked, count) {
-        if (!button) {
-            return;
-        }
-        const countValue = Number.isFinite(count) ? count : 0;
-        button.dataset.liked = liked ? 'true' : 'false';
-        button.dataset.count = String(countValue);
-        button.classList.remove('text-blue-600', 'text-gray-500');
-        button.classList.add(liked ? 'text-blue-600' : 'text-gray-500');
-        const icon = button.querySelector('svg');
-        if (icon) {
-            icon.classList.remove('text-blue-600', 'text-gray-400');
-            icon.classList.add(liked ? 'text-blue-600' : 'text-gray-400');
-        }
-        const countSpan = button.querySelector('.comment-like-count');
-        if (countSpan) {
-            countSpan.textContent = countValue;
-        }
+    if (!button) return;
+    const countValue = Number.isFinite(count) ? count : 0;
+    button.dataset.liked = liked ? 'true' : 'false';
+    button.dataset.count = String(countValue);
+    button.classList.remove('text-rose-500', 'text-slate-500');
+    button.classList.add(liked ? 'text-rose-500' : 'text-slate-500');
+    const icon = button.querySelector('svg');
+    if (icon) {
+        icon.classList.remove('text-rose-500', 'text-slate-400');
+        icon.classList.add(liked ? 'text-rose-500' : 'text-slate-400');
     }
+    const countSpan = button.querySelector('.comment-like-count');
+    if (countSpan) countSpan.textContent = countValue;
+    }
+
 
     async function toggleCommentLike(event, commentId) {
         event.preventDefault();
@@ -497,7 +490,7 @@
             'LIGUE1': 'Ligue 1'
         };
         const leagueLabel = leagueNames[post.league] || 'General';
-
+        const isLiked = !!post.is_liked
         currentPost = { ...post };
         const likeCount = post.like_count || 0;
         const likeButtonClass = post.is_liked ? 'text-blue-600' : 'text-gray-500';
@@ -513,27 +506,30 @@
                     <div class="flex items-center gap-2 mb-3">
                         <a href="${profileUrl}" onclick="event.stopPropagation();" class="font-semibold text-gray-900 hover:text-blue-600 transition-colors">${post.author}</a>
                         <span class="text-gray-400">&middot;</span>
-                        <span class="text-xs px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full">${leagueLabel}</span>
+                        <span class="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">${leagueLabel}</span>
                         <span class="text-gray-400">&middot;</span>
                         <span class="text-sm text-gray-500">${timeAgo}</span>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-900 mb-4">${escapeHtml(post.title)}</h1>
                     <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(post.content)}</p>
                     <div class="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                        <button type="button"
-                                class="flex items-center gap-2 ${likeButtonClass} transition-colors"
-                                data-post-id="${post.id}"
-                                data-liked="${post.is_liked ? 'true' : 'false'}"
-                                data-count="${likeCount}"
-                                onclick="toggleDetailPostLike(event)">
-                            <svg class="w-5 h-5 ${likeIconClass} fill-current transition-colors" viewBox="0 0 24 24">
-                                <path d="M4.318 6.318a4.5 4.5 0 0 1 6.364 0L12 7.636l1.318-1.318a4.5 4.5 0 1 1 6.364 6.364L12 21.682l-7.682-8.682a4.5 4.5 0 0 1 0-6.364z"></path>
-                            </svg>
-                            <span class="post-like-count">${likeCount}</span>
-                        </button>
+                    <button type="button"
+                    class="like-button inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-1 text-sm font-medium ${post.is_liked ? 'text-rose-500' : 'text-slate-500'} transition hover:text-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    data-post-id="${post.id}"
+                    data-liked="${post.is_liked}"
+                    data-count="${likeCount}"
+                    onclick="toggleDetailPostLike(event)">
+                    <svg class="h-5 w-5 ${post.is_liked ? 'text-rose-500' : 'text-slate-400'} transition"
+                        viewBox="0 0 24 24" fill="${post.is_liked ? 'currentColor' : 'none'}"
+                        stroke="currentColor" stroke-width="1.6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4.318 6.318a4.5 4.5 0 0 1 6.364 0L12 7.636l1.318-1.318a4.5 4.5 0 1 1 6.364 6.364L12 21.682l-7.682-8.682a4.5 4.5 0 0 1 0-6.364z" />
+                    </svg>
+                    <span class="post-like-count">${likeCount}</span>
+                    </button>
                         <div class="flex items-center gap-1">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                            <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-5 8 4-4h4a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h1z" />
                             </svg>
                             <span>${post.comment_count || 0} comments</span>
                         </div>
@@ -587,7 +583,7 @@
                     <button type="button"
                             id="toggle-btn-${comment.id}"
                             onclick="toggleReplies(${comment.id})"
-                            class="text-xs uppercase tracking-wide text-blue-600 hover:text-blue-500 font-semibold">
+                            class="text-xs uppercase tracking-wide text-gray-700 hover:text-black font-semibold">
                         Hide replies (${comment.replies.length})
                     </button>
                 </div>
@@ -597,36 +593,39 @@
             `
             : '';
 
-        const likeButton = `
+            const likeButton = `
             <button type="button"
-                    onclick="toggleCommentLike(event, ${comment.id})"
-                    class="flex items-center gap-1 ${likeButtonClass} transition-colors"
-                    data-comment-id="${comment.id}"
-                    data-liked="${comment.is_liked ? 'true' : 'false'}"
-                    data-count="${likeCount}">
-                <svg class="w-4 h-4 ${likeIconClass} fill-current transition-colors" viewBox="0 0 24 24">
-                    <path d="M4.318 6.318a4.5 4.5 0 0 1 6.364 0L12 7.636l1.318-1.318a4.5 4.5 0 1 1 6.364 6.364L12 21.682l-7.682-8.682a4.5 4.5 0 0 1 0-6.364z"></path>
+                onclick="toggleCommentLike(event, ${comment.id})"
+                class="like-button inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-1 text-sm font-medium ${comment.is_liked ? 'text-rose-500' : 'text-slate-500'} transition hover:text-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                data-comment-id="${comment.id}"
+                data-liked="${comment.is_liked ? 'true' : 'false'}"
+                data-count="${likeCount}">
+                <svg class="h-5 w-5 ${comment.is_liked ? 'text-rose-500' : 'text-slate-400'} transition"
+                    viewBox="0 0 24 24"
+                    fill="${comment.is_liked ? 'currentColor' : 'none'}"
+                    stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 0 1 6.364 0L12 7.636l1.318-1.318a4.5 4.5 0 1 1 6.364 6.364L12 21.682l-7.682-8.682a4.5 4.5 0 0 1 0-6.364z" />
                 </svg>
                 <span class="comment-like-count">${likeCount}</span>
             </button>
-        `;
+            `;
+
 
         const ownerActions = comment.is_owner ? `
             <button type="button"
                     onclick="openEditCommentModal(${comment.id})"
-                    class="text-blue-600 hover:text-blue-500 font-medium inline-flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    class="rounded-2xl border border-slate-200 bg-white/70 p-2 text-slate-500 transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-.879-9.121a2.121 2.121 0 1 1 3 3L13 15l-4 1 1-4 7.121-7.121z" />
                 </svg>
-                Edit
             </button>
             <button type="button"
                     onclick="openDeleteCommentModal(${comment.id})"
-                    class="text-red-600 hover:text-red-500 font-medium inline-flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-                Delete
+                    class="rounded-2xl border border-rose-100 bg-rose-50/70 p-2 text-rose-500 transition hover:border-rose-200 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200">
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12m-1 0-1 12H8L7 7m3 0V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2" />
+            </svg>
             </button>
         ` : '';
 
@@ -645,12 +644,14 @@
                         <p class="text-gray-700 mb-3 whitespace-pre-wrap">${escapeHtml(comment.content)}</p>
                         <div class="flex items-center flex-wrap gap-3 text-sm text-gray-500">
                             ${likeButton}
-                            <button type="button" onclick="openReplyModal(${comment.id})" class="text-blue-600 hover:text-blue-500 font-medium inline-flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                                </svg>
-                                Reply
-                            </button>
+                        <button type="button" onclick="openReplyModal(${comment.id})" 
+                            class="text-black hover:text-gray-700 font-medium inline-flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                            </svg>
+                            Reply
+                        </button>
                             ${ownerActions}
                         </div>
                         ${childHtml}
