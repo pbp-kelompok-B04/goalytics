@@ -42,11 +42,42 @@
   {# SCRIPTS #}
   {# ================================ #}
 
-  {# 🛠️ ADDED: jQuery is required for the upvote and your existing ajax_handlers.js to work correctly #}
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
-          integrity="sha256-/JqT3SQfawRz2Uks+3zL3wOkt6WbK0fCE7O6c4sVqJ0=" 
-          crossorigin="anonymous"></script>
+  {# 🛠️ ADDED: jQuery is required for the upvote and your existing ajax_handlers.js to work correctly #}
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+          integrity="sha256-/JqT3SQfawRz2Uks+3zL3wOkt6WbK0fCE7O6c4sVqJ0=" 
+          crossorigin="anonymous"></script>
 
+    {# 🌟 CRITICAL FIX: Global AJAX setup for CSRF token #}
+    <script>
+        // Function to reliably get the CSRF token from the browser cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // Setup ALL jQuery AJAX POST requests to automatically include the CSRF header
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                // Only send token for non-GET requests and if not cross-domain
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+    </script>
+    
   {# ✅ ALERT ANIMATION SCRIPT (yours) #}
   <script>
     // 🎬 Animasi masuk
@@ -70,60 +101,51 @@
     }, 3000);
   </script>
 
-  {# 🚀 ADDED: AJAX Upvote/Downvote Script #}
-  <script>
-    $(document).ready(function() {
-        // 1. Listen for clicks on any upvote button
-        $(document).on('click', '.js-upvote-btn', function(e) {
-            e.preventDefault();
-            var button = $(this);
-            var url = button.data('upvote-url');
-            var predictionId = button.data('prediction-id');
-            var countSpan = $('#upvote-count-' + predictionId);
+  {# 🚀 CORRECTED: AJAX Upvote/Downvote Script (Now relies on global setup) #}
+  <script>
+    $(document).ready(function() {
+        // 1. Listen for clicks on any upvote button
+        $(document).on('click', '.js-upvote-btn', function(e) {
+            e.preventDefault();
+            var button = $(this);
+            var url = button.data('upvote-url');
+            var predictionId = button.data('prediction-id');
+            var countSpan = $('#upvote-count-' + predictionId);
 
-            // Get CSRF token from the DOM (assuming it's in a hidden input like most Django forms)
-            var csrftoken = $('[name=csrfmiddlewaretoken]').val();
-            if (!csrftoken) {
-                // Fallback for getting the CSRF token from the cookie
-                // This is needed if the user navigates directly without a form on the page
-                csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-            }
+            // Token handling is now global, simplifying the $.ajax call
 
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    // Pass the CSRF token required by Django for POST requests
-                    csrfmiddlewaretoken: csrftoken 
-                },
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // 2. Update the count display
-                        countSpan.text(response.new_count);
+            $.ajax({
+                url: url,
+                type: 'POST',
+                // No data payload needed for the CSRF token anymore
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // 2. Update the count display
+                        countSpan.text(response.new_count);
 
-                        // 3. Update the button style (toggle state)
-                        if (response.is_upvoted) {
-                            button.removeClass('text-gray-500 hover:text-blue-600 hover:bg-gray-100')
-                                  .addClass('text-blue-600 bg-blue-100 hover:bg-blue-200');
-                        } else {
-                            button.removeClass('text-blue-600 bg-blue-100 hover:bg-blue-200')
-                                  .addClass('text-gray-500 hover:text-blue-600 hover:bg-gray-100');
-                        }
-                    } else {
-                        alert('Error toggling upvote: ' + response.message);
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.status === 403) {
-                         alert('You must be logged in to upvote.');
-                    } else {
-                         alert('An unexpected error occurred. Please try again.');
-                    }
-                }
-            });
-        });
-    });
-  </script>
+                        // 3. Update the button style (toggle state)
+                        if (response.is_upvoted) {
+                            button.removeClass('text-gray-500 hover:text-blue-600 hover:bg-gray-100')
+                                  .addClass('text-blue-600 bg-blue-100 hover:bg-blue-200');
+                        } else {
+                            button.removeClass('text-blue-600 bg-blue-100 hover:bg-blue-200')
+                                  .addClass('text-gray-500 hover:text-blue-600 hover:bg-gray-100');
+                        }
+                    } else {
+                        alert('Error toggling upvote: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                         alert('Action failed. You might need to log in again.');
+                    } else {
+                         alert('An unexpected error occurred. Please try again.');
+                    }
+                }
+            });
+        });
+    });
+  </script>
 
   {# ================================ #}
   {# ✅ AJAX HANDLER SCRIPT IMPORT #}
