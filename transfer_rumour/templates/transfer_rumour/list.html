@@ -3,15 +3,15 @@
 {% block title %}Transfer Rumours{% endblock %}
 
 {% block content %}
-<section class="bg-slate-950 text-slate-100" data-rumour-section>
+<section class="bg-black text-slate-100" data-rumour-section>
   <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
     <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
       <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-1 text-slate-100 font-semibold uppercase tracking-wide text-slate-100">
+        <div class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-300">
           Top News
         </div>
-        <h1 class="text-slate-100 font-semibold text-slate-100 md:text-slate-100">Transfer Rumours</h1>
-        <p class="text-slate-100 text-slate-100 md:text-slate-100">The latest moves, whispers, and confirmed deals curated by the Goalytics newsroom.</p>
+        <h1 class="text-3xl font-semibold text-white md:text-4xl">Transfer Rumours</h1>
+        <p class="text-sm text-slate-400 md:text-base">The latest moves, whispers, and confirmed deals curated by the Goalytics newsroom.</p>
       </div>
       {% if can_publish %}
         <div class="flex flex-wrap items-center gap-3">
@@ -23,7 +23,7 @@
           </button>
           <noscript>
             <a href="{% url 'transfer_rumour:create' %}"
-               class="inline-flex items-center gap-2 rounded-2xl border border-slate-600 bg-slate-950 px-4 py-2 text-slate-100 font-semibold text-slate-100 transition hover:bg-slate-950 hover:text-slate-100">
+               class="inline-flex items-center gap-2 rounded-2xl border border-slate-600 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-800 hover:text-white">
               New Rumour
             </a>
           </noscript>
@@ -44,17 +44,17 @@
     <div id="rumour-list" class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {% for rumour in rumours|slice:'1:' %}
         {% if forloop.counter <= 4 %}
-          <article class="rumour-card rumour-card-stack" data-rumour-id="{{ rumour.id }}">
+          <div>
             {% include "transfer_rumour/partials/rumour_brief.html" with rumour=rumour manageable_ids=manageable_ids %}
-          </article>
+          </div>
         {% elif forloop.counter <= 6 %}
-          <article class="rumour-card rumour-card-split sm:col-span-2 lg:col-span-2" data-rumour-id="{{ rumour.id }}">
+          <div class="sm:col-span-2 lg:col-span-2">
             {% include "transfer_rumour/partials/rumour_split.html" with rumour=rumour manageable_ids=manageable_ids %}
-          </article>
+          </div>
         {% else %}
-          <article class="rumour-card rumour-card-stack" data-rumour-id="{{ rumour.id }}">
+          <div>
             {% include "transfer_rumour/partials/rumour_brief.html" with rumour=rumour manageable_ids=manageable_ids %}
-          </article>
+          </div>
         {% endif %}
       {% endfor %}
     </div>
@@ -99,7 +99,7 @@
   }
 </style>
 
-  <div id="rumourDeleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+  <div id="rumourDeleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
     <div class="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 shadow-2xl">
       <div class="border-b border-slate-700 px-6 py-4 text-sm font-semibold uppercase tracking-wide">Hapus Rumour</div>
       <div class="px-6 py-5 text-sm text-slate-400">
@@ -157,7 +157,7 @@
     let emptyState = document.getElementById('rumour-empty-state');
     const section = document.querySelector('[data-rumour-section]');
     const initialFormFieldsHtml = formFieldsContainer ? "{% filter escapejs %}{% include 'transfer_rumour/partials/form_fields.html' with form=form %}{% endfilter %}" : "";
-    const emptyStateHtml = "{% filter escapejs %}<div id='rumour-empty-state' class='bg-slate-950 rounded-xl shadow-md p-10 text-slate-100'><h2 class='text-slate-100 font-semibold text-slate-100 mb-2'>Belum ada rumour.</h2><p class='text-slate-100'>Konten baru akan segera hadir.{% if can_publish %} Jadilah yang pertama membagikan rumor terbaru!{% endif %}</p></div>{% endfilter %}";
+    const emptyStateHtml = "{% filter escapejs %}<div id='rumour-empty-state' class='rounded-2xl border border-slate-700 bg-slate-900 p-10 text-center text-slate-200'><h2 class='text-lg font-semibold text-slate-100 mb-2'>Belum ada rumour.</h2><p class='text-sm text-slate-400'>Konten baru akan segera hadir.{% if can_publish %} Jadilah yang pertama membagikan rumor terbaru!{% endif %}</p></div>{% endfilter %}";
 
     const getCSRFToken = () => {
       const input = form ? form.querySelector('input[name=\"csrfmiddlewaretoken\"]') : null;
@@ -177,8 +177,8 @@
       const wrapper = document.createElement('div');
       const baseClasses = 'px-4 py-3 rounded-lg shadow transition-opacity duration-500';
       const colorClasses = type === 'success'
-        ? 'bg-slate-950 text-slate-100'
-        : 'bg-slate-950 text-slate-100';
+        ? 'bg-slate-900 text-slate-100'
+        : 'bg-white text-slate-900';
       wrapper.className = `${baseClasses} ${colorClasses}`;
       wrapper.textContent = message;
       alertContainer.appendChild(wrapper);
@@ -292,7 +292,11 @@
         if (!response.ok || !payload || !payload.success) {
           throw new Error((payload && payload.message) || 'Gagal menghapus rumour.');
         }
+        const cell = card.parentElement;
         card.remove();
+        if (cell && cell !== listContainer && cell.childElementCount === 0) {
+          cell.remove();
+        }
         if (listContainer && listContainer.children.length === 0) {
           ensureEmptyState();
         }

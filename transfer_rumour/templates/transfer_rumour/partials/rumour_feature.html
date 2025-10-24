@@ -1,4 +1,4 @@
-<article class="grid gap-6 overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-slate-100 shadow-lg lg:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
+<article data-rumour-id="{{ rumour.id }}" class="grid gap-6 overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-slate-100 shadow-lg lg:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
   <div class="relative bg-slate-800">
     {% if rumour.cover_image_url %}
       <img src="{{ rumour.cover_image_url }}" alt="Cover {{ rumour.title }}"
