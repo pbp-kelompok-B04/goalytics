@@ -347,38 +347,47 @@ def save_comparison(request):
     """Save comparison to user's history"""
     if request.method == 'POST':
         try:
-            player1_id = request.POST.get('player1_id')
-            player2_id = request.POST.get('player2_id')
-            notes = request.POST.get('notes', '')
+            # 1. Baca raw data dari request.body dan parse sebagai JSON
+            data = json.loads(request.body)
             
+            # 2. Ambil ID dan notes dari data yang sudah di-parse
+            player1_id = data.get('player1_id')
+            player2_id = data.get('player2_id')
+            notes = data.get('notes', '')
+            
+            # Pastikan ID ada sebelum mencari di database
+            if not player1_id or not player2_id:
+                return JsonResponse({'success': False, 'error': 'Missing player IDs.'}, status=400)
+
             player1 = Player.objects.get(id=player1_id)
             player2 = Player.objects.get(id=player2_id)
             
-            # Save comparison
-            comparison, created = SavedComparison.objects.get_or_create(
+            # Menggunakan update_or_create lebih efisien
+            comparison, created = SavedComparison.objects.update_or_create(
                 user=request.user,
                 player1=player1,
                 player2=player2,
                 defaults={'notes': notes}
             )
             
-            if not created:
-                # Update notes if comparison already exists
-                comparison.notes = notes
-                comparison.save()
+            message = 'Comparison saved successfully!' if created else 'Comparison notes updated successfully!'
             
             return JsonResponse({
                 'success': True,
-                'message': 'Comparison saved successfully!' if created else 'Comparison updated successfully!',
+                'message': message,
                 'comparison_id': comparison.id
             })
             
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON format in request.'}, status=400)
         except Player.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Player not found'})
+            return JsonResponse({'success': False, 'error': 'Player with the provided ID was not found.'}, status=404)
         except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+            # Untuk debugging, bisa print errornya
+            print(traceback.format_exc()) 
+            return JsonResponse({'success': False, 'error': 'An unexpected server error occurred.'}, status=500)
     
-    return JsonResponse({'success': False, 'error': 'Invalid method'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method. Only POST is allowed.'}, status=405)
 
 @login_required
 def comparison_history(request):
