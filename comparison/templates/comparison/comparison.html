@@ -607,5 +607,54 @@ document.getElementById('saveComparisonForm')?.addEventListener('submit', async 
     alert(err.message || 'Terjadi kesalahan saat menyimpan.');
   }
 });
+
+// Function untuk auto-load players dari URL parameters
+async function loadPlayersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const player1Id = urlParams.get('player1_id');
+    const player2Id = urlParams.get('player2_id');
+    
+    if (player1Id && player2Id) {
+        console.log("🔄 Auto-loading players from URL:", player1Id, player2Id);
+        
+        try {
+            // Show loading
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) loadingEl.classList.remove('hidden');
+            
+            // Load player data menggunakan endpoint get_player_by_id
+            const response1 = await fetch(`/comparison/api/players/${player1Id}/`);
+            const data1 = await response1.json();
+            
+            const response2 = await fetch(`/comparison/api/players/${player2Id}/`);
+            const data2 = await response2.json();
+            
+            if (data1.player && data2.player) {
+                // Auto-select players
+                selectPlayer(data1.player, 1);
+                selectPlayer(data2.player, 2);
+                
+                // Auto-run comparison setelah delay singkat
+                setTimeout(() => {
+                    console.log("🚀 Auto-running comparison");
+                    comparePlayers();
+                }, 1000);
+            } else {
+                console.error("❌ Players not found");
+                if (loadingEl) loadingEl.classList.add('hidden');
+                alert("One or both players not found");
+            }
+        } catch (error) {
+            console.error('Error loading players from URL:', error);
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) loadingEl.classList.add('hidden');
+            alert("Error loading players from URL");
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadPlayersFromURL();
+});
 </script>
 {% endblock %}
