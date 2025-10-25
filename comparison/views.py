@@ -450,3 +450,4 @@ def get_player_by_id(request, player_id):
         return JsonResponse({'player': player_data})
     except Player.DoesNotExist:
         return JsonResponse({'error': 'Player not found'}, status=404)
+
