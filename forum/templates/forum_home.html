@@ -627,6 +627,80 @@
   function buildDetailUrl(postId) {
   return detailTemplate.replace("0/", `${postId}/`);
 }
+
+  function extractYouTubeId(rawUrl) {
+    if (!rawUrl) return null;
+    try {
+      const u = new URL(rawUrl, window.location.origin);
+
+      // youtu.be/<id>
+      if (u.hostname.includes('youtu.be')) {
+        const id = u.pathname.slice(1).split('/')[0];
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+
+      // youtube.com/shorts/<id>
+      if (u.hostname.includes('youtube.com') && u.pathname.startsWith('/shorts/')) {
+        const id = u.pathname.split('/')[2] || '';
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+
+      // youtube.com/watch?v=<id> (v bisa tidak urutan pertama)
+      if (u.hostname.includes('youtube.com') && u.pathname === '/watch') {
+        const v = u.searchParams.get('v');
+        return /^[A-Za-z0-9_-]{6,}$/.test(v || '') ? v : null;
+      }
+
+      // youtube.com/embed/<id>
+      if (u.hostname.includes('youtube.com') && u.pathname.startsWith('/embed/')) {
+        const id = u.pathname.split('/')[2] || '';
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+
+      return null;
+    } catch {
+      // fallback regex ringan kalau URL() gagal
+      const m = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*v=|shorts\/|embed\/))([A-Za-z0-9_-]{6,})/);
+      return m ? m[1] : null;
+    }
+  }
+
+  function buildYouTubeSrc(videoId, { useApi = false } = {}) {
+    const base = `https://www.youtube-nocookie.com/embed/${videoId}`;
+    const params = new URLSearchParams({
+      rel: '0',
+      modestbranding: '1',
+      playsinline: '1',
+    });
+    if (useApi) {
+      params.set('enablejsapi', '1');
+      params.set('origin', window.location.origin); // penting saat enablejsapi
+    }
+    return `${base}?${params.toString()}`;
+  }
+
+
+  function renderYouTubeEmbedOrFallback(videoId) {
+    const src = buildYouTubeSrc(videoId, { useApi: false });
+    // Kartu dengan iframe + fallback link (jaga-jaga kalau error/153)
+    return `
+      <div class="my-2">
+        <div class="relative w-full aspect-video overflow-hidden rounded-2xl border border-slate-200">
+          <iframe
+            src="${src}"
+            class="absolute inset-0 h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          Jika video tidak bisa diputar (mis. error 153), buka langsung di YouTube:
+          <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="text-blue-600 underline">https://youtu.be/${videoId}</a>
+        </div>
+      </div>
+    `;
+  }
   function displayPosts(posts) {
     if (!postsListElement) {
       return;
@@ -686,21 +760,11 @@
 
         const url = urlCandidates[0];
         if (!url) return '';
+        const ytId = extractYouTubeId(url);
+          if (ytId) {
+            return renderYouTubeEmbedOrFallback(ytId);
+          }
 
-          // 2) Bersihkan query/hash agar deteksi ekstensi akurat
-        
-
-        // 3) YouTube (support watch?v=..., youtu.be/..., &list params tetap aman)
-        const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([A-Za-z0-9_-]{6,})/);
-        if (yt && yt[1]) {
-          return `
-            <iframe
-              src="https://www.youtube.com/embed/${yt[1]}"
-              class="w-full aspect-video rounded-2xl border border-slate-200 my-2"
-              allowfullscreen loading="lazy"></iframe>`;
-        }
-
-        // 4) Vimeo
         const vimeo = url.match(/vimeo\.com\/(\d+)/);
         if (vimeo && vimeo[1]) {
           return `
@@ -710,15 +774,6 @@
               allowfullscreen loading="lazy"></iframe>`;
         }
 
-        // 5) Gambar (tambahkan SVG/BMP + dukung data URL)
-        if (/\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(url) || /^data:image\//i.test(url)) {
-          return `
-            <img src="${url}" alt="media"
-                class="rounded-2xl border border-slate-200 w-full max-h-96 object-cover my-2"
-                loading="lazy">`;
-        }
-
-        // 6) Video (luaskan daftar ekstensi umum)
         if (/\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(url)) {
           return `
             <video controls class="w-full rounded-2xl border border-slate-200 max-h-96 my-2">
@@ -727,12 +782,33 @@
             </video>`;
         }
 
-        // 7) Heuristik: kalau lokal MEDIA (/media/...), coba render sebagai img
         if (/^\/media\//.test(url)) {
           return `
             <img src="${url}" alt="media"
                 class="rounded-2xl border border-slate-200 w-full max-h-96 object-cover my-2"
                 loading="lazy">`;
+        }
+
+        const likelyImageHost = /gstatic\.com|googleusercontent\.com|ggpht\.com|fbcdn\.net|twimg\.com|pinimg\.com|cdninstagram\.com/i.test(url);
+        const looksLikeImage =
+          /^data:image\//i.test(url) ||
+          /\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(url) ||
+          likelyImageHost ||
+          /^\/media\//.test(url); // lokal MEDIA
+
+        if (looksLikeImage) {
+          const escaped = url.replace(/"/g, '&quot;');
+          return `
+            <div class="media-wrapper my-2">
+              <img
+                src="${escaped}"
+                alt="media"
+                class="rounded-2xl border border-slate-200 w-full max-h-96 object-cover"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                onerror="this.nextElementSibling.classList.remove('hidden'); this.remove();">
+              <a href="${escaped}" target="_blank" class="media-fallback hidden text-blue-600 underline break-all">${escaped}</a>
+            </div>`;
         }
 
         // 8) Fallback: link biasa
