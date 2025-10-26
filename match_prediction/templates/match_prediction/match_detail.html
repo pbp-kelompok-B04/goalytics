@@ -10,7 +10,7 @@
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div class="space-y-2">
-          <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">
+          <h1 id="match-title-header" class="text-3xl font-semibold text-slate-900 md:text-4xl">
             ⚽ {{ match.home_club.name|default:"TBD" }}
             <span class="mx-2 text-slate-400">vs</span>
             {{ match.away_club.name|default:"TBD" }}
