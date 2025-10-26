@@ -74,6 +74,8 @@ class Prediction(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    
+
     # soft delete flag (optional; admin can hard-delete if needed)
     is_deleted = models.BooleanField(default=False)
 
