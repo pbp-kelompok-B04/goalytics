@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 User = settings.AUTH_USER_MODEL  # uses django.contrib.auth.models.User as requested
 
@@ -44,6 +45,14 @@ class Match(models.Model):
     def get_absolute_url(self):
         from django.urls import reverse
         return reverse('match_prediction:match_detail', args=[str(self.id)])
+    
+    def clean(self):
+        if self.home_club and self.away_club and self.home_club == self.away_club:
+            raise ValidationError("Home and Away clubs cannot be the same.")
+
+    def save(self, *args, **kwargs):
+        self.clean()  # ensure validation always enforced
+        super().save(*args, **kwargs)
 
 
 class Prediction(models.Model):

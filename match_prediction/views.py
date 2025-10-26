@@ -108,18 +108,18 @@ class MatchCreateView(CreateView):
             return JsonResponse({
                 'message': 'Match created successfully!',
                 'updateTarget': '#match-list',
-                'html' : html,
+                'html': html,
             })
         messages.success(self.request, "Match created successfully!")
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):
-        # Handle AJAX GET: return form HTML only
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form = self.form_class()
-            return render(request, self.template_name, {'form': form})
+            # ✅ Correct template for AJAX modal
+            return render(request, 'match_prediction/partials/match_form_partial.html', {'form': form})
         return super().get(request, *args, **kwargs)
-
+    
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(is_admin_or_analyst), name='dispatch')
 class MatchUpdateView(UpdateView):
@@ -128,42 +128,67 @@ class MatchUpdateView(UpdateView):
     template_name = 'match_prediction/match_form.html'
     success_url = reverse_lazy('match_prediction:match_list')
 
-    # Handle AJAX GET: return only form HTML for modal
     def get(self, request, *args, **kwargs):
+        """Return form partial for modal if AJAX, or full page otherwise."""
         self.object = self.get_object()
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form = self.form_class(instance=self.object)
-            return render(request, self.template_name, {'form': form, 'object': self.object})
+            # ✅ Use partial template for AJAX (was the cause of 405)
+            return render(request, 'match_prediction/partials/match_form_partial.html', {'form': form, 'object': self.object})
         return super().get(request, *args, **kwargs)
 
-    # Handle AJAX POST: save form and return JSON
     def post(self, request, *args, **kwargs):
+        """Handle both AJAX and non-AJAX POST updates."""
         self.object = self.get_object()
         form = self.form_class(request.POST, instance=self.object)
+
         if form.is_valid():
-            form.save()
+            match = form.save()
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # ✅ Smart refresh target depending on where the edit was done
+                referer = request.META.get('HTTP_REFERER')
+                is_detail_page = referer and f'/match/{match.id}/' in referer
 
-                matches = Match.objects.all().order_by('-match_datetime')
-                can_manage = is_admin_or_analyst(self.request.user)
-                html = render_to_string(
-                   'match_prediction/partials/match_list_table.html',
-                    {'matches': matches, 'can_manage_matches': can_manage}
-                )
+                if is_detail_page:
+                    # Update title in match detail page
+                    home_name = match.home_club.name if match.home_club else "TBD"
+                    away_name = match.away_club.name if match.away_club else "TBD"
+                    new_title_html = f'⚽ {home_name} <span class="mx-2 text-slate-400">vs</span> {away_name}'
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Match updated successfully!',
+                        'updateTarget': '#match-title-header',
+                        'html': new_title_html
+                    })
+                else:
+                    # Update the match list in dashboard
+                    matches = Match.objects.all().order_by('-match_datetime')
+                    can_manage = is_admin_or_analyst(self.request.user)
+                    html = render_to_string(
+                        'match_prediction/partials/match_list_table.html',
+                        {'matches': matches, 'can_manage_matches': can_manage}
+                    )
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Match updated successfully!',
+                        'updateTarget': '#match-list',
+                        'html': html
+                    })
 
-                return JsonResponse({
-                    'status': 'success',
-                    'message': 'Match updated successfully!',
-                    'updateTarget': '#match-list',  # triggers reload
-                    'html': html
-                })
-            # fallback non-AJAX
-            return super().form_valid(form)
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return render(request, self.template_name, {'form': form, 'object': self.object})
-            return super().form_invalid(form)
+            # Fallback for non-AJAX submission
+            messages.success(request, "Match updated successfully!")
+            return redirect(self.get_success_url())
 
+        # Invalid form: re-render the modal with errors
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return render(
+                request,
+                'match_prediction/partials/match_form_partial.html',
+                {'form': form, 'object': self.object},
+                status=400
+            )
+        return super().form_invalid(form)
 
 @method_decorator(user_passes_test(is_admin_or_analyst), name='dispatch')
 class MatchDeleteView(DeleteView):
@@ -181,8 +206,7 @@ class MatchDeleteView(DeleteView):
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Match deleted successfully!',
-                    # This payload is expected by your ajax_handlers.js 
-                    'removeTarget': f'#match-row-{match_id}' 
+                    'removeTarget': f'#match-row-{match_id}'
                 })
             except Match.DoesNotExist:
                 return JsonResponse({'status': 'error', 'message': 'Match not found.'}, status=404)
@@ -191,7 +215,6 @@ class MatchDeleteView(DeleteView):
 
         # Fallback for non-AJAX POST
         return super().post(request, *args, **kwargs)
-
 
 
 # --- PREDICTION VIEWS ---
@@ -210,44 +233,45 @@ def add_prediction(request, match_id):
             return redirect('match_detail', pk=match.id)
     else:
         form = PredictionForm()
-    return render(request, 'match_prediction/prediction_form.html', {'form': form, 'match': match})
+
+    # 👇 Add this line
+    return render(request, 'match_prediction/prediction_form.html', {
+        'form': form,
+        'match': match,
+        'hide_navbar': True,  
+    })
 
 
 @login_required
 def edit_prediction(request, pk):
-    """Handle prediction editing via AJAX or normal page."""
     prediction = get_object_or_404(Prediction, pk=pk, is_deleted=False)
-    if prediction.user != request.user and not is_admin_or_analyst(request.user):
-        return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+    match = prediction.match
 
-    # ---- POST: update prediction ----
+    # GET (AJAX) → kirim HTML form ke modal
+    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = PredictionForm(instance=prediction)
+        return render(request, 'match_prediction/prediction_form.html', {
+            'form': form, 'object': prediction, 'match': match
+        })
+
+    # POST (AJAX) → simpan & kembalikan list terbaru
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = PredictionForm(request.POST, instance=prediction)
         if form.is_valid():
             form.save()
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Prediction updated successfully!',
-                'updateTarget': f'#prediction-{prediction.id}',  # reload just this prediction div
-            })
-        # return form HTML with errors if invalid
-        return render(request, 'match_prediction/prediction_form.html', {
-            'form': form,
-            'object': prediction,
-            'match': prediction.match
-        }, status=400)
+            predictions = match.predictions.filter(is_deleted=False).select_related('user')
+            new_list_html = render_to_string(
+                'match_prediction/partials/prediction_list.html',
+                {'predictions': predictions, 'match': match, 'request': request, 'user': request.user},
+                request=request
+            )
+            return JsonResponse({'status':'success','message':'Prediction updated successfully!','updateTarget':'#predictionList','html':new_list_html})
+        return render(request, 'match_prediction/prediction_form.html', {'form': form, 'object': prediction, 'match': match}, status=400)
 
-    # ---- GET: return form HTML ----
-    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        form = PredictionForm(instance=prediction)
-        return render(request, 'match_prediction/prediction_form.html', {
-            'form': form,
-            'object': prediction,
-            'match': prediction.match
-        })
+    # Fallback non-AJAX
+    form = PredictionForm(instance=prediction)
+    return render(request, 'match_prediction/prediction_form.html', {'form': form, 'object': prediction, 'match': match})
 
-    # fallback for invalid requests
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
 @login_required
@@ -255,7 +279,7 @@ def delete_prediction(request, pk):
     prediction = get_object_or_404(Prediction, pk=pk, is_deleted=False)
     
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        if prediction.user != request.user:
+        if prediction.user != request.user and not is_admin_or_analyst(request.user):
             return JsonResponse({'status': 'error', 'message': 'Permission denied.'}, status=403)
         
         prediction_id = prediction.id
@@ -269,7 +293,7 @@ def delete_prediction(request, pk):
         })
 
     # Non-AJAX/GET fallback (keep redirect for compatibility if needed)
-    if prediction.user != request.user:
+    if prediction.user != request.user and not is_admin_or_analyst(request.user):
         messages.error(request, "You are not allowed to delete this prediction.")
     else:
         prediction.is_deleted = True

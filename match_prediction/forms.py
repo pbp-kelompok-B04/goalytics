@@ -1,5 +1,6 @@
 from django import forms
 from .models import Match, Prediction
+from django.utils.html import format_html
 
 
 class MatchForm(forms.ModelForm):
@@ -13,6 +14,21 @@ class MatchForm(forms.ModelForm):
             'match_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'venue': forms.TextInput(attrs={'placeholder': 'Enter venue name...'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Defensive: if the PlayerClub_Data app is present, set an ordered queryset
+        try:
+            from PlayerClub_Data.models import Club
+            qs = Club.objects.all().order_by('name')    # deterministic ordering
+            # set the queryset for both selectors
+            self.fields['home_club'].queryset = qs
+            self.fields['away_club'].queryset = qs
+
+
+        except Exception:
+            pass
 
     def clean(self):
         cleaned_data = super().clean()

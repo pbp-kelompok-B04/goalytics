@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Post, Comment, LEAGUE_CHOICES
+from .models import Post, Comment, LEAGUE_CHOICES, Notification
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
@@ -7,7 +7,6 @@ from django.db.models import Count
 from django.views.decorators.http import require_http_methods
 from urllib.parse import quote
 import json
-
 def _avatar_for_user(user):
     profile = getattr(user, "profile", None)
     avatar = getattr(profile, "profile_picture", None) if profile else None
@@ -416,3 +415,26 @@ def delete_comment(request, comment_id):
         'message': 'Komentar berhasil dihapus'
     }, status=200)
 
+
+@login_required
+def get_notifications(request):
+    notifs = Notification.objects.filter(recipient=request.user).select_related("actor", "target_post", "target_comment")[:50]
+    data = [
+        {
+            "id": n.id,
+            "actor": n.actor.username,
+            "verb": n.verb,
+            "post_id": n.target_post.id if n.target_post else None,
+            "comment_id": n.target_comment.id if n.target_comment else None,
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat()
+        }
+        for n in notifs
+    ]
+    return JsonResponse({"data": data})
+
+@login_required
+@require_http_methods(["POST"])
+def mark_notifications_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({"message": "All notifications marked as read"})

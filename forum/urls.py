@@ -18,4 +18,8 @@ urlpatterns = [
     path('api/comments/<int:comment_id>/update/', views.update_comment, name='update_comment'),
     path('api/comments/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
     path('api/comments/<int:comment_id>/likes/', views.like_comment, name='like_comment'),
+
+    path('api/notifications/', views.get_notifications, name='get_notifications'),
+    path('api/notifications/mark_read/', views.mark_notifications_read, name='mark_notifications_read'),
+
 ]
