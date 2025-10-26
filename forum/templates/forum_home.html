@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Discussion Forum{% endblock %}
 
@@ -21,6 +22,21 @@
           Manage Forum
         </a>
         {% endif %}
+        <!-- Notification Button -->
+        <button
+          type="button"
+          id="notif-btn"
+          class="relative inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+          onclick="openNotifModal()"
+        >
+          <svg class="h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V11a6 6 0 10-12 0v3c0 .538-.214 1.055-.595 1.595L4 17h5m6 0a3 3 0 11-6 0h6z" />
+          </svg>
+          Notifications
+          <!-- 🔴 dot indicator -->
+          <span id="notif-dot" class="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-rose-500 hidden"></span>
+        </button>
         <button type="button" id="my-posts-toggle" aria-pressed="false" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200">
           <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 16v-5a2 2 0 0 0-2-2h-1l-1-3a2 2 0 0 0-1.89-1.368H9.89A2 2 0 0 0 8 6L7 9H6a2 2 0 0 0-2 2v5" />
@@ -36,54 +52,6 @@
         </button>
       </div>
     </header>
-
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-9 5V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12l-4-3H6a2 2 0 0 1-2-2z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-              {% if forum_is_admin or not request.user.is_authenticated %}Total Posts{% else %}Your Posts{% endif %}
-            </p>
-            <p id="stat-total-posts" class="text-2xl font-semibold text-slate-900">0</p>
-          </div>
-        </div>
-      </article>
-      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-500">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 21.35 10.55 20a15.55 15.55 0 0 1-5.36-5.11A6 6 0 0 1 12 5.09a6 6 0 0 1 6.81 9.8 15.55 15.55 0 0 1-5.36 5.11Z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-              {% if forum_is_admin or not request.user.is_authenticated %}Total Likes{% else %}Your Likes{% endif %}
-            </p>
-            <p id="stat-total-likes" class="text-2xl font-semibold text-slate-900">0</p>
-          </div>
-        </div>
-      </article>
-      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 17l6-6 4 4 6-6" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-              {% if forum_is_admin or not request.user.is_authenticated %}Active Now{% else %}Active Posts (6h){% endif %}
-            </p>
-            <p id="stat-active-now" class="text-2xl font-semibold text-slate-900">0</p>
-          </div>
-        </div>
-      </article>
-    </div>
 
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div class="flex flex-col gap-6">
@@ -191,6 +159,17 @@
         <label class="mb-2 block text-sm font-medium text-slate-600">Content</label>
         <textarea id="postContent" rows="6" placeholder="Share your thoughts with the community..." class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200"></textarea>
       </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-600">Media URL (optional)</label>
+        <input type="url" id="postMediaUrl" placeholder="Paste image/video link (e.g. YouTube, Imgur)" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200" />
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-600">Attachment (optional)</label>
+        <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <input type="file" id="postAttachment" accept="image/*,video/*" class="w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-800 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-700 transition" />
+        </div>
+        <p class="mt-2 text-xs text-slate-400">You can upload one image or video file (max 10MB)</p>
+      </div>
       <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
         <button type="button" onclick="closeCreateModal()" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
           Cancel
@@ -246,6 +225,23 @@
   </div>
 </div>
 
+<!-- Notification Modal -->
+<div id="notifModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+      <h2 class="text-lg font-semibold text-slate-900">Notifications</h2>
+      <button onclick="closeNotifModal()" class="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div id="notifList" class="max-h-[400px] overflow-y-auto px-6 py-4 space-y-3 text-sm text-slate-700">
+      <p class="text-center text-slate-400">Loading notifications...</p>
+    </div>
+  </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm">
   <div class="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
@@ -295,7 +291,7 @@
 </style>
 
 <script>
-  const isAuthenticated = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
+    const isAuthenticated = ("{{ request.user.is_authenticated|yesno:'true,false' }}" === "true");
   const isAdminUser = ("{{ forum_is_admin|yesno:'true,false' }}" === "true");
   let currentLeague = '';
   let currentSort = 'newest';
@@ -631,6 +627,80 @@
   function buildDetailUrl(postId) {
   return detailTemplate.replace("0/", `${postId}/`);
 }
+
+  function extractYouTubeId(rawUrl) {
+    if (!rawUrl) return null;
+    try {
+      const u = new URL(rawUrl, window.location.origin);
+
+      // youtu.be/<id>
+      if (u.hostname.includes('youtu.be')) {
+        const id = u.pathname.slice(1).split('/')[0];
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+
+      // youtube.com/shorts/<id>
+      if (u.hostname.includes('youtube.com') && u.pathname.startsWith('/shorts/')) {
+        const id = u.pathname.split('/')[2] || '';
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+
+      // youtube.com/watch?v=<id> (v bisa tidak urutan pertama)
+      if (u.hostname.includes('youtube.com') && u.pathname === '/watch') {
+        const v = u.searchParams.get('v');
+        return /^[A-Za-z0-9_-]{6,}$/.test(v || '') ? v : null;
+      }
+
+      // youtube.com/embed/<id>
+      if (u.hostname.includes('youtube.com') && u.pathname.startsWith('/embed/')) {
+        const id = u.pathname.split('/')[2] || '';
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+
+      return null;
+    } catch {
+      // fallback regex ringan kalau URL() gagal
+      const m = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*v=|shorts\/|embed\/))([A-Za-z0-9_-]{6,})/);
+      return m ? m[1] : null;
+    }
+  }
+
+  function buildYouTubeSrc(videoId, { useApi = false } = {}) {
+    const base = `https://www.youtube-nocookie.com/embed/${videoId}`;
+    const params = new URLSearchParams({
+      rel: '0',
+      modestbranding: '1',
+      playsinline: '1',
+    });
+    if (useApi) {
+      params.set('enablejsapi', '1');
+      params.set('origin', window.location.origin); // penting saat enablejsapi
+    }
+    return `${base}?${params.toString()}`;
+  }
+
+
+  function renderYouTubeEmbedOrFallback(videoId) {
+    const src = buildYouTubeSrc(videoId, { useApi: false });
+    // Kartu dengan iframe + fallback link (jaga-jaga kalau error/153)
+    return `
+      <div class="my-2">
+        <div class="relative w-full aspect-video overflow-hidden rounded-2xl border border-slate-200">
+          <iframe
+            src="${src}"
+            class="absolute inset-0 h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">
+          Jika video tidak bisa diputar (mis. error 153), buka langsung di YouTube:
+          <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="text-blue-600 underline">https://youtu.be/${videoId}</a>
+        </div>
+      </div>
+    `;
+  }
   function displayPosts(posts) {
     if (!postsListElement) {
       return;
@@ -677,6 +747,73 @@
         </div>
       ` : '';
 
+      const mediaHTML = (() => {
+        const urlCandidates = [
+          post.attachment_url,                       
+          post.media_url,
+          post.mediaUrl,
+          (typeof post.attachment === 'string' ? post.attachment : null),
+          (post.attachment && post.attachment.url),
+          (post.media && post.media.url),
+        ].filter(Boolean);
+
+        const url = urlCandidates[0];
+        if (!url) return '';
+        const ytId = extractYouTubeId(url);
+          if (ytId) {
+            return renderYouTubeEmbedOrFallback(ytId);
+          }
+
+        const vimeo = url.match(/vimeo\.com\/(\d+)/);
+        if (vimeo && vimeo[1]) {
+          return `
+            <iframe
+              src="https://player.vimeo.com/video/${vimeo[1]}"
+              class="w-full aspect-video rounded-2xl border border-slate-200 my-2"
+              allowfullscreen loading="lazy"></iframe>`;
+        }
+
+        if (/\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(url)) {
+          return `
+            <video controls class="w-full rounded-2xl border border-slate-200 max-h-96 my-2">
+              <source src="${url}">
+              Your browser does not support the video tag.
+            </video>`;
+        }
+
+        if (/^\/media\//.test(url)) {
+          return `
+            <img src="${url}" alt="media"
+                class="rounded-2xl border border-slate-200 w-full max-h-96 object-cover my-2"
+                loading="lazy">`;
+        }
+
+        const likelyImageHost = /gstatic\.com|googleusercontent\.com|ggpht\.com|fbcdn\.net|twimg\.com|pinimg\.com|cdninstagram\.com/i.test(url);
+        const looksLikeImage =
+          /^data:image\//i.test(url) ||
+          /\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(url) ||
+          likelyImageHost ||
+          /^\/media\//.test(url); // lokal MEDIA
+
+        if (looksLikeImage) {
+          const escaped = url.replace(/"/g, '&quot;');
+          return `
+            <div class="media-wrapper my-2">
+              <img
+                src="${escaped}"
+                alt="media"
+                class="rounded-2xl border border-slate-200 w-full max-h-96 object-cover"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                onerror="this.nextElementSibling.classList.remove('hidden'); this.remove();">
+              <a href="${escaped}" target="_blank" class="media-fallback hidden text-blue-600 underline break-all">${escaped}</a>
+            </div>`;
+        }
+
+        // 8) Fallback: link biasa
+        return `<a href="${url}" target="_blank" class="text-blue-600 underline break-all my-2 inline-block">${url}</a>`;
+      })();
+
       return `
         <article onclick="handlePostClick(${post.id})" class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
           ${actionButtons}
@@ -689,9 +826,11 @@
                 <h3 class="text-lg font-semibold text-slate-900">${escapeHtml(post.title)}</h3>
                 <span class="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">${leagueNames[post.league] || 'General'}</span>
               </div>
+              ${mediaHTML}
               <p class="truncate-lines-3 text-sm leading-relaxed text-slate-600">
                 ${escapeHtml(post.content)}
               </p>
+              
               <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
                 <div class="flex flex-wrap items-center gap-2">
                   <a href="${profileUrl}" onclick="event.stopPropagation();" class="font-medium text-slate-600 transition hover:text-slate-900">${post.author}</a>
@@ -805,9 +944,28 @@
       const title = document.getElementById('postTitle').value.trim();
       const content = document.getElementById('postContent').value.trim();
       const league = document.getElementById('postLeague').value;
+      const mediaUrl = document.getElementById('postMediaUrl').value.trim();
+      const file = document.getElementById('postAttachment').files[0];
       if (!title || !content) {
         showToast('Please fill in all fields', true);
         return;
+      }
+      let finalMediaUrl = mediaUrl;
+      if (file) {
+        const formData = new FormData();
+        formData.append("attachment", file);
+        const uploadRes = await fetch("/forum/api/posts/upload/", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok) {
+          finalMediaUrl = uploadData.url;
+        } else {
+          showToast(uploadData.error || "Upload failed", true);
+          return;
+        }
       }
       try {
         const response = await fetch(createUrl, {
@@ -817,10 +975,10 @@
             'X-CSRFToken': csrftoken
           },
           credentials: 'include',
-          body: JSON.stringify({title, content, league})
+          body: JSON.stringify({title, content, league, media_url: finalMediaUrl})
         });
         if (response.redirected) {
-          window.location.href = response.url; // langsung ke login
+          window.location.href = response.url; 
           return;
         }
         const result = await response.json();
@@ -941,9 +1099,123 @@
     window.location.href = buildDetailUrl(postId);
   }
 
+  // --- Notification elements ---
+  const notifModal = document.getElementById("notifModal");
+  const notifList = document.getElementById("notifList");
+  const notifDot = document.getElementById("notif-dot"); // 🔴 dot indikator baru
+  let lastNotifCount = 0;
 
+  // --- Open modal + mark all as read ---
+  async function openNotifModal() {
+    if (!isAuthenticated) {
+      window.location.href = "{% url 'users:login' %}?next={% url 'forum_home' %}";
+      return;
+    }
+    notifModal.classList.remove("hidden");
+    notifModal.classList.add("flex");
+
+    // Load daftar notifikasi
+    await loadNotifications();
+
+    // Mark semua notif sudah dibaca
+    try {
+      await fetch(`/forum/api/notifications/mark_read/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+        credentials: "include",
+      });
+      notifDot.classList.add("hidden");
+      lastNotifCount = 0;
+    } catch (e) {
+      console.error("Failed to mark notifications as read:", e);
+    }
+  }
+
+  function closeNotifModal() {
+    notifModal.classList.add("hidden");
+    notifModal.classList.remove("flex");
+  }
+
+  async function loadNotifications() {
+    notifList.innerHTML = `<p class="text-center text-slate-400">Loading notifications...</p>`;
+    try {
+      const res = await fetch(`/forum/api/notifications/`);
+      const data = await res.json();
+      const items = data.data;
+
+      if (items.length === 0) {
+        notifList.innerHTML = `<p class="text-center text-slate-400">No notifications yet.</p>`;
+        notifDot.classList.add("hidden");
+        return;
+      }
+
+      notifList.innerHTML = items
+        .map(
+          (n) => `
+          <div class="notif-item cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 transition" data-post-id="${n.post_id || ''}">
+            <p><span class="font-semibold">${n.actor}</span> ${n.verb}</p>
+            <p class="text-xs text-slate-400 mt-1">${new Date(
+              n.created_at
+            ).toLocaleString()}</p>
+          </div>`
+        )
+        .join("");
+
+
+      document.querySelectorAll(".notif-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const postId = item.dataset.postId;
+          if (postId) {
+            window.location.href = `/forum/posts/${postId}/`;
+          } else {
+            showToast("This notification has no target post", true);
+          }
+        });
+      });
+      const unreadCount = items.filter((n) => !n.is_read).length;
+      if (unreadCount > 0) {
+        notifDot.classList.remove("hidden");
+      } else {
+        notifDot.classList.add("hidden");
+      }
+    } catch (error) {
+      console.error("Error loading notifications:", error);
+      notifList.innerHTML = `<p class="text-center text-rose-500">Error loading notifications</p>`;
+    }
+  }
+
+  async function checkNotifications() {
+    if (!isAuthenticated) return;
+    try {
+      const res = await fetch(`/forum/api/notifications/`);
+      const data = await res.json();
+      const notifs = data.data || [];
+      const unread = notifs.filter((n) => !n.is_read).length;
+
+      if (unread > 0) {
+        notifDot.classList.remove("hidden");
+        if (unread > lastNotifCount) {
+          notifDot.classList.add("animate-ping");
+          setTimeout(() => notifDot.classList.remove("animate-ping"), 1000);
+        }
+      } else {
+        notifDot.classList.add("hidden");
+      }
+      lastNotifCount = unread;
+    } catch (err) {
+      console.error("Error checking notifications:", err);
+    }
+  }
+
+  // Jalankan otomatis tiap 15 detik dan saat halaman pertama kali dimuat
+  setInterval(checkNotifications, 15000);
+  checkNotifications();
   syncLeagueChips(currentLeague);
   syncSortChips(currentSort);
   loadPosts();
 </script>
+
 {% endblock %}

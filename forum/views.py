@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Post, Comment, LEAGUE_CHOICES
+from .models import Post, Comment, LEAGUE_CHOICES, Notification
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
@@ -7,7 +7,6 @@ from django.db.models import Count
 from django.views.decorators.http import require_http_methods
 from urllib.parse import quote
 import json
-
 def _avatar_for_user(user):
     profile = getattr(user, "profile", None)
     avatar = getattr(profile, "profile_picture", None) if profile else None
@@ -70,6 +69,8 @@ def get_all_post(request):
             "like_count": getattr(p, "like_count", 0),
             "is_liked": p.id in liked_post_ids,
             "avatar": _avatar_for_user(p.author),
+            "media_url": p.media_url or None,
+            "attachment_url": (getattr(p.attachment, "url", None) if p.attachment else None)
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -99,6 +100,8 @@ def get_post_by_id(request, post_id):
         "is_author": request.user.is_authenticated and post.author == request.user,
         "like_count": getattr(post, "like_count", 0),
         "is_liked": liked,
+        "media_url": post.media_url or None,
+        "attachment_url": (getattr(post.attachment, "url", None) if post.attachment else None)
     }
     return JsonResponse({"data": data})
 
@@ -200,19 +203,29 @@ def get_my_posts(request):
 @login_required
 @require_http_methods(["POST"])
 def create_post(request):
-    payload = json.loads(request.body.decode("utf-8"))
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON format"}, status=400)
     title = payload.get("title", "").strip()
     content = payload.get("content", "").strip()
     league = (payload.get("league") or "").strip().upper()
+    media_url = (payload.get("media_url") or "").strip()
+    if not title or not content:
+        return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
     if not title or not content:
         return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
     valid_codes = {code for code, _ in LEAGUE_CHOICES}
-    kwargs = {"author": request.user, "title": title, "content": content}
-    if league:
-        if league not in valid_codes:
-            return JsonResponse({"error": "league tidak valid"}, status=400)
-        kwargs["league"] = league
-    p = Post.objects.create(**kwargs)
+    if league and league not in valid_codes:
+        return JsonResponse({"error": "league tidak valid"}, status=400)
+
+    p = Post.objects.create(
+        author=request.user,
+        title=title,
+        content=content,
+        league=league or "EPL",
+        media_url=media_url or None,
+    )
     data = {
         'id': p.id,
         'author': p.author.username,
@@ -226,6 +239,7 @@ def create_post(request):
         "like_count": 0,
         "is_liked": False,
         "avatar": _avatar_for_user(p.author),
+        'media_url': p.media_url
     }
     return JsonResponse({"data": data}, status=201)
 
@@ -416,3 +430,43 @@ def delete_comment(request, comment_id):
         'message': 'Komentar berhasil dihapus'
     }, status=200)
 
+
+@login_required
+def get_notifications(request):
+    notifs = Notification.objects.filter(recipient=request.user).select_related("actor", "target_post", "target_comment")[:50]
+    data = [
+        {
+            "id": n.id,
+            "actor": n.actor.username,
+            "verb": n.verb,
+            "post_id": n.target_post.id if n.target_post else None,
+            "comment_id": n.target_comment.id if n.target_comment else None,
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat()
+        }
+        for n in notifs
+    ]
+    return JsonResponse({"data": data})
+
+@login_required
+@require_http_methods(["POST"])
+def mark_notifications_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({"message": "All notifications marked as read"})
+
+@login_required
+@require_http_methods(["POST"])
+def upload_attachment(request):
+    file = request.FILES.get("attachment")
+    if not file:
+        return JsonResponse({"error": "file tidak ditemukan"}, status=400)
+
+    post = Post.objects.create(author=request.user, title="(upload-only)", content="")
+    post.attachment = file
+    post.save()
+
+    return JsonResponse({
+        "attachment_url": post.attachment.url,
+        "post_id": post.id,
+        "url": post.attachment.url
+    }, status=201)
