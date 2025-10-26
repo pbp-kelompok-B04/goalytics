@@ -748,9 +748,8 @@
       ` : '';
 
       const mediaHTML = (() => {
-        // 1) Kumpulkan semua kandidat URL media dari berbagai bentuk payload
         const urlCandidates = [
-          post.attachment_url,                         // <-- penting: dari backend
+          post.attachment_url,                       
           post.media_url,
           post.mediaUrl,
           (typeof post.attachment === 'string' ? post.attachment : null),
@@ -827,10 +826,11 @@
                 <h3 class="text-lg font-semibold text-slate-900">${escapeHtml(post.title)}</h3>
                 <span class="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">${leagueNames[post.league] || 'General'}</span>
               </div>
+              ${mediaHTML}
               <p class="truncate-lines-3 text-sm leading-relaxed text-slate-600">
                 ${escapeHtml(post.content)}
               </p>
-              ${mediaHTML}
+              
               <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
                 <div class="flex flex-wrap items-center gap-2">
                   <a href="${profileUrl}" onclick="event.stopPropagation();" class="font-medium text-slate-600 transition hover:text-slate-900">${post.author}</a>
@@ -961,7 +961,7 @@
         });
         const uploadData = await uploadRes.json();
         if (uploadRes.ok) {
-          finalMediaUrl = uploadData.url; // ambil URL hasil upload
+          finalMediaUrl = uploadData.url;
         } else {
           showToast(uploadData.error || "Upload failed", true);
           return;
@@ -978,7 +978,7 @@
           body: JSON.stringify({title, content, league, media_url: finalMediaUrl})
         });
         if (response.redirected) {
-          window.location.href = response.url; // langsung ke login
+          window.location.href = response.url; 
           return;
         }
         const result = await response.json();

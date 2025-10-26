@@ -100,6 +100,8 @@ def get_post_by_id(request, post_id):
         "is_author": request.user.is_authenticated and post.author == request.user,
         "like_count": getattr(post, "like_count", 0),
         "is_liked": liked,
+        "media_url": post.media_url or None,
+        "attachment_url": (getattr(post.attachment, "url", None) if post.attachment else None)
     }
     return JsonResponse({"data": data})
 
