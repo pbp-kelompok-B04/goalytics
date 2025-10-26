@@ -18,6 +18,8 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(User, related_name='liked_post')
     league = models.CharField(max_length=20, choices=LEAGUE_CHOICES, default="EPL")
+    media_url = models.URLField(blank=True, null=True)  
+    attachment = models.FileField(upload_to='posts/', blank=True, null=True) 
 
     def __str__(self):
         return self.title
