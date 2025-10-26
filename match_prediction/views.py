@@ -57,32 +57,51 @@ class MatchDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        match = self.object
+        match = self.get_object()
+        user = self.request.user
+
+        # 1. Ambil parameter sorting dari URL (default ke 'newest')
+        sort_by = self.request.GET.get('sort_by', 'newest')
         
-        # 1. Fetch all predictions for the match
-        predictions = match.predictions.filter(is_deleted=False).select_related('user')
+        # 2. Definisikan queryset awal (Menggunakan related_name='predictions')
+        # Filter is_deleted=False secara default
+        predictions_queryset = match.predictions.filter(is_deleted=False)
         
-        if self.request.user.is_authenticated:
-            user = self.request.user
-            context['user_prediction'] = match.predictions.filter(user=user, is_deleted=False).first()
+        # 3. Terapkan logic sorting
+        if sort_by == 'upvotes':
+            # Menggunakan related_name yang benar ('upvote_links') dari PredictionUpvote
+            predictions_queryset = predictions_queryset.annotate(
+                upvote_count_anno=Count('upvote_links') 
+            ).order_by('-upvote_count_anno', '-created_at')
+        else: # Default: 'newest'
+            predictions_queryset = predictions_queryset.order_by('-created_at')
             
-            # 2. CRITICAL STEP: Get a set of prediction IDs the user has upvoted
-            upvoted_ids = set(
-                PredictionUpvote.objects
-                .filter(user=user, prediction__in=predictions)
-                .values_list('prediction_id', flat=True)
-            )
+        # 4. Tambahkan properti dinamis (Looping diperlukan untuk user-specific data)
+        user_prediction = None
+        if user.is_authenticated:
+            
+            # Mendapatkan ID prediksi yang telah di-upvote oleh user
+            # Catatan: match.predictionupvote_set adalah relasi terbalik dari Match 
+            # ke PredictionUpvote (nama default karena tidak ada related_name)
+            user_upvote_ids = PredictionUpvote.objects.filter(
+                prediction__match=match, user=user
+            ).values_list('prediction_id', flat=True)
+            
+            # Tambahkan properti 'user_has_upvoted' ke setiap objek Prediction 
+            # yang akan digunakan di partial HTML (untuk warna tombol upvote)
+            for prediction in predictions_queryset:
+                prediction.user_has_upvoted = prediction.id in user_upvote_ids
+                
+            # Cek apakah user sudah membuat prediksi (penting untuk tombol 'Add Prediction' di HTML)
+            user_prediction = predictions_queryset.filter(user=user).first()
 
-            # 3. Annotate the predictions with the upvoted status
-            for prediction in predictions:
-                # Add a new attribute that is DTL-safe
-                prediction.user_has_upvoted = prediction.id in upvoted_ids
-        else:
-            # If not authenticated, no one has upvoted
-            for prediction in predictions:
-                prediction.user_has_upvoted = False
 
-        context['predictions'] = predictions
+        # 5. Tambahkan data ke context
+        # Inilah variabel yang digunakan di match_detail.html dan prediction_list.html
+        context['predictions'] = predictions_queryset
+        context['current_sort'] = sort_by
+        context['user_prediction'] = user_prediction
+        
         return context
 
 
