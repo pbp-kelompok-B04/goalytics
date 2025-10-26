@@ -69,6 +69,8 @@ def get_all_post(request):
             "like_count": getattr(p, "like_count", 0),
             "is_liked": p.id in liked_post_ids,
             "avatar": _avatar_for_user(p.author),
+            "media_url": p.media_url or None,
+            "attachment_url": (getattr(p.attachment, "url", None) if p.attachment else None)
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -199,19 +201,29 @@ def get_my_posts(request):
 @login_required
 @require_http_methods(["POST"])
 def create_post(request):
-    payload = json.loads(request.body.decode("utf-8"))
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON format"}, status=400)
     title = payload.get("title", "").strip()
     content = payload.get("content", "").strip()
     league = (payload.get("league") or "").strip().upper()
+    media_url = (payload.get("media_url") or "").strip()
+    if not title or not content:
+        return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
     if not title or not content:
         return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
     valid_codes = {code for code, _ in LEAGUE_CHOICES}
-    kwargs = {"author": request.user, "title": title, "content": content}
-    if league:
-        if league not in valid_codes:
-            return JsonResponse({"error": "league tidak valid"}, status=400)
-        kwargs["league"] = league
-    p = Post.objects.create(**kwargs)
+    if league and league not in valid_codes:
+        return JsonResponse({"error": "league tidak valid"}, status=400)
+
+    p = Post.objects.create(
+        author=request.user,
+        title=title,
+        content=content,
+        league=league or "EPL",
+        media_url=media_url or None,
+    )
     data = {
         'id': p.id,
         'author': p.author.username,
@@ -225,6 +237,7 @@ def create_post(request):
         "like_count": 0,
         "is_liked": False,
         "avatar": _avatar_for_user(p.author),
+        'media_url': p.media_url
     }
     return JsonResponse({"data": data}, status=201)
 
@@ -438,3 +451,20 @@ def get_notifications(request):
 def mark_notifications_read(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     return JsonResponse({"message": "All notifications marked as read"})
+
+@login_required
+@require_http_methods(["POST"])
+def upload_attachment(request):
+    file = request.FILES.get("attachment")
+    if not file:
+        return JsonResponse({"error": "file tidak ditemukan"}, status=400)
+
+    post = Post.objects.create(author=request.user, title="(upload-only)", content="")
+    post.attachment = file
+    post.save()
+
+    return JsonResponse({
+        "attachment_url": post.attachment.url,
+        "post_id": post.id,
+        "url": post.attachment.url
+    }, status=201)
