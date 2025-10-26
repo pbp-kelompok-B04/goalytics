@@ -21,10 +21,12 @@
                 <td class="px-6 py-3">
                     {% if can_manage_matches %}
                     <button
+                        type="button"
                         class="editMatchBtn text-yellow-500 hover:text-yellow-600 mr-3"
                         data-ajax-url="{% url 'match_prediction:match_edit' match.id %}"
                         >Edit</button>
                     <button
+                        type="button"
                         class="deleteMatchBtn text-red-500 hover:text-red-600"
                         data-delete-url="{% url 'match_prediction:match_delete' match.id %}"
                         >Delete</button>

@@ -43,7 +43,7 @@
       {% block content %}{% endblock %}
     </div>
   </div>
-</div>
+
 
   <button id="sidebarReopen" type="button"
           class="fixed bottom-5 left-5 z-50 hidden rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-lg transition hover:border-slate-300 hover:text-slate-900">
@@ -52,6 +52,24 @@
     </svg>
     Open Menu
   </button>
+
+  <div id="ajaxModal" 
+     class="hidden fixed inset-0 z-[100] bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+    <div class="relative w-full max-w-lg bg-white rounded-xl shadow-2xl transform transition-transform duration-300">
+        
+        <button id="closeModalBtn" 
+                type="button"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 p-2 rounded-full transition-colors">
+            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+
+        <div id="ajaxModalContent" class="p-6">
+            <div class="text-center text-gray-500">Loading...</div>
+        </div>
+    </div>
+</div>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -114,5 +132,6 @@
       });
     })();
   </script>
+  <script src="{% static 'js/ajax_handlers.js' %}"></script>
 </body>
 </html>
