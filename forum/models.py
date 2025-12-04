@@ -39,7 +39,7 @@ class Comment(models.Model):
 class Notification(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_notifications")
-    verb = models.CharField(max_length=255)  # contoh: "liked your post", "commented on your comment"
+    verb = models.CharField(max_length=255)  
     target_post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
     target_comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
     is_read = models.BooleanField(default=False)
