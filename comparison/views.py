@@ -347,47 +347,124 @@ def save_comparison(request):
     """Save comparison to user's history"""
     if request.method == 'POST':
         try:
-            # 1. Baca raw data dari request.body dan parse sebagai JSON
             data = json.loads(request.body)
-            
-            # 2. Ambil ID dan notes dari data yang sudah di-parse
             player1_id = data.get('player1_id')
             player2_id = data.get('player2_id')
             notes = data.get('notes', '')
+            comparison_id = data.get('comparison_id')
             
-            # Pastikan ID ada sebelum mencari di database
-            if not player1_id or not player2_id:
-                return JsonResponse({'success': False, 'error': 'Missing player IDs.'}, status=400)
+            print(f"DEBUG: comparison_id={comparison_id}, player1={player1_id}, player2={player2_id}")
+            
+            # Mode EDIT dengan comparison_id
+            if comparison_id:
+                try:
+                    # Cari comparison lama
+                    old_comparison = SavedComparison.objects.get(
+                        id=comparison_id,
+                        user=request.user
+                    )
+                    
+                    # Jika players berubah, kita perlu buat baru dan hapus yang lama
+                    if (str(old_comparison.player1.id) != str(player1_id) or 
+                        str(old_comparison.player2.id) != str(player2_id)):
+                        
+                        print(f"DEBUG: Players changed! Deleting old and creating new...")
+                        
+                        # Hapus comparison lama
+                        old_comparison.delete()
+                        
+                        # Buat baru dengan players baru
+                        player1 = Player.objects.get(id=player1_id)
+                        player2 = Player.objects.get(id=player2_id)
+                        
+                        new_comparison = SavedComparison.objects.create(
+                            user=request.user,
+                            player1=player1,
+                            player2=player2,
+                            notes=notes
+                        )
+                        
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Comparison updated with new players!',
+                            'comparison_id': new_comparison.id,
+                            'is_new': True
+                        })
+                    
+                    # Jika players TIDAK berubah, cukup update notes
+                    else:
+                        old_comparison.notes = notes
+                        old_comparison.save()
+                        
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Comparison notes updated!',
+                            'comparison_id': old_comparison.id,
+                            'is_new': False
+                        })
+                        
+                except SavedComparison.DoesNotExist:
+                    return JsonResponse({'success': False, 'error': 'Comparison not found'}, status=404)
+            
+            # Mode CREATE baru (tanpa comparison_id)
+            else:
+                if not player1_id or not player2_id:
+                    return JsonResponse({'success': False, 'error': 'Missing player IDs.'}, status=400)
 
-            player1 = Player.objects.get(id=player1_id)
-            player2 = Player.objects.get(id=player2_id)
+                player1 = Player.objects.get(id=player1_id)
+                player2 = Player.objects.get(id=player2_id)
+                
+                # Cek apakah sudah ada comparison yang sama
+                existing = SavedComparison.objects.filter(
+                    user=request.user,
+                    player1=player1,
+                    player2=player2
+                ).first()
+                
+                if existing:
+                    existing.notes = notes
+                    existing.save()
+                    message = 'Comparison notes updated!'
+                    comparison_id = existing.id
+                    is_new = False
+                else:
+                    comparison = SavedComparison.objects.create(
+                        user=request.user,
+                        player1=player1,
+                        player2=player2,
+                        notes=notes
+                    )
+                    message = 'Comparison saved successfully!'
+                    comparison_id = comparison.id
+                    is_new = True
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': message,
+                    'comparison_id': comparison_id,
+                    'is_new': is_new
+                })
             
-            # Menggunakan update_or_create lebih efisien
-            comparison, created = SavedComparison.objects.update_or_create(
-                user=request.user,
-                player1=player1,
-                player2=player2,
-                defaults={'notes': notes}
-            )
-            
-            message = 'Comparison saved successfully!' if created else 'Comparison notes updated successfully!'
-            
-            return JsonResponse({
-                'success': True,
-                'message': message,
-                'comparison_id': comparison.id
-            })
-            
-        except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'error': 'Invalid JSON format in request.'}, status=400)
-        except Player.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Player with the provided ID was not found.'}, status=404)
         except Exception as e:
-            # Untuk debugging, bisa print errornya
-            print(traceback.format_exc()) 
-            return JsonResponse({'success': False, 'error': 'An unexpected server error occurred.'}, status=500)
+            print(f"DEBUG Error: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
-    return JsonResponse({'success': False, 'error': 'Invalid request method. Only POST is allowed.'}, status=405)
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+def comparison_view(request):
+    """Render comparison page dengan parameter awal jika ada"""
+    player1_id = request.GET.get('player1_id')
+    player2_id = request.GET.get('player2_id')
+    comparison_id = request.GET.get('comparison_id')
+    notes = request.GET.get('notes', '')
+    
+    context = {
+        'player1_id': player1_id,
+        'player2_id': player2_id,
+        'comparison_id': comparison_id,  # Kirim ke template
+        'initial_notes': notes,  # Kirim notes awal
+    }
+    return render(request, 'comparison/comparison.html', context)
 
 @login_required
 def comparison_history(request):
@@ -450,4 +527,3 @@ def get_player_by_id(request, player_id):
         return JsonResponse({'player': player_data})
     except Player.DoesNotExist:
         return JsonResponse({'error': 'Player not found'}, status=404)
-

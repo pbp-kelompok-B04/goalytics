@@ -136,10 +136,11 @@
     <!-- Save Comparison Section (muncul setelah compare sukses) -->
     <div id="save-comparison-section" class="max-w-4xl mx-auto px-6 py-8 text-center hidden">
       <div class="bg-white p-6 rounded-2xl shadow-md">
-        <h3 class="text-xl font-bold text-slate-900 mb-3">Save This Comparison</h3>
+        <h3 class="text-xl font-bold text-slate-900 mb-3" id="save-section-title">Save This Comparison</h3>
         <p class="text-slate-600 mb-4">Simpan perbandingan ini ke history untuk referensi nanti.</p>
         <button type="button" onclick="openSaveComparisonModal()"
-                class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition">
+                class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition"
+                id="open-save-modal-btn">
           💾 Save Comparison
         </button>
       </div>
@@ -217,20 +218,20 @@
 <div id="saveComparisonModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4">
   <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
     <div class="flex items-center justify-between mb-2">
-      <h3 class="text-lg font-semibold text-slate-900">Save Comparison</h3>
+      <h3 class="text-lg font-semibold text-slate-900" id="save-modal-title">Save Comparison</h3>
       <button type="button" onclick="closeSaveComparisonModal()" class="text-slate-400 hover:text-slate-700">&times;</button>
     </div>
     <form id="saveComparisonForm" class="mt-2 space-y-4">
       {% csrf_token %}
       <label class="block text-sm">
         <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes (opsional)</span>
-        <textarea name="notes" placeholder="Tambahkan catatan singkat"
+        <textarea id="notes" name="notes" placeholder="Tambahkan catatan singkat"
                   class="mt-1 w-full p-3 border rounded-xl h-28 focus:ring-2 focus:ring-slate-200 focus:outline-none"></textarea>
       </label>
       <div class="flex justify-end gap-2">
         <button type="button" onclick="closeSaveComparisonModal()"
                 class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300">Cancel</button>
-        <button type="submit"
+        <button type="submit" id="saveComparisonBtn"
                 class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
           Save Comparison
         </button>
@@ -242,7 +243,34 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let selectedPlayers = { player1: null, player2: null };
+let currentComparisonId = null;
 let playerToDelete = null;
+
+// Inisialisasi mode edit dari URL
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const notesFromURL = urlParams.get('notes');
+    const comparisonIdFromURL = urlParams.get('comparison_id');
+    
+    // Jika ada comparison_id, kita dalam mode edit
+    if (comparisonIdFromURL) {
+        currentComparisonId = comparisonIdFromURL;
+        console.log('Edit mode activated for comparison:', currentComparisonId);
+        
+        // Update UI untuk mode edit
+        const saveSectionTitle = document.getElementById('save-section-title');
+        const openSaveBtn = document.getElementById('open-save-modal-btn');
+        const saveModalTitle = document.getElementById('save-modal-title');
+        const saveComparisonBtn = document.getElementById('saveComparisonBtn');
+        
+        if (saveSectionTitle) saveSectionTitle.textContent = 'Update This Comparison';
+        if (openSaveBtn) openSaveBtn.textContent = '💾 Update Comparison';
+        if (saveModalTitle) saveModalTitle.textContent = 'Update Comparison';
+        if (saveComparisonBtn) saveComparisonBtn.textContent = 'Update Comparison';
+    }
+    
+    loadPlayersFromURL();
+});
 
 function debounce(fn, wait) {
   let timeout;
@@ -357,7 +385,16 @@ async function comparePlayers() {
     renderRadarChart();
 
     // Tampilkan blok "Save Comparison" setelah hasil muncul
-    document.getElementById('save-comparison-section')?.classList.remove('hidden');
+    const saveSection = document.getElementById('save-comparison-section');
+    if (saveSection) {
+      saveSection.classList.remove('hidden');
+      
+      // Jika mode edit, update tombol
+      if (currentComparisonId) {
+        document.getElementById('save-section-title').textContent = 'Update This Comparison';
+        document.getElementById('open-save-modal-btn').textContent = '💾 Update Comparison';
+      }
+    }
   } catch (error) {
     alert(error.message || 'Unable to compare players');
   } finally {
@@ -481,11 +518,25 @@ function closeDeletePlayerModal() {
   playerToDelete = null;
   document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'disabled');
 }
+
 function openSaveComparisonModal() {
   const m = document.getElementById('saveComparisonModal');
-  m?.classList.remove('hidden');
-  m?.classList.add('flex');
+  if (!m) return;
+  
+  // Ambil notes dari URL jika ada (untuk mode edit)
+  const urlParams = new URLSearchParams(window.location.search);
+  const notesFromURL = urlParams.get('notes');
+  
+  // Jika ada notes dari URL, isi ke textarea
+  const notesTextarea = document.getElementById('notes');
+  if (notesFromURL && notesTextarea) {
+    notesTextarea.value = decodeURIComponent(notesFromURL);
+  }
+  
+  m.classList.remove('hidden');
+  m.classList.add('flex');
 }
+
 function closeSaveComparisonModal() {
   const m = document.getElementById('saveComparisonModal');
   if (!m) return;
@@ -577,6 +628,8 @@ document.getElementById('saveComparisonForm')?.addEventListener('submit', async 
   const form = e.currentTarget;
   const notes = form.elements['notes']?.value || '';
   const csrftoken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+  
+  const isEditMode = !!currentComparisonId;
 
   try {
     const res = await fetch('/comparison/api/save-comparison/', {
@@ -589,6 +642,7 @@ document.getElementById('saveComparisonForm')?.addEventListener('submit', async 
         player1_id: selectedPlayers.player1.id,
         player2_id: selectedPlayers.player2.id,
         notes: notes,
+        comparison_id: currentComparisonId,
       }),
       credentials: 'include',
     });
@@ -599,62 +653,73 @@ document.getElementById('saveComparisonForm')?.addEventListener('submit', async 
     }
 
     closeSaveComparisonModal();
-    form.reset();
-    alert('Comparison berhasil disimpan!');
-    // Jika ingin langsung ke history:
-    // window.location.href = "{% url 'comparison_history' %}";
+    
+    // Update currentComparisonId (terutama jika dibuat baru)
+    if (data.is_new && data.comparison_id) {
+      currentComparisonId = data.comparison_id;
+    }
+    
+    // Tampilkan pesan sukses
+    alert(data.message || 'Success!');
+    
+    // Redirect ke history setelah 1.5 detik
+    setTimeout(() => {
+      window.location.href = "{% url 'comparison_history' %}";
+    }, 1500);
+    
   } catch (err) {
     alert(err.message || 'Terjadi kesalahan saat menyimpan.');
   }
 });
 
-// Function untuk auto-load players dari URL parameters
+// ===== Auto-load players dari URL =====
 async function loadPlayersFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const player1Id = urlParams.get('player1_id');
-    const player2Id = urlParams.get('player2_id');
-    
-    if (player1Id && player2Id) {
-        console.log("🔄 Auto-loading players from URL:", player1Id, player2Id);
-        
-        try {
-            // Show loading
-            const loadingEl = document.getElementById('loading');
-            if (loadingEl) loadingEl.classList.remove('hidden');
-            
-            // Load player data menggunakan endpoint get_player_by_id
-            const response1 = await fetch(`/comparison/api/players/${player1Id}/`);
-            const data1 = await response1.json();
-            
-            const response2 = await fetch(`/comparison/api/players/${player2Id}/`);
-            const data2 = await response2.json();
-            
-            if (data1.player && data2.player) {
-                // Auto-select players
-                selectPlayer(data1.player, 1);
-                selectPlayer(data2.player, 2);
-                
-                // Auto-run comparison setelah delay singkat
-                setTimeout(() => {
-                    console.log("🚀 Auto-running comparison");
-                    comparePlayers();
-                }, 1000);
-            } else {
-                console.error("❌ Players not found");
-                if (loadingEl) loadingEl.classList.add('hidden');
-                alert("One or both players not found");
-            }
-        } catch (error) {
-            console.error('Error loading players from URL:', error);
-            const loadingEl = document.getElementById('loading');
-            if (loadingEl) loadingEl.classList.add('hidden');
-            alert("Error loading players from URL");
-        }
-    }
-}
+  const urlParams = new URLSearchParams(window.location.search);
+  const player1Id = urlParams.get('player1_id');
+  const player2Id = urlParams.get('player2_id');
+  const comparisonId = urlParams.get('comparison_id');
+  const notesFromURL = urlParams.get('notes');
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadPlayersFromURL();
-});
+  // Set currentComparisonId jika ada
+  if (comparisonId) {
+    currentComparisonId = comparisonId;
+  }
+
+  // Load player1 dan player2 jika ada di URL
+  if (player1Id && player2Id) {
+    console.log("🔄 Auto-loading players from URL:", player1Id, player2Id);
+
+    try {
+      const loadingEl = document.getElementById('loading');
+      if (loadingEl) loadingEl.classList.remove('hidden');
+
+      const response1 = await fetch(`/comparison/api/players/${player1Id}/`);
+      const data1 = await response1.json();
+
+      const response2 = await fetch(`/comparison/api/players/${player2Id}/`);
+      const data2 = await response2.json();
+
+      if (data1.player && data2.player) {
+        selectPlayer(data1.player, 1);
+        selectPlayer(data2.player, 2);
+
+        // Tunggu sebentar lalu jalankan comparison
+        setTimeout(() => {
+          console.log("🚀 Auto-running comparison");
+          comparePlayers();
+        }, 800);
+      } else {
+        console.error("❌ Players not found");
+        if (loadingEl) loadingEl.classList.add('hidden');
+        alert("One or both players not found");
+      }
+    } catch (error) {
+      console.error('Error loading players from URL:', error);
+      const loadingEl = document.getElementById('loading');
+      if (loadingEl) loadingEl.classList.add('hidden');
+      alert("Error loading players from URL");
+    }
+  }
+}
 </script>
 {% endblock %}
