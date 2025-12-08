@@ -7,6 +7,13 @@ from django.template.loader import render_to_string
 from .forms import TransferRumourForm
 from .models import TransferRumour
 
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.html import strip_tags
+from django.views.decorators.http import require_GET, require_http_methods
+
+
 
 def _get_role(user):
     profile = getattr(user, "profile", None)
@@ -214,4 +221,181 @@ def rumour_delete(request, slug):
         {
             "rumour": rumour,
         },
+    )
+
+@require_GET
+def rumour_list_json(request):
+    rumours = (
+        TransferRumour.objects
+        .select_related("author", "author__profile")
+        .all()
+    )
+
+    data = []
+    for r in rumours:
+        data.append({
+            "id": r.id,
+            "title": r.title,
+            "slug": r.slug,
+            "summary": r.summary,
+            "content": r.content,
+            "source_url": r.source_url,
+            "cover_image_url": r.cover_image_url,
+            "created_at": r.created_at.isoformat(),
+            "updated_at": r.updated_at.isoformat(),
+            "author_username": r.author.username,
+        })
+
+    return JsonResponse(data, safe=False)
+
+
+@require_GET
+def rumour_detail_json(request, slug):
+    rumour = get_object_or_404(
+        TransferRumour.objects.select_related("author", "author__profile"),
+        slug=slug,
+    )
+
+    data = {
+        "id": rumour.id,
+        "title": rumour.title,
+        "slug": rumour.slug,
+        "summary": rumour.summary,
+        "content": rumour.content,
+        "source_url": rumour.source_url,
+        "cover_image_url": rumour.cover_image_url,
+        "created_at": rumour.created_at.isoformat(),
+        "updated_at": rumour.updated_at.isoformat(),
+        "author_username": rumour.author.username,
+    }
+
+    return JsonResponse(data)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_rumour_flutter(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": "error", "message": "Authentication required."},
+            status=401,
+        )
+
+    if not _can_publish(request.user):
+        return JsonResponse(
+            {"status": "error", "message": "Anda tidak memiliki izin untuk membuat rumour."},
+            status=403,
+        )
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"status": "error", "message": "Body bukan JSON yang valid."},
+            status=400,
+        )
+
+    title = strip_tags(data.get("title", "")).strip()
+    summary = strip_tags(data.get("summary", "")).strip()
+    content = strip_tags(data.get("content", "")).strip()
+    source_url = data.get("source_url", "").strip()
+    cover_image_url = data.get("cover_image_url", "").strip()
+
+    if not title or not content:
+        return JsonResponse(
+            {"status": "error", "message": "Title dan content wajib diisi."},
+            status=400,
+        )
+
+    rumour = TransferRumour.objects.create(
+        title=title,
+        summary=summary,
+        content=content,
+        source_url=source_url,
+        cover_image_url=cover_image_url,
+        author=request.user,
+    )
+
+    return JsonResponse(
+        {
+            "status": "success",
+            "id": rumour.id,
+            "slug": rumour.slug,
+            "detail_url": rumour.get_absolute_url(),
+        },
+        status=200,
+    )
+
+@csrf_exempt
+@require_http_methods(["POST", "PUT", "PATCH"])
+def update_rumour_flutter(request, slug):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": "error", "message": "Authentication required."},
+            status=401,
+        )
+
+    rumour = get_object_or_404(TransferRumour, slug=slug)
+
+    if not _can_manage_rumour(request.user, rumour):
+        return JsonResponse(
+            {"status": "error", "message": "Anda tidak memiliki izin untuk mengubah rumour ini."},
+            status=403,
+        )
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"status": "error", "message": "Body bukan JSON yang valid."},
+            status=400,
+        )
+
+    if "title" in data:
+        rumour.title = strip_tags(data["title"]).strip()
+    if "summary" in data:
+        rumour.summary = strip_tags(data["summary"]).strip()
+    if "content" in data:
+        rumour.content = strip_tags(data["content"]).strip()
+    if "source_url" in data:
+        rumour.source_url = data["source_url"].strip()
+    if "cover_image_url" in data:
+        rumour.cover_image_url = data["cover_image_url"].strip()
+
+    rumour.save()
+
+    return JsonResponse(
+        {
+            "status": "success",
+            "message": "Rumour berhasil diperbarui.",
+            "slug": rumour.slug,
+        },
+        status=200,
+    )
+@csrf_exempt
+@require_http_methods(["POST", "DELETE"])
+def delete_rumour_flutter(request, slug):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": "error", "message": "Authentication required."},
+            status=401,
+        )
+
+    rumour = get_object_or_404(TransferRumour, slug=slug)
+
+    if not _can_manage_rumour(request.user, rumour):
+        return JsonResponse(
+            {"status": "error", "message": "Anda tidak memiliki izin untuk menghapus rumour ini."},
+            status=403,
+        )
+
+    rumour_id = rumour.id
+    rumour.delete()
+
+    return JsonResponse(
+        {
+            "status": "success",
+            "message": "Rumour berhasil dihapus.",
+            "id": rumour_id,
+        },
+        status=200,
     )
