@@ -13,4 +13,5 @@ urlpatterns = [
     path('api/saved-comparisons/', views.get_saved_comparisons, name='get_saved_comparisons'),
     path('api/saved-comparisons/<int:comparison_id>/delete/', views.delete_saved_comparison, name='delete_saved_comparison'),
     path('api/players/<int:player_id>/', views.get_player_by_id, name='get_player_by_id'),
+    path('api/saved-comparisons/<int:comparison_id>/', views.get_comparison_detail),
 ]
