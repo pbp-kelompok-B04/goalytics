@@ -527,3 +527,113 @@ def get_player_by_id(request, player_id):
         return JsonResponse({'player': player_data})
     except Player.DoesNotExist:
         return JsonResponse({'error': 'Player not found'}, status=404)
+
+def compare_players_flutter(request):
+    player1_id = request.GET.get('player1_id')
+    player2_id = request.GET.get('player2_id')
+
+    try:
+        player1 = Player.objects.get(id=player1_id)
+        player2 = Player.objects.get(id=player2_id)
+    except Player.DoesNotExist:
+        return JsonResponse({'error': 'Player not found'}, status=404)
+
+    data = {
+        "player1": {
+            "id": player1.id,
+            "name": player1.name,
+            "club": player1.club.name if player1.club else "No Club",
+            "position": player1.position
+        },
+        "player2": {
+            "id": player2.id,
+            "name": player2.name,
+            "club": player2.club.name if player2.club else "No Club",
+            "position": player2.position
+        },
+        "stats1": {
+            "goals": player1.goals or 0,
+            "assists": player1.assists or 0,
+            "xg": player1.xg or 0
+        },
+        "stats2": {
+            "goals": player2.goals or 0,
+            "assists": player2.assists or 0,
+            "xg": player2.xg or 0
+        }
+    }
+
+    return JsonResponse(data)
+
+@login_required
+def save_comparison_flutter(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            player1_id = data.get('player1_id')
+            player2_id = data.get('player2_id')
+            notes = data.get('notes', '')
+
+            player1 = Player.objects.get(id=player1_id)
+            player2 = Player.objects.get(id=player2_id)
+
+            comparison, created = SavedComparison.objects.update_or_create(
+                user=request.user,
+                player1=player1,
+                player2=player2,
+                defaults={'notes': notes}
+            )
+
+            return JsonResponse({
+                'success': True,
+                'is_new': created,
+                'comparison_id': comparison.id
+            })
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+
+@login_required
+def get_saved_comparisons_flutter(request):
+    comparisons = SavedComparison.objects.filter(user=request.user)
+
+    data = []
+    for comp in comparisons:
+        data.append({
+            'id': comp.id,
+            'player1': {
+                'id': comp.player1.id,
+                'name': comp.player1.name
+            },
+            'player2': {
+                'id': comp.player2.id,
+                'name': comp.player2.name
+            },
+            'notes': comp.notes,
+            'created_at': comp.created_at.strftime('%Y-%m-%d %H:%M')
+        })
+
+    return JsonResponse({'data': data})
+
+@login_required
+def get_comparison_detail(request, comparison_id):
+    try:
+        comp = SavedComparison.objects.get(id=comparison_id, user=request.user)
+
+        data = {
+            'id': comp.id,
+            'player1_id': comp.player1.id,
+            'player2_id': comp.player2.id,
+            'notes': comp.notes,
+            'created_at': comp.created_at.strftime('%Y-%m-%d %H:%M')
+        }
+
+        return JsonResponse({'comparison': data})
+
+    except SavedComparison.DoesNotExist:
+        return JsonResponse({'error': 'Comparison not found'}, status=404)
+
+
