@@ -77,6 +77,7 @@ def rumour_detail(request, slug):
 
 
 @login_required
+@csrf_exempt
 def rumour_create(request):
     if not _can_publish(request.user):
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
