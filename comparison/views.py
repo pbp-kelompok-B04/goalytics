@@ -8,6 +8,7 @@ import json
 import traceback
 from django.utils.safestring import mark_safe
 from .models import SavedComparison
+from django.views.decorators.csrf import csrf_exempt
 
 def comparison_view(request):
     return render(request, 'comparison/comparison.html')
@@ -533,94 +534,263 @@ def compare_players_flutter(request):
     player2_id = request.GET.get('player2_id')
 
     try:
+        player1_id = request.GET.get('player1_id')
+        player2_id = request.GET.get('player2_id')
+
         player1 = Player.objects.get(id=player1_id)
         player2 = Player.objects.get(id=player2_id)
-    except Player.DoesNotExist:
-        return JsonResponse({'error': 'Player not found'}, status=404)
 
-    data = {
-        "player1": {
-            "id": player1.id,
-            "name": player1.name,
-            "club": player1.club.name if player1.club else "No Club",
-            "position": player1.position
-        },
-        "player2": {
-            "id": player2.id,
-            "name": player2.name,
-            "club": player2.club.name if player2.club else "No Club",
-            "position": player2.position
-        },
-        "stats1": {
-            "goals": player1.goals or 0,
-            "assists": player1.assists or 0,
-            "xg": player1.xg or 0
-        },
-        "stats2": {
-            "goals": player2.goals or 0,
-            "assists": player2.assists or 0,
-            "xg": player2.xg or 0
+        # Stats utama (sinkron dengan compare_players_api)
+        player1_stats = {
+            'goals': player1.goals or 0,
+            'assists': player1.assists or 0,
+            'xg': player1.xg or 0,
+            'npxg': player1.npxg or 0,
+            'xag': player1.xag or 0,
+            'Progressive_Carries': player1.Progressive_Carries or 0,
+            'Progressive_Passes': player1.Progressive_Passes or 0,
+            'Progressive_Receptions': player1.Progressive_Receptions or 0,
+            'passes_completed': player1.passes_completed or 0,
+            'passes_attempted': player1.passes_attempted or 0,
+            'pass_accuracy': player1.pass_accuracy or 0,
+            'tackles': player1.tackles or 0,
+            'tackles_won': player1.tackles_won or 0,
+            'challenges_won': player1.challenges_won or 0,
+            'challenges_attempted': player1.challenges_attempted or 0,
+            'blocks': player1.blocks or 0,
+            'clearances': player1.clearances or 0,
+            'saves': player1.saves or 0,
+            'save_percentage': player1.save_percentage or 0,
+            'clean_sheets': player1.clean_sheets or 0,
+            'clean_sheet_percentage': player1.clean_sheet_percentage or 0,
         }
-    }
 
-    return JsonResponse(data)
+        player2_stats = {
+            'goals': player2.goals or 0,
+            'assists': player2.assists or 0,
+            'xg': player2.xg or 0,
+            'npxg': player2.npxg or 0,
+            'xag': player2.xag or 0,
+            'Progressive_Carries': player2.Progressive_Carries or 0,
+            'Progressive_Passes': player2.Progressive_Passes or 0,
+            'Progressive_Receptions': player2.Progressive_Receptions or 0,
+            'passes_completed': player2.passes_completed or 0,
+            'passes_attempted': player2.passes_attempted or 0,
+            'pass_accuracy': player2.pass_accuracy or 0,
+            'tackles': player2.tackles or 0,
+            'tackles_won': player2.tackles_won or 0,
+            'challenges_won': player2.challenges_won or 0,
+            'challenges_attempted': player2.challenges_attempted or 0,
+            'blocks': player2.blocks or 0,
+            'clearances': player2.clearances or 0,
+            'saves': player2.saves or 0,
+            'save_percentage': player2.save_percentage or 0,
+            'clean_sheets': player2.clean_sheets or 0,
+            'clean_sheet_percentage': player2.clean_sheet_percentage or 0,
+        }
 
-@login_required
+        # Max values (sinkron penuh)
+        max_values = {
+            'goals': max(player1_stats['goals'], player2_stats['goals']) or 1,
+            'assists': max(player1_stats['assists'], player2_stats['assists']) or 1,
+            'xg': max(player1_stats['xg'], player2_stats['xg']) or 1,
+            'npxg': max(player1_stats['npxg'], player2_stats['npxg']) or 1,
+            'xag': max(player1_stats['xag'], player2_stats['xag']) or 1,
+            'Progressive_Carries': max(player1_stats['Progressive_Carries'], player2_stats['Progressive_Carries']) or 1,
+            'Progressive_Passes': max(player1_stats['Progressive_Passes'], player2_stats['Progressive_Passes']) or 1,
+            'Progressive_Receptions': max(player1_stats['Progressive_Receptions'], player2_stats['Progressive_Receptions']) or 1,
+            'passes_completed': max(player1_stats['passes_completed'], player2_stats['passes_completed']) or 1,
+            'passes_attempted': max(player1_stats['passes_attempted'], player2_stats['passes_attempted']) or 1,
+            'pass_accuracy': max(player1_stats['pass_accuracy'], player2_stats['pass_accuracy']) or 1,
+            'tackles': max(player1_stats['tackles'], player2_stats['tackles']) or 1,
+            'tackles_won': max(player1_stats['tackles_won'], player2_stats['tackles_won']) or 1,
+            'challenges_won': max(player1_stats['challenges_won'], player2_stats['challenges_won']) or 1,
+            'challenges_attempted': max(player1_stats['challenges_attempted'], player2_stats['challenges_attempted']) or 1,
+            'blocks': max(player1_stats['blocks'], player2_stats['blocks']) or 1,
+            'clearances': max(player1_stats['clearances'], player2_stats['clearances']) or 1,
+            'saves': max(player1_stats['saves'], player2_stats['saves']) or 1,
+            'save_percentage': max(player1_stats['save_percentage'], player2_stats['save_percentage']) or 1,
+            'clean_sheets': max(player1_stats['clean_sheets'], player2_stats['clean_sheets']) or 1,
+            'clean_sheet_percentage': max(player1_stats['clean_sheet_percentage'], player2_stats['clean_sheet_percentage']) or 1,
+        }
+
+        # Radar (sinkron penuh)
+        same_position = player1.position == player2.position
+
+        radar_labels = []
+        radar_data1 = []
+        radar_data2 = []
+        radar_max = []
+
+        if same_position:
+            if player1.position == 'FW':
+                radar_labels = ['goals', 'assists', 'xg', 'npxg', 'xag']
+                radar_data1 = [player1_stats['goals'], player1_stats['assists'], player1_stats['xg'], player1_stats['npxg'], player1_stats['xag']]
+                radar_data2 = [player2_stats['goals'], player2_stats['assists'], player2_stats['xg'], player2_stats['npxg'], player2_stats['xag']]
+                radar_max = [max_values['goals'], max_values['assists'], max_values['xg'], max_values['npxg'], max_values['xag']]
+
+            elif player1.position == 'MF':
+                radar_labels = ['goals', 'assists', 'Progressive_Passes', 'pass_accuracy', 'xag']
+                radar_data1 = [player1_stats['goals'], player1_stats['assists'], player1_stats['Progressive_Passes'], player1_stats['pass_accuracy'], player1_stats['xag']]
+                radar_data2 = [player2_stats['goals'], player2_stats['assists'], player2_stats['Progressive_Passes'], player2_stats['pass_accuracy'], player2_stats['xag']]
+                radar_max = [max_values['goals'], max_values['assists'], max_values['Progressive_Passes'], max_values['pass_accuracy'], max_values['xag']]
+
+            elif player1.position == 'DF':
+                radar_labels = ['tackles', 'tackles_won', 'blocks', 'clearances', 'challenges_won']
+                radar_data1 = [player1_stats['tackles'], player1_stats['tackles_won'], player1_stats['blocks'], player1_stats['clearances'], player1_stats['challenges_won']]
+                radar_data2 = [player2_stats['tackles'], player2_stats['tackles_won'], player2_stats['blocks'], player2_stats['clearances'], player2_stats['challenges_won']]
+                radar_max = [max_values['tackles'], max_values['tackles_won'], max_values['blocks'], max_values['clearances'], max_values['challenges_won']]
+
+            elif player1.position == 'GK':
+                radar_labels = ['saves', 'save_percentage', 'clean_sheets', 'clean_sheet_percentage']
+                radar_data1 = [player1_stats['saves'], player1_stats['save_percentage'], player1_stats['clean_sheets'], player1_stats['clean_sheet_percentage']]
+                radar_data2 = [player2_stats['saves'], player2_stats['save_percentage'], player2_stats['clean_sheets'], player2_stats['clean_sheet_percentage']]
+                radar_max = [max_values['saves'], max_values['save_percentage'], max_values['clean_sheets'], max_values['clean_sheet_percentage']]
+
+        return JsonResponse({
+            'success': True,
+            'player1': {
+                'id': player1.id,
+                'name': player1.name,
+                'club': player1.club.name if player1.club else "No Club",
+                'position': player1.position,
+            },
+            'player2': {
+                'id': player2.id,
+                'name': player2.name,
+                'club': player2.club.name if player2.club else "No Club",
+                'position': player2.position,
+            },
+            'player1_stats': player1_stats,
+            'player2_stats': player2_stats,
+            'max_values': max_values,
+            'same_position': same_position,
+            'radar_labels': radar_labels,
+            'radar_data1': radar_data1,
+            'radar_data2': radar_data2,
+            'radar_max': radar_max,
+        })
+
+    except Player.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Server error'}, status=500)
+
+# =================================================================
+# 1. SAVE / UPDATE COMPARISON
+# =================================================================
+@csrf_exempt
 def save_comparison_flutter(request):
+    # 1. Cek Login Manual
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-
             player1_id = data.get('player1_id')
             player2_id = data.get('player2_id')
-            notes = data.get('notes', '')
+            notes = str(data.get('notes', '') or '')
+            comparison_id = data.get('comparison_id')
 
             player1 = Player.objects.get(id=player1_id)
             player2 = Player.objects.get(id=player2_id)
 
-            comparison, created = SavedComparison.objects.update_or_create(
-                user=request.user,
-                player1=player1,
-                player2=player2,
-                defaults={'notes': notes}
-            )
+            # --- MODE EDIT ---
+            if comparison_id:
+                try:
+                    comparison = SavedComparison.objects.get(id=comparison_id)
+                    
+                    # Cek kepemilikan
+                    if comparison.user != request.user:
+                        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
-            return JsonResponse({
-                'success': True,
-                'is_new': created,
-                'comparison_id': comparison.id
-            })
+                    # Update data (Tidak perlu delete & create baru, cukup update fieldnya)
+                    comparison.player1 = player1
+                    comparison.player2 = player2
+                    comparison.notes = notes
+                    comparison.save()
 
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Comparison updated successfully',
+                        'comparison_id': comparison.id
+                    })
+                except SavedComparison.DoesNotExist:
+                    return JsonResponse({'success': False, 'error': 'Comparison not found'}, status=404)
+
+            # --- MODE CREATE ---
+            else:
+                # Gunakan update_or_create agar tidak duplikat
+                comparison, created = SavedComparison.objects.update_or_create(
+                    user=request.user,
+                    player1=player1,
+                    player2=player2,
+                    defaults={'notes': notes}
+                )
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Comparison saved successfully',
+                    'comparison_id': comparison.id
+                })
+
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
 
-@login_required
+
+# =================================================================
+# 2. GET LIST COMPARISONS
+# =================================================================
 def get_saved_comparisons_flutter(request):
-    comparisons = SavedComparison.objects.filter(user=request.user)
+    # Cek Login Manual
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {'success': False, 'error': 'Authentication required.'}, 
+            status=401
+        )
 
-    data = []
-    for comp in comparisons:
-        data.append({
-            'id': comp.id,
-            'player1': {
-                'id': comp.player1.id,
-                'name': comp.player1.name
-            },
-            'player2': {
-                'id': comp.player2.id,
-                'name': comp.player2.name
-            },
-            'notes': comp.notes,
-            'created_at': comp.created_at.strftime('%Y-%m-%d %H:%M')
-        })
-
-    return JsonResponse({'data': data})
-
-@login_required
-def get_comparison_detail(request, comparison_id):
     try:
+        comparisons = SavedComparison.objects.filter(user=request.user).order_by('-created_at')
+
+        data = []
+        for comp in comparisons:
+            data.append({
+                'id': comp.id,
+                'player1': {
+                    'id': comp.player1.id,
+                    'name': comp.player1.name,
+                    'club': comp.player1.club,       # Tambahan info berguna
+                    'position': comp.player1.position 
+                },
+                'player2': {
+                    'id': comp.player2.id,
+                    'name': comp.player2.name,
+                    'club': comp.player2.club,
+                    'position': comp.player2.position
+                },
+                'notes': comp.notes,
+                'created_at': comp.created_at.strftime('%Y-%m-%d %H:%M')
+            })
+
+        return JsonResponse({'data': data}, status=200)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# =================================================================
+# 3. GET DETAIL COMPARISON
+# =================================================================
+def get_comparison_detail(request, comparison_id):
+    # 1. Cek Login Manual (Gantikan @login_required)
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    try:
+        # 2. Ambil data spesifik user
         comp = SavedComparison.objects.get(id=comparison_id, user=request.user)
 
         data = {
@@ -630,10 +800,39 @@ def get_comparison_detail(request, comparison_id):
             'notes': comp.notes,
             'created_at': comp.created_at.strftime('%Y-%m-%d %H:%M')
         }
-
-        return JsonResponse({'comparison': data})
+        
+        # Kembalikan JSON dengan key 'comparison' atau langsung data
+        return JsonResponse({'comparison': data, 'success': True})
 
     except SavedComparison.DoesNotExist:
-        return JsonResponse({'error': 'Comparison not found'}, status=404)
+        return JsonResponse({'success': False, 'error': 'Comparison not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@csrf_exempt
+def delete_comparison_flutter(request, comparison_id):
+    # 1. Cek Login
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    # 2. Method POST (karena request.post dari Flutter)
+    if request.method == 'POST':
+        try:
+            comparison = SavedComparison.objects.get(id=comparison_id)
+            
+            # 3. Cek Kepemilikan
+            if comparison.user != request.user:
+                return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+            
+            # 4. Hapus
+            comparison.delete()
+            return JsonResponse({'success': True, 'message': 'Deleted successfully'})
+            
+        except SavedComparison.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Comparison not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
 
 
