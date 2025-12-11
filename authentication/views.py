@@ -7,30 +7,36 @@ from users.models import Profile
 
 @csrf_exempt
 def login(request):
-    username = request.POST['username']
-    password = request.POST['password']
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": False, "message": "Invalid method"},
+            status=405,
+        )
+
+    username = request.POST.get("username")
+    password = request.POST.get("password")
+
     user = authenticate(username=username, password=password)
+
     if user is not None:
         if user.is_active:
-            auth_login(request, user)
-            # Login status successful.
+            auth_login(request, user)   # <-- ini yang bikin session + cookie
+
             return JsonResponse({
                 "username": user.username,
                 "status": True,
-                "message": "Login successful!"
-                # Add other data if you want to send data to Flutter.
+                "message": "Login successful!",
             }, status=200)
-        else:
-            return JsonResponse({
-                "status": False,
-                "message": "Login failed, account is disabled."
-            }, status=401)
 
-    else:
         return JsonResponse({
             "status": False,
-            "message": "Login failed, please check your username or password."
-        }, status=401)
+            "message": "Account disabled.",
+        }, status=403)
+
+    return JsonResponse({
+        "status": False,
+        "message": "Invalid username or password.",
+    }, status=401)
     
 @csrf_exempt
 def register(request):
