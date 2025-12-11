@@ -6,10 +6,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import ProfileForm
 from .models import Profile
+from PlayerClub_Data.models import Club
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 def login_user(request):
     
@@ -19,7 +22,7 @@ def login_user(request):
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            login(request, user)  # Django otomatis buat session ID + cookie
+            login(request, user)  
             messages.success(request, f"Welcome back, {username}!")
             return redirect('main:dashboard')
         else:
@@ -80,7 +83,7 @@ def search_users(request):
 
     qs = qs.order_by('user__username')
 
-    paginator = Paginator(qs, 12)  # 12 cards per page
+    paginator = Paginator(qs, 12)  
     page_obj = paginator.get_page(request.GET.get('page'))
     active_filters = sum(1 for value in (q, league, position) if value)
 
@@ -138,7 +141,7 @@ def search_users_api(request):
             "website_url": p.website_url,
         })
 
-    return JsonResponse({"results": results})
+    return JsonResponse({"status": True, "results": results}, status=200)
 
 @login_required
 def view_profile(request, username):
@@ -198,3 +201,129 @@ def toggle_flag_user(request, username):
     if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=allowed_hosts):
         return redirect(next_url)
     return redirect('users:profile', username=username)
+
+def serialize_profile(profile, include_email=False):
+    user = profile.user
+    return {
+        "username": user.username,
+        "name": (user.get_full_name() or "").strip(),
+        "email": user.email if include_email else "",
+        "favorite_team": profile.favorite_team.name if profile.favorite_team else None,
+        "favorite_team_id": profile.favorite_team.id if profile.favorite_team else None,
+        "favorite_league": profile.get_favorite_league_display() if profile.favorite_league else None,
+        "preferred_position": profile.get_preferred_position_display() if profile.preferred_position else None,
+        "avatar": profile.profile_picture,
+        "role": profile.role or "",
+        "bio": (profile.bio or "").strip(),
+        "member_since": user.date_joined.isoformat() if user.date_joined else "",
+        "instagram_url": profile.instagram_url,
+        "x_url": profile.x_url,
+        "website_url": profile.website_url,
+        "is_blocked": profile.is_blocked,
+        "is_flagged": profile.is_flagged,
+    }
+
+@csrf_exempt
+def profile_me_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": False, "message": "Authentication required."},
+            status=401,
+        )
+
+    profile, _ = Profile.objects.select_related('user', 'favorite_team').get_or_create(
+        user=request.user
+    )
+
+    if request.method == "GET":
+        data = serialize_profile(profile, include_email=True)
+        return JsonResponse({"status": True, "data": data}, status=200)
+
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"status": False, "message": "Invalid JSON payload."},
+                status=400,
+            )
+
+        team_id = payload.get("favorite_team_id", None)
+        team_name = payload.get("favorite_team", None)
+
+        if team_id is not None:
+            try:
+                profile.favorite_team = Club.objects.get(pk=team_id)
+            except Club.DoesNotExist:
+                profile.favorite_team = None
+
+        elif team_name is not None:
+            team_name_str = (team_name or "").strip()
+            if team_name_str == "":
+                profile.favorite_team = None
+            else:
+                club_obj = Club.objects.filter(name__iexact=team_name_str).first()
+                profile.favorite_team = club_obj  
+
+        editable_fields = [
+            "bio",
+            "profile_picture",
+            "favorite_league",
+            "preferred_position",
+            "instagram_url",
+            "x_url",
+            "website_url",
+        ]
+
+        for field in editable_fields:
+            if field in payload:
+                value = payload.get(field)
+                setattr(profile, field, value if value != "" else None)
+
+        profile.save()
+
+        return JsonResponse(
+            {"status": True, "message": "Profile updated successfully."},
+            status=200,
+        )
+
+    return JsonResponse(
+        {"status": False, "message": "Method not allowed."},
+        status=405,
+    )
+
+
+
+@login_required
+def list_users_api(request):
+    try:
+        limit = int(request.GET.get("limit", 50))
+    except ValueError:
+        limit = 50
+
+    limit = max(1, min(limit, 200))  
+
+    qs = Profile.objects.select_related('user', 'favorite_team') \
+                        .order_by('user__username')[:limit]
+
+    results = [serialize_profile(p) for p in qs]
+
+    return JsonResponse(
+        {"status": True, "count": len(results), "results": results},
+        status=200,
+    )
+
+def profile_detail_api(request, username):
+    profile = get_object_or_404(
+        Profile.objects.select_related('user', 'favorite_team'),
+        user__username__iexact=username,
+    )
+
+    include_email = (request.user == profile.user) 
+    data = serialize_profile(profile, include_email=include_email)
+
+    return JsonResponse(
+        {"status": True, "data": data},
+        status=200,
+    )
+
