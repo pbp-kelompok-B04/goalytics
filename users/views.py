@@ -22,7 +22,7 @@ def login_user(request):
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            login(request, user)  # Django otomatis buat session ID + cookie
+            login(request, user)  
             messages.success(request, f"Welcome back, {username}!")
             return redirect('main:dashboard')
         else:
@@ -83,7 +83,7 @@ def search_users(request):
 
     qs = qs.order_by('user__username')
 
-    paginator = Paginator(qs, 12)  # 12 cards per page
+    paginator = Paginator(qs, 12)  
     page_obj = paginator.get_page(request.GET.get('page'))
     active_filters = sum(1 for value in (q, league, position) if value)
 
@@ -240,7 +240,6 @@ def profile_me_api(request):
         return JsonResponse({"status": True, "data": data}, status=200)
 
     if request.method == "POST":
-        # Ambil JSON dari body
         try:
             payload = json.loads(request.body.decode("utf-8"))
         except json.JSONDecodeError:
@@ -249,7 +248,6 @@ def profile_me_api(request):
                 status=400,
             )
 
-        # --------- Favorite Team (boleh pakai ID atau nama) ---------
         team_id = payload.get("favorite_team_id", None)
         team_name = payload.get("favorite_team", None)
 
@@ -265,7 +263,7 @@ def profile_me_api(request):
                 profile.favorite_team = None
             else:
                 club_obj = Club.objects.filter(name__iexact=team_name_str).first()
-                profile.favorite_team = club_obj  # bisa None kalau tidak ketemu
+                profile.favorite_team = club_obj  
 
         editable_fields = [
             "bio",
