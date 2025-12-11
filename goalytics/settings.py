@@ -37,11 +37,14 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'
 
+
+
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jefferson-tirza-goalytics.pbp.cs.ui.ac.id", "10.0.2.2"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://jefferson-tirza-goalytics.pbp.cs.ui.ac.id",
-    "http://localhost:49270"
+    "http://localhost:49270",
+    "http://localhost:3000"
 ]
 
 # Application definition
@@ -71,6 +74,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',           
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -103,7 +107,6 @@ WSGI_APPLICATION = 'goalytics.wsgi.application'
 
 # Database configuration
 if PRODUCTION:
-    # Production: gunakan PostgreSQL dengan kredensial dari environment variables
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -118,7 +121,6 @@ if PRODUCTION:
         }
     }
 else:
-    # Development: gunakan SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
