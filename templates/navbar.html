@@ -95,24 +95,24 @@
           </a>
         {% endif %}
 
-        <!-- Favorite Players -->
-        <a href="{% url 'favorite_player:favorite_list' %}"
+        <!-- Dream Squad -->
+        <a href="{% url 'dream_squad:dream_squad' %}"
            class="group flex items-center gap-3 rounded-2xl px-4 py-3 transition
-                  {% if namespace == 'favorite_player' %}
+                  {% if namespace == 'dream_squad' %}
                     bg-slate-900 text-white shadow-lg
                   {% else %}
                     text-slate-600 hover:bg-slate-100 hover:text-slate-900
                   {% endif %}">
           <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition
-                {% if namespace == 'favorite_player' %}bg-slate-800 text-white{% endif %}">
+                {% if namespace == 'dream_squad' %}bg-slate-800 text-white{% endif %}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M12 21c-4.97-4.363-8-7.27-8-10.5C4 7.015 6.686 4.5 10 4.5c1.5 0 2.904.705 4 1.832C15.096 5.205 16.5 4.5 18 4.5c3.314 0 6 2.515 6 6 0 3.23-3.03 6.138-8 10.5l-2-1.75" />
             </svg>
           </span>
           <div>
-            <p class="text-sm font-semibold">Favorite Players</p>
-            <p class="text-xs text-slate-500 {% if namespace == 'favorite_player' %}text-slate-200{% endif %}">
+            <p class="text-sm font-semibold">Dream Squad</p>
+            <p class="text-xs text-slate-500 {% if namespace == 'dream_squad' %}text-slate-200{% endif %}">
               Track your curated player list
             </p>
           </div>

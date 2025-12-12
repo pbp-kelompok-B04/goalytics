@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class FavoritePlayerConfig(AppConfig):
+class DreamSquadConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'favorite_player'
+    name = 'dream_squad'

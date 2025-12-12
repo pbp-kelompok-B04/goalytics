@@ -1,0 +1,30 @@
+{# partials/squad_select_option.html #}
+
+<label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer 
+    {% if is_full %}
+        bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed
+    {% else %}
+        hover:bg-slate-50
+    {% endif %}">
+    
+    {# Info Nama Squad dan Jumlah Pemain #}
+    <div class="font-semibold">
+        {{ squad.name }}
+        <span class="text-sm font-normal ml-2">({{ squad.player_count|default:0 }} / {{ MAX_PLAYERS }})</span>
+    </div>
+    
+    {# Radio Button #}
+    <input 
+        type="radio" 
+        name="squad_id" 
+        value="{{ squad.id }}"
+        {% if is_full %}disabled{% endif %}
+        required 
+        class="{% if is_full %}opacity-50 cursor-not-allowed{% endif %}"
+    >
+</label>
+
+{# Tambahkan pesan peringatan jika penuh (opsional, tergantung pada desain Anda) #}
+{% if is_full %}
+    <p class="text-xs text-red-500 mt-[-5px] ml-3">Squad is full (Max {{ MAX_PLAYERS }} players). You cannot select this squad.</p>
+{% endif %}

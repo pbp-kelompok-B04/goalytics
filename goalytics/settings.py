@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'comparison',
     'users.apps.UsersConfig',
-    'favorite_player.apps.FavoritePlayerConfig',
+    'dream_squad.apps.DreamSquadConfig',
     'forum',
     'transfer_rumour',
     'authentication',

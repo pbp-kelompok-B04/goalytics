@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ player.name }} — Player Detail{% endblock %}
+
+{% block content %}
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+    <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-12">
+
+        <header class="flex flex-col gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
+            
+            <div class="flex items-center gap-5">
+                <div class="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-slate-100 bg-slate-100 shadow-lg">
+                    {% if player.image_url %}
+                        <img src="{{ player.image_url }}" alt="{{ player.name }}" class="h-full w-full object-cover" />
+                    {% else %}
+                        <div class="flex h-full w-full items-center justify-center text-3xl font-bold text-slate-500">
+                            {{ player.name|slice:':2'|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <h1 class="text-3xl font-extrabold text-slate-900 md:text-4xl">{{ player.name }}</h1>
+                    <p class="text-lg font-medium text-slate-600">{{ player.get_position_display|default:player.position }}</p>
+                    
+                    <p class="text-sm text-slate-500">
+                        {# BARIS PERBAIKAN: Mengganti player.team dengan "Free Agent" #}
+                        {{ player.club.name|default:"Free Agent" }} | {{ player.nation }} 
+                    </p>
+                </div>
+            </div>
+
+            <div class="ml-auto space-y-2 text-right">
+                <p class="text-sm font-medium text-slate-700">League: <span class="font-semibold text-slate-900">{{ player.league|default:"N/A" }}</span></p>
+                <p class="text-sm font-medium text-slate-700">Season: <span class="font-semibold text-slate-900">{{ player.season|default:"N/A" }}</span></p>
+                <p class="text-sm font-medium text-slate-700">Age: <span class="font-semibold text-slate-900">{{ player.age|default:"N/A" }} (Born {{ player.born|default:"-" }})</span></p>
+            </div>
+        </header>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-5 text-xl font-semibold text-slate-900 border-b pb-2">🎯 Attacking Output</h2>
+            <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                
+                {% include 'partials/stat_card.html' with title="Goals" value=player.goals|default:"0" icon="⚽" color="rose" %}
+                {% include 'partials/stat_card.html' with title="Assists" value=player.assists|default:"0" icon="👟" color="sky" %}
+                {% include 'partials/stat_card.html' with title="xG (Expected Goals)" value=player.xg|default:"0.0" unit=" xG" icon="🥅" color="orange" %}
+                {% include 'partials/stat_card.html' with title="xAG (Expected Assisted Goals)" value=player.xag|default:"0.0" unit=" xAG" icon="📐" color="green" %}
+
+            </div>
+        </section>
+        
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-5 text-xl font-semibold text-slate-900 border-b pb-2">🔄 Passing & Progression</h2>
+            <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+
+                {% include 'partials/stat_card.html' with title="Pass Accuracy" value=player.pass_accuracy|default:"0.0" unit="%" icon="✅" color="teal" %}
+                {% include 'partials/stat_card.html' with title="Passes Completed" value=player.passes_completed|default:"0" icon="🤝" color="indigo" %}
+                {% include 'partials/stat_card.html' with title="Passes Attempted" value=player.passes_attempted|default:"0" icon="📤" color="indigo" %}
+                {% include 'partials/stat_card.html' with title="Prog. Carries (PrgC)" value=player.prgc|default:"0" icon="🏃" color="purple" %}
+                {% include 'partials/stat_card.html' with title="Prog. Passes (PrgP)" value=player.prgp|default:"0" icon="🚀" color="purple" %}
+                {% include 'partials/stat_card.html' with title="Prog. Rushes (PrgR)" value=player.prgr|default:"0" icon="⚡" color="purple" %}
+
+            </div>
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-5 text-xl font-semibold text-slate-900 border-b pb-2">🛡️ Defensive Actions</h2>
+            <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+
+                {% include 'partials/stat_card.html' with title="Tackles" value=player.tackles|default:"0" icon="🛑" color="blue" %}
+                {% include 'partials/stat_card.html' with title="Tackles Won" value=player.tackles_won|default:"0" icon="✔️" color="blue" %}
+                {% include 'partials/stat_card.html' with title="Challenges Won" value=player.challenges_won|default:"0" icon="⚔️" color="cyan" %}
+                {% include 'partials/stat_card.html' with title="Challenges Attempted" value=player.challenges_attempted|default:"0" icon="💪" color="cyan" %}
+                {% include 'partials/stat_card.html' with title="Blocks" value=player.blocks|default:"0" icon="🧱" color="gray" %}
+                {% include 'partials/stat_card.html' with title="Clearances" value=player.clearances|default:"0" icon="🧹" color="gray" %}
+
+            </div>
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-5 text-xl font-semibold text-slate-900 border-b pb-2">📊 Advanced Metrics</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                {% include 'partials/stat_card.html' with title="NPxG (Non-Penalty xG)" value=player.npxg|default:"0.0" unit=" NPxG" icon="📈" color="red" %}
+            </div>
+        </section>
+
+        <footer class="text-center text-sm text-slate-500">
+            <a href="{% url 'dream_squad:dream_squad' %}" class="font-medium text-slate-700 hover:text-slate-900">← Back to Squads</a>
+        </footer>
+    </div>
+</section>
+{% endblock %}

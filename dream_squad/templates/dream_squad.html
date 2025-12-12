@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dream Squads{% endblock %}
+
+{% block content %}
+<section class="w-full px-4 py-6 sm:px-8 lg:px-12">
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-12" data-base-url="{% url 'dream_squad:dream_squad' %}">
+    <header class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div>
+        <h1 class="text-3xl font-semibold text-slate-900 md:text-4xl">Dream Squads</h1>
+        <p class="text-slate-500">Manage your dream squads. Create, edit players, and delete squads.</p>
+      </div>
+
+      <div class="flex items-center gap-3 md:pt-2">
+        {% if squads %}
+          <label for="select-active-squad" class="sr-only">Select active squad</label>
+          <select id="select-active-squad" class="rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-600">
+            {% for s in squads %}
+              <option value="{{ s.id }}">{{ s.name }} ({{ s.player_count }})</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+
+        <a href="{% url 'dream_squad:create_squad' %}" class="rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800">
+          Create Squad
+        </a>
+      </div>
+    </header>
+
+    <section class="grid gap-4 sm:grid-cols-3">
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 0 1 6.364 0L12 7.636l1.318-1.318a4.5 4.5 0 1 1 6.364 6.364L12 21.682l-7.682-8.682a4.5 4.5 0 0 1 0-6.364z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Total Squads</p>
+                <p class="text-2xl font-semibold text-slate-900">{{ squad_stats.count }}</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-3m0 0h-5m5 0l-1.5-1.5M4 17h5M4 7h5M12 21.5a9.5 9.5 0 100-19 9.5 9.5 0 000 19z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Total Players</p>
+                <p class="text-2xl font-semibold text-slate-900">{{ squad_stats.player_count_total }}</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Avg Global Age</p>
+                <p class="text-2xl font-semibold text-slate-900">{{ squad_stats.avg_age }}</p>
+              </div>
+            </div>
+          </article>
+    </section>
+
+    <!-- Saved Squads -->
+    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <header class="mb-6 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Saved Squads</h2>
+          <p class="text-sm text-slate-500">Your previously created dream squads.</p>
+        </div>
+      </header>
+
+      {% if squads %}
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% for squad in squads %}
+            <article class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-50/70 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-xl">
+              <div class="flex gap-4 items-center justify-between">
+                <div class="min-w-0">
+                  <h3 class="truncate text-lg font-semibold text-slate-900">{{ squad.name }}</h3>
+                  <p class="truncate text-sm text-slate-500">{{ squad.player_count }} players</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <a href="{% url 'dream_squad:squad_detail' squad.id %}" class="rounded-full bg-slate-900 px-3 py-2 text-xs text-white">Open</a>
+                  <a href="{% url 'dream_squad:edit_squad' squad.id %}" class="rounded-full border px-3 py-2 text-xs text-slate-700">Edit</a>
+                  <form method="post" action="{% url 'dream_squad:delete_squad' squad.id %}" class="inline-block">
+                    {% csrf_token %}
+                    <button type="submit" class="rounded-full bg-rose-500 px-3 py-2 text-xs text-white">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-slate-500" data-empty-state>
+          You haven't created any dream squads yet. Create one to start adding players.
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Discover / Search players -->
+    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <header class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Discover Players</h2>
+          <p class="text-sm text-slate-500">Search and add new players to your squads (max 22 players per squad — must include GK, DF, MF, FW).</p>
+        </div>
+      </header>
+
+      <div id="player-results" data-player-results data-active-squad-id="">
+        {% comment %} include partial same as before; pass favorite_ids default to empty list if not provided {% endcomment %}
+        {% include 'partials/player_results.html' with players=players favorite_ids=favorite_ids limited=players_limited %}
+      </div>
+    </section>
+  </div>
+</section>
+
+<script>
+(function () {
+  const container = document.querySelector('[data-base-url]');
+  const baseUrl = container?.getAttribute('data-base-url') || '/dream_squad/';
+  const searchForm = document.querySelector('[data-player-search-form]');
+  const searchInput = searchForm?.querySelector('[data-player-search-input]');
+  const resultsContainer = document.querySelector('[data-player-results]');
+  const squadSelect = document.querySelector('#select-active-squad');
+  let searchDebounce;
+  let activeController;
+
+  function getCSRFToken() {
+    const name = 'csrftoken=';
+    return document.cookie
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith(name))
+      ?.slice(name.length) || '';
+  }
+
+  function getActiveSquadId() {
+    // 1) If on squad detail page, server can set data-active-squad-id on container (not in this template)
+    const pageActive = document.querySelector('[data-active-squad-id]');
+    if (pageActive) return pageActive.getAttribute('data-active-squad-id');
+    // 2) else use select dropdown
+    if (squadSelect && squadSelect.value) return squadSelect.value;
+    return null;
+  }
+
+  // Attach handlers to Add forms (handles both old data-favorite-form and our target)
+  function attachAddHandlers(root = document) {
+    // old: forms were marked data-favorite-form
+    const favForms = root.querySelectorAll('[data-favorite-form]');
+    favForms.forEach((form) => {
+      if (form.dataset.boundFav === 'true') return;
+      form.dataset.boundFav = 'true';
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const playerId = form.querySelector('[data-player-id]')?.getAttribute('data-player-id');
+        const squadId = getActiveSquadId();
+        if (!squadId) {
+          alert('Please create/select a squad first.');
+          return;
+        }
+        const csrf = getCSRFToken();
+        const postUrl = `${baseUrl}add/${squadId}/${playerId}/`;
+        const button = form.querySelector('button[type="submit"]');
+        const origTxt = button?.textContent || 'Adding...';
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Adding...';
+        }
+        try {
+          const resp = await fetch(postUrl, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrf,
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          });
+          if (!resp.ok) {
+            const data = await resp.json().catch(()=>({}));
+            throw new Error(data.error || 'Failed to add player to squad.');
+          }
+          if (button) button.textContent = 'Added';
+          setTimeout(()=> window.location.reload(), 350);
+        } catch (err) {
+          console.error(err);
+          alert(err.message || 'Failed to add player to squad.');
+          if (button) {
+            button.disabled = false;
+            button.textContent = origTxt;
+          }
+        }
+      });
+    });
+
+    // new: forms marked data-add-player-form (if you changed partials)
+    const addForms = root.querySelectorAll('[data-add-player-form]');
+    addForms.forEach((form) => {
+      if (form.dataset.boundAdd === 'true') return;
+      form.dataset.boundAdd = 'true';
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const playerId = form.querySelector('[data-player-id]')?.getAttribute('data-player-id');
+        const squadId = getActiveSquadId();
+        if (!squadId) {
+          alert('Please create/select a squad first.');
+          return;
+        }
+        const csrf = getCSRFToken();
+        const postUrl = `${baseUrl}add/${squadId}/${playerId}/`;
+        const button = form.querySelector('button[type="submit"]');
+        const origTxt = button?.textContent || 'Adding...';
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Adding...';
+        }
+        try {
+          const resp = await fetch(postUrl, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrf,
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          });
+          if (!resp.ok) {
+            const data = await resp.json().catch(()=>({}));
+            throw new Error(data.error || 'Failed to add player to squad.');
+          }
+          if (button) button.textContent = 'Added';
+          setTimeout(()=> window.location.reload(), 350);
+        } catch (err) {
+          console.error(err);
+          alert(err.message || 'Failed to add player to squad.');
+          if (button) {
+            button.disabled = false;
+            button.textContent = origTxt;
+          }
+        }
+      });
+    });
+  }
+
+  async function performSearch(query) {
+    if (!searchForm || !resultsContainer) return;
+    if (activeController) activeController.abort();
+    activeController = new AbortController();
+
+    const url = new URL(searchForm.getAttribute('action') || window.location.href, window.location.origin);
+    if (query) url.searchParams.set('q', query);
+    else url.searchParams.delete('q');
+
+    resultsContainer.setAttribute('aria-busy', 'true');
+    resultsContainer.classList.add('opacity-60');
+
+    try {
+      const response = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: activeController.signal,
+      });
+      if (!response.ok) throw new Error('Search request failed');
+      const data = await response.json();
+      resultsContainer.innerHTML = data.html;
+      // re-attach handlers to newly injected partial
+      attachAddHandlers(resultsContainer);
+    } catch (error) {
+      if (error.name !== 'AbortError') console.error(error);
+    } finally {
+      resultsContainer.removeAttribute('aria-busy');
+      resultsContainer.classList.remove('opacity-60');
+    }
+  }
+
+  // initial attachment
+  attachAddHandlers(document);
+
+  if (searchInput && searchForm && resultsContainer) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => performSearch(query), 300);
+    });
+
+    searchForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const query = searchInput.value.trim();
+      performSearch(query);
+    });
+  }
+})();
+</script>
+{% endblock %}
