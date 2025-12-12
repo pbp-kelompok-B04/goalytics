@@ -2,15 +2,22 @@
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {% for player in players %}
       <article class="flex h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50/70 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-xl">
+        
+        <!-- Player Info -->
         <div class="space-y-3">
           <div class="flex items-start gap-3">
+
+            <a href="{% url 'dream_squad:player_detail' player.id %}" class="space-y-3 block">
+            <!-- Image -->
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-slate-500 shadow-inner">
               {% if player.image_url %}
-                <img src="{{ player.image_url }}" alt="{{ player.name }}" class="h-12 w-12 rounded-2xl object-cover" />
+                <img src="{{ player.image_url }}" class="h-12 w-12 rounded-2xl object-cover" />
               {% else %}
                 {{ player.name|slice:':2'|upper }}
               {% endif %}
             </div>
+
+            <!-- Name & Info -->
             <div class="min-w-0">
               <h3 class="truncate text-base font-semibold text-slate-900">{{ player.name }}</h3>
               <p class="truncate text-sm text-slate-500">{{ player.club.name|default:"Free Agent" }}</p>
@@ -19,44 +26,46 @@
               </p>
             </div>
           </div>
+
+          <!-- Stats -->
           <div class="flex items-center gap-3 text-xs text-slate-500">
             <span class="inline-flex items-center gap-1">
-              <svg class="h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6l-2 2m8 4h-3m8-6-4-4-4 4" />
               </svg>
               Goals {{ player.goals|default:"0" }}
             </span>
             <span class="inline-flex items-center gap-1">
-              <svg class="h-4 w-4 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <svg class="h-4 w-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 12l5 5L20 7" />
               </svg>
               Assists {{ player.assists|default:"0" }}
             </span>
           </div>
         </div>
-        <form method="post"
-              action="{% url 'favorite_player:add_favorite' player.id %}"
-              data-favorite-form
-              class="mt-4">
-          {% csrf_token %}
-          <button type="submit"
-                  class="w-full rounded-2xl px-4 py-2 text-sm font-semibold transition
-                         {% if player.id in favorite_ids %}
-                           cursor-not-allowed bg-emerald-500 text-white opacity-80
-                         {% else %}
-                           bg-slate-900 text-white hover:bg-slate-800
-                         {% endif %}"
-                  {% if player.id in favorite_ids %}disabled{% endif %}
-                  data-player-id="{{ player.id }}">
-            {% if player.id in favorite_ids %}Added{% else %}Add to Favorites{% endif %}
+        </a>
+
+        <!-- Add / Added Button -->
+        {% if player.id in favorite_ids %}
+          <button
+            type="button"
+            class="w-full rounded-2xl px-4 py-2 text-sm font-semibold transition cursor-not-allowed bg-emerald-500 text-white opacity-80"
+            disabled
+          >
+            Added
           </button>
-        </form>
+        {% else %}
+          <a href="{% url 'dream_squad:select_squad_for_player' player.id %}"
+            class="mt-4 block w-full rounded-2xl px-4 py-2 text-sm font-semibold transition bg-slate-900 text-white hover:bg-slate-800 text-center">
+            Add to Squad
+          </a>
+        {% endif %}
+
+
       </article>
     {% endfor %}
   </div>
-  {% if limited %}
-    <p class="mt-4 text-center text-xs text-slate-400">Showing first 50 matches. Refine your search to see more.</p>
-  {% endif %}
+
 {% else %}
   <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-slate-500">
     No players found for your search.

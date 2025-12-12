@@ -1,0 +1,20 @@
+{% comment %} 
+    Menerima: title, value, icon, color (e.g., 'rose', 'sky'), unit (optional) 
+{% endcomment %}
+{% load static %}
+
+{% with color_bg=color|add:"-50" color_text=color|add:"-500" %}
+<article class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div class="flex items-center gap-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-{{ color_bg }} text-{{ color_text }} text-xl">
+            {{ icon }}
+        </div>
+        <div>
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-400">{{ title }}</p>
+            <p class="text-xl font-semibold text-slate-900">
+                {{ value }}{{ unit|default:"" }}
+            </p>
+        </div>
+    </div>
+</article>
+{% endwith %}
