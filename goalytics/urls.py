@@ -25,7 +25,7 @@ urlpatterns = [
     path('adminpanel/', include('adminpanel.urls')),
     path('comparison/', include('comparison.urls')),
     path('data/', include('PlayerClub_Data.urls')),
-    path('favorite/', include('favorite_player.urls')), 
+    path('dream-squad/', include('dream_squad.urls')), 
     path('forum/', include('forum.urls')),
     path('transfer-rumours/', include('transfer_rumour.urls')),
     path('auth/', include('authentication.urls')),

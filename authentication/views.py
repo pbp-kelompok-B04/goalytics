@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.contrib.auth.decorators import login_required
 from users.models import Profile 
 
 @csrf_exempt
@@ -63,3 +64,12 @@ def register(request):
         }, status=200)
 
     return JsonResponse({"status": False, "message": "Invalid request method."}, status=400)
+
+@login_required
+def get_user_info(request):
+    user = request.user  # user yang sedang login (via session)
+    
+    return JsonResponse({
+        "status": True,
+        "username": user.username,
+    }, status=200)

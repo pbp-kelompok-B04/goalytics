@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .models import Player, Club
-from favorite_player.models import FavoritePlayer 
 from .forms import PlayerForm, ClubForm
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Count
+from django.apps import apps
+
 
 def is_admin(user):
     return hasattr(user, 'profile') and user.profile.role == 'admin'
@@ -110,11 +111,23 @@ def club_delete(request, pk):
 def get_all_player(request):
     players = Player.objects.select_related("club").all()
 
-    # Ambil semua player_id favorit user saat ini
-    favorite_ids = set(
-        FavoritePlayer.objects.filter(user=request.user)
-        .values_list("player_id", flat=True)
-    )
+    # Ambil model secara dinamis untuk menghindari circular import saat startup
+    # Jika model FavoritePlayer sudah dihapus/pindah, sesuaikan nama model yang benar di bawah.
+    try:
+        FavoritePlayer = apps.get_model('favorite_player', 'FavoritePlayer')
+    except LookupError:
+        # Jika model FavoritePlayer tidak ada (karena sudah diganti), fallback ke DreamSquadPlayer
+        # dan tetapkan favorite_ids kosong (atau ambil logic lain jika kamu punya DreamSquadAPI)
+        FavoritePlayer = None
+
+    if FavoritePlayer:
+        favorite_ids = set(
+            FavoritePlayer.objects.filter(user=request.user)
+            .values_list("player_id", flat=True)
+        )
+    else:
+        # jika model tidak ditemukan, jangan crash — anggap tidak ada favorit
+        favorite_ids = set()
 
     data = []
     for p in players:
@@ -131,9 +144,9 @@ def get_all_player(request):
             "xg": p.xg,
             "npxg": p.npxg,
             "xag": p.xag,
-            "progressive_carries": p.Progressive_Carries,
-            "progressive_passes": p.Progressive_Passes,
-            "progressive_receptions": p.Progressive_Receptions,
+            "progressive_carries": getattr(p, "Progressive_Carries", 0),
+            "progressive_passes": getattr(p, "Progressive_Passes", 0),
+            "progressive_receptions": getattr(p, "Progressive_Receptions", 0),
             "passes_completed": p.passes_completed,
             "passes_attempted": p.passes_attempted,
             "pass_accuracy": p.pass_accuracy,
@@ -147,12 +160,12 @@ def get_all_player(request):
             "save_percentage": p.save_percentage,
             "clean_sheets": p.clean_sheets,
             "clean_sheet_percentage": p.clean_sheet_percentage,
-            # ✅ Tandai apakah player ini sudah jadi favorit
             "is_favorite": p.id in favorite_ids,
         }
         data.append(item)
 
     return JsonResponse({"data": data})
+
 
 
 

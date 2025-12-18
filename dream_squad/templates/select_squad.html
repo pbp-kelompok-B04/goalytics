@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10 p-6 bg-white shadow rounded-2xl">
+    <h1 class="text-xl font-bold mb-4">
+        Add {{ player.name }} to a Squad
+    </h1>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="space-y-3">
+            {% if squads %}
+                {% for squad in squads %}
+                    
+                    {# Tentukan kondisi penuh secara langsung di sini #}
+                    {% if squad.player_count|default:0 >= MAX_PLAYERS %}
+                        {% include 'partials/squad_select_option.html' with squad=squad is_full=True %}
+                    {% else %}
+                        {% include 'partials/squad_select_option.html' with squad=squad is_full=False %}
+                    {% endif %}
+
+                    
+                {% endfor %}
+            {% else %}
+                <p class="text-slate-500 mb-4">You don't have any squads yet.</p>
+                <a href="{% url 'dream_squad:create_squad' %}"
+                   class="block w-full text-center py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800">
+                    Create a New Squad
+                </a>
+            {% endif %}
+        </div>
+
+        {% if error %}
+        <p class="mt-3 text-sm text-red-500">{{ error }}</p>
+        {% endif %}
+
+        {% if squads %}
+        <button
+            type="submit"
+            class="mt-6 w-full py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800">
+            Add to Selected Squad
+        </button>
+        {% endif %}
+    </form>
+
+    <a href="{% url 'dream_squad:dream_squad' %}"
+       class="mt-4 block text-center text-sm text-slate-600 hover:underline">
+        Cancel
+    </a>
+</div>
+{% endblock %}
