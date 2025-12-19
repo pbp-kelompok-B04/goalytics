@@ -43,7 +43,9 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jefferson-tirza-goalytics.pbp.cs.ui.
 
 CSRF_TRUSTED_ORIGINS = [
     "https://jefferson-tirza-goalytics.pbp.cs.ui.ac.id",
-    "http://localhost:3000"
+    "http://localhost:49270",
+    "http://localhost:3000",
+    "http://localhost:59316"
 ]
 
 # Application definition
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',           
@@ -80,7 +83,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 ROOT_URLCONF = 'goalytics.urls'
 
 TEMPLATES = [
