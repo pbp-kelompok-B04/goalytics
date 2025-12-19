@@ -44,7 +44,8 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jefferson-tirza-goalytics.pbp.cs.ui.
 CSRF_TRUSTED_ORIGINS = [
     "https://jefferson-tirza-goalytics.pbp.cs.ui.ac.id",
     "http://localhost:49270",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "http://localhost:59316"
 ]
 
 # Application definition
