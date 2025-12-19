@@ -60,29 +60,24 @@ class MatchDetailView(DetailView):
         match = self.get_object()
         user = self.request.user
 
-        # 1. Ambil parameter sorting dari URL (default ke 'newest')
+
         sort_by = self.request.GET.get('sort_by', 'newest')
         
-        # 2. Definisikan queryset awal (Menggunakan related_name='predictions')
-        # Filter is_deleted=False secara default
         predictions_queryset = match.predictions.filter(is_deleted=False)
         
-        # 3. Terapkan logic sorting
         if sort_by == 'upvotes':
-            # Menggunakan related_name yang benar ('upvote_links') dari PredictionUpvote
             predictions_queryset = predictions_queryset.annotate(
                 upvote_count_anno=Count('upvote_links') 
             ).order_by('-upvote_count_anno', '-created_at')
-        else: # Default: 'newest'
+        else: 
             predictions_queryset = predictions_queryset.order_by('-created_at')
             
         # 4. Tambahkan properti dinamis (Looping diperlukan untuk user-specific data)
         user_prediction = None
+        is_manager = False
+
         if user.is_authenticated:
-            
-            # Mendapatkan ID prediksi yang telah di-upvote oleh user
-            # Catatan: match.predictionupvote_set adalah relasi terbalik dari Match 
-            # ke PredictionUpvote (nama default karena tidak ada related_name)
+            is_manager = is_admin_or_analyst(user)
             user_upvote_ids = PredictionUpvote.objects.filter(
                 prediction__match=match, user=user
             ).values_list('prediction_id', flat=True)
@@ -101,6 +96,7 @@ class MatchDetailView(DetailView):
         context['predictions'] = predictions_queryset
         context['current_sort'] = sort_by
         context['user_prediction'] = user_prediction
+        context['is_manager'] = is_manager
         
         return context
 
@@ -269,7 +265,7 @@ def edit_prediction(request, pk):
     # GET (AJAX) → kirim HTML form ke modal
     if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = PredictionForm(instance=prediction)
-        return render(request, 'match_prediction/prediction_form.html', {
+        return render(request, 'match_prediction/partials/prediction_form_partial.html', {
             'form': form, 'object': prediction, 'match': match
         })
 
@@ -278,14 +274,31 @@ def edit_prediction(request, pk):
         form = PredictionForm(request.POST, instance=prediction)
         if form.is_valid():
             form.save()
+            sort_by = request.GET.get('sort_by', 'newest')
             predictions = match.predictions.filter(is_deleted=False).select_related('user')
+
+            if sort_by == 'upvotes':
+                predictions = predictions.annotate(
+                    upvote_count_anno=Count('upvote_links')
+                ).order_by('-upvote_count_anno', '-created_at')
+            else:
+                predictions = predictions.order_by('-created_at')
+
+            user_upvote_ids = PredictionUpvote.objects.filter(
+                prediction__match=match, user=request.user
+            ).values_list('prediction_id', flat=True)
+            for p in predictions:
+                p.user_has_upvoted = p.id in user_upvote_ids
+
+            is_manager = is_admin_or_analyst(request.user)
+
             new_list_html = render_to_string(
                 'match_prediction/partials/prediction_list.html',
-                {'predictions': predictions, 'match': match, 'request': request, 'user': request.user},
+                {'predictions': predictions, 'match': match, 'request': request, 'user': request.user, 'is_manager': is_manager},
                 request=request
             )
             return JsonResponse({'status':'success','message':'Prediction updated successfully!','updateTarget':'#predictionList','html':new_list_html})
-        return render(request, 'match_prediction/prediction_form.html', {'form': form, 'object': prediction, 'match': match}, status=400)
+        return render(request, 'match_prediction/partials/prediction_form_partial.html', {'form': form, 'object': prediction, 'match': match}, status=400)
 
     # Fallback non-AJAX
     form = PredictionForm(instance=prediction)
@@ -337,9 +350,7 @@ def toggle_upvote(request, prediction_id):
     else:
         messages.success(request, "You upvoted this prediction!")
 
-    # Recalculate count for display (this is fine, calls model method)
     prediction.recalc_upvote_count() 
-    # FIX: Use namespaced URL for robustness
     return redirect('match_prediction:match_detail', pk=prediction.match.id)
 
 @login_required
@@ -347,13 +358,12 @@ def ajax_add_prediction(request, match_id):
     """Handle prediction form via AJAX (GET shows form, POST submits/edits)."""
     match = get_object_or_404(Match, id=match_id, is_active=True)
     
-    # 1. Check for existing prediction (UPDATE case for the current user)
     existing_prediction = Prediction.objects.filter(user=request.user, match=match, is_deleted=False).first()
 
-    # ---- GET: return form HTML (for modal) ----
+
     if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = PredictionForm(instance=existing_prediction)
-        return render(request, 'match_prediction/prediction_form.html', {
+        return render(request, 'match_prediction/partials/prediction_form_partial.html', {
             'form': form,
             'object': existing_prediction,
             'match': match,
@@ -379,11 +389,30 @@ def ajax_add_prediction(request, match_id):
                     'message': 'You already have an active prediction for this match. Please edit the existing one.',
                 }, status=400) # 400 Bad Request is appropriate for client-side error
             
+            sort_by = request.GET.get('sort_by', 'newest')
+            
             # --- Auto-Refresh Logic ---
             predictions = match.predictions.filter(is_deleted=False).select_related('user')
+
+            if sort_by == 'upvotes':
+                predictions = predictions.annotate(
+                    upvote_count_anno=Count('upvote_links')
+                ).order_by('-upvote_count_anno', '-created_at')
+            else:
+                predictions = predictions.order_by('-created_at')
+
+            user_upvote_ids = PredictionUpvote.objects.filter(
+                prediction__match=match, user=request.user
+            ).values_list('prediction_id', flat=True)
+
+            for p in predictions:
+                p.user_has_upvoted = p.id in user_upvote_ids
+
+            is_manager = is_admin_or_analyst(request.user)
+
             new_list_html = render_to_string(
                 'match_prediction/partials/prediction_list.html', 
-                {'predictions': predictions, 'match': match, 'request': request, 'user': request.user},
+                {'predictions': predictions, 'match': match, 'request': request, 'user': request.user, 'is_manager': is_manager},
                 request=request
             )
             
@@ -395,7 +424,7 @@ def ajax_add_prediction(request, match_id):
             })
         
         # If invalid, return form with errors
-        return render(request, 'match_prediction/prediction_form.html', {
+        return render(request, 'match_prediction/partials/prediction_form_partial.html', {
             'form': form,
             'object': existing_prediction,
             'match': match
@@ -425,8 +454,7 @@ def ajax_toggle_upvote(request, prediction_id):
             PredictionUpvote.objects.create(prediction=prediction, user=user)
             is_upvoted = True
         
-        # Recalculate and update the cached upvote_count field
-        # Use Count() for accurate and atomic calculation
+
         new_count = PredictionUpvote.objects.filter(prediction=prediction).count()
         prediction.upvote_count = new_count
         prediction.save(update_fields=['upvote_count'])
