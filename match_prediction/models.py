@@ -11,8 +11,7 @@ class Match(models.Model):
     The forum card created by admin/analyst.
     Title can be auto-generated with `title` property (Team A vs Team B).
     """
-    # NOTE: you requested this exact FK signature; I'm including it explicitly as an optional field
-    # for integration with your PlayerClub_Data app. If you'd rather only have home/away, you can remove this.
+
 
     home_club = models.ForeignKey('PlayerClub_Data.Club', on_delete=models.SET_NULL, null=True, blank=True, related_name='home_matches')
     away_club = models.ForeignKey('PlayerClub_Data.Club', on_delete=models.SET_NULL, null=True, blank=True, related_name='away_matches')
@@ -76,10 +75,9 @@ class Prediction(models.Model):
 
     
 
-    # soft delete flag (optional; admin can hard-delete if needed)
+
     is_deleted = models.BooleanField(default=False)
 
-    # upvotes will be tracked via PredictionUpvote (see below)
     upvote_count = models.PositiveIntegerField(default=0, editable=False)
 
     class Meta:
@@ -88,10 +86,10 @@ class Prediction(models.Model):
             models.Index(fields=['match', 'user']),
         ]
         constraints = [
-            # This constraint now ONLY applies to predictions where is_deleted=False
+
             models.UniqueConstraint(
                 fields=['user', 'match'], 
-                condition=models.Q(is_deleted=False), # ⬅️ CRITICAL FIX
+                condition=models.Q(is_deleted=False), 
                 name='unique_active_user_prediction_per_match'
             )
         ]

@@ -267,8 +267,15 @@
         if (addPredBtn) {
             addPredBtn.addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
-                const url = addPredBtn.dataset.ajaxUrl;
-                if (url) loadForm(url);
+                
+                let url = addPredBtn.dataset.ajaxUrl;
+                
+                const sortSelect = document.getElementById('sort_select');
+                if (url && sortSelect) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url = url + separator + 'sort_by=' + sortSelect.value;
+                    loadForm(url);
+                }
             });
         }
 
@@ -281,8 +288,15 @@
             // Edit
             if (el.classList.contains('js-edit-prediction')) {
                 e.preventDefault();
-                const url = el.dataset.ajaxUrl;
-                if (url) loadForm(url);
+                let url = el.dataset.ajaxUrl;
+                
+                // Ambil nilai sort saat ini
+                const sortSelect = document.getElementById('sort_select');
+                if (url && sortSelect) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url = url + separator + 'sort_by=' + sortSelect.value;
+                    loadForm(url);
+                }
                 return;
             }
 
