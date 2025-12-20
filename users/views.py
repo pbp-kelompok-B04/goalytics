@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.views.decorators.http import require_GET
 
 def login_user(request):
     
