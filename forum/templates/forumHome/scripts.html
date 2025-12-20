@@ -339,8 +339,15 @@
 
   function extractYouTubeId(rawUrl) {
     if (!rawUrl) return null;
+    
+    // Ensure URL has protocol
+    let urlStr = rawUrl;
+    if (!/^https?:\/\//i.test(urlStr)) {
+        urlStr = 'https://' + urlStr;
+    }
+
     try {
-      const u = new URL(rawUrl, window.location.origin);
+      const u = new URL(urlStr);
 
       // youtu.be/<id>
       if (u.hostname.includes('youtu.be')) {
@@ -374,38 +381,25 @@
     }
   }
 
-  function buildYouTubeSrc(videoId, { useApi = false } = {}) {
-    const base = `https://www.youtube-nocookie.com/embed/${videoId}`;
-    const params = new URLSearchParams({
-      rel: '0',
-      modestbranding: '1',
-      playsinline: '1',
-    });
-    if (useApi) {
-      params.set('enablejsapi', '1');
-      params.set('origin', window.location.origin); // penting saat enablejsapi
-    }
-    return `${base}?${params.toString()}`;
-  }
-
-
   function renderYouTubeEmbedOrFallback(videoId) {
-    const src = buildYouTubeSrc(videoId, { useApi: false });
-    // Kartu dengan iframe + fallback link (jaga-jaga kalau error/153)
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    
     return `
       <div class="my-2">
-        <div class="relative w-full aspect-video overflow-hidden rounded-2xl border border-slate-200">
+        <div class="relative w-full aspect-video overflow-hidden rounded-2xl border border-slate-200 bg-black">
           <iframe
-            src="${src}"
+            src="${embedUrl}"
             class="absolute inset-0 h-full w-full"
+            title="YouTube video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
-            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            frameborder="0"
           ></iframe>
         </div>
-        <div class="mt-2 text-xs text-slate-500">
-          Jika video tidak bisa diputar (mis. error 153), buka langsung di YouTube:
-          <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" class="text-blue-600 underline">https://youtu.be/${videoId}</a>
+        <div class="mt-1 text-xs text-slate-400">
+          <a href="${watchUrl}" target="_blank" class="hover:text-blue-600 hover:underline">Buka di YouTube ↗</a>
         </div>
       </div>
     `;
