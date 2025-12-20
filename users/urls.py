@@ -16,5 +16,5 @@ urlpatterns = [
     path('api/me/', profile_me_api, name='profile_me_api'),
     path('api/users/', list_users_api, name='list_users_api'),
     path('api/profile/<str:username>/', profile_detail_api, name='profile_detail_api'),
-
+    path('image-proxy/', image_proxy, name='image_proxy'),
 ]
