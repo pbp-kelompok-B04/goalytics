@@ -11,6 +11,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db import IntegrityError
 from django.db.models import Count
+import json
+from django.http import JsonResponse, HttpResponse
+from django.core import serializers
+from django.views.decorators.csrf import csrf_exempt
+from PlayerClub_Data.models import Club
 
 
 # --- Role helpers ---
@@ -432,13 +437,14 @@ def ajax_add_prediction(request, match_id):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+@csrf_exempt
 @login_required
 def ajax_toggle_upvote(request, prediction_id):
     """
     Toggles a user's upvote status on a prediction.
     Must be called via POST and AJAX.
     """
-    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+    if request.method == 'POST':
         prediction = get_object_or_404(Prediction, id=prediction_id, is_deleted=False)
         user = request.user
         
@@ -467,3 +473,314 @@ def ajax_toggle_upvote(request, prediction_id):
         })
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+
+def show_json(request):
+    """Mengembalikan daftar Match dengan Nama Klub (bukan cuma ID)"""
+    data = Match.objects.all().select_related('home_club', 'away_club').order_by('-match_datetime')
+    
+    res = []
+    for match in data:
+        res.append({
+            "model": "match_prediction.match",
+            "pk": match.pk,
+            "fields": {
+                # Data ID asli (Tetap dikirim untuk keperluan Form Edit)
+                "home_club": match.home_club.id if match.home_club else None,
+                "away_club": match.away_club.id if match.away_club else None,
+                
+                "home_club_name": match.home_club.name if match.home_club else "TBD",
+                "away_club_name": match.away_club.name if match.away_club else "TBD",
+                
+                "match_datetime": match.match_datetime.isoformat(),
+                "venue": match.venue,
+                "created_by": match.created_by.id,
+                "created_at": match.created_at.isoformat(),
+                "is_active": match.is_active
+            }
+        })
+        
+    return JsonResponse(res, safe=False)
+
+def show_predictions_json(request, match_id):
+    """
+    Mengembalikan daftar prediksi dengan dukungan SORTING.
+    Parameter URL: ?sort_by=newest (default) atau ?sort_by=upvotes
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    
+    # 1. Ambil parameter sort dari URL
+    sort_by = request.GET.get('sort_by', 'newest')
+
+    # 2. Query dasar
+    predictions = match.predictions.filter(is_deleted=False).select_related('user')
+
+    # 3. Terapkan logika sorting
+    if sort_by == 'upvotes':
+        predictions = predictions.annotate(
+            upvote_count_anno=Count('upvote_links')
+        ).order_by('-upvote_count_anno', '-created_at')
+    else:
+        # Default: Newest first
+        predictions = predictions.order_by('-created_at')
+    
+    # 4. Ambil status upvote user (sama seperti sebelumnya)
+    user_upvoted_ids = set()
+    if request.user.is_authenticated:
+        user_upvoted_ids = set(PredictionUpvote.objects.filter(
+            user=request.user, 
+            prediction__match=match
+        ).values_list('prediction_id', flat=True))
+
+    data = []
+    for p in predictions:
+        data.append({
+            "model": "match_prediction.prediction",
+            "pk": p.pk,
+            "fields": {
+                "user": p.user.id,
+                "username": p.user.username,
+                "match": p.match.id,
+                "predicted_home_score": p.predicted_home_score,
+                "predicted_away_score": p.predicted_away_score,
+                "explanation": p.explanation,
+                "created_at": p.created_at.isoformat(),
+                "upvote_count": p.upvote_count,
+                "is_deleted": p.is_deleted,
+                "user_has_upvoted": p.id in user_upvoted_ids 
+            }
+        })
+    
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def create_prediction_flutter(request, match_id):
+    """Menerima input prediksi dari Flutter (Create OR Update)"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            match = get_object_or_404(Match, pk=match_id)
+            
+            if not request.user.is_authenticated:
+                return JsonResponse({"status": "error", "message": "Authentication required"}, status=403)
+
+            # 1. Cari prediksi yang AKTIF (is_deleted=False) milik user ini
+            prediction = Prediction.objects.filter(
+                user=request.user, 
+                match=match, 
+                is_deleted=False
+            ).first()
+
+            if prediction:
+                # 2. Jika ada, UPDATE datanya
+                prediction.predicted_home_score = int(data["predicted_home_score"])
+                prediction.predicted_away_score = int(data["predicted_away_score"])
+                prediction.explanation = data["explanation"]
+                prediction.save()
+                message = "Prediction updated!"
+            else:
+                # 3. Jika tidak ada, CREATE data baru
+                Prediction.objects.create(
+                    user=request.user,
+                    match=match,
+                    predicted_home_score=int(data["predicted_home_score"]),
+                    predicted_away_score=int(data["predicted_away_score"]),
+                    explanation=data["explanation"],
+                    is_deleted=False
+                )
+                message = "Prediction created!"
+            
+            return JsonResponse({"status": "success", "message": message}, status=200)
+        
+        except Exception as e:
+            # Print error di terminal agar mudah dilacak
+            print(f"Error Flutter Predict: {e}") 
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=401)
+
+# --- TAMBAHKAN FUNGSI BARU INI DI BAWAHNYA ---
+def get_user_prediction_json(request, match_id):
+    """Mengembalikan prediksi milik user yang sedang login untuk match tertentu"""
+    if request.user.is_authenticated:
+        # Cari prediksi user untuk match ini
+        prediction = Prediction.objects.filter(
+            user=request.user, 
+            match_id=match_id, 
+            is_deleted=False
+        ).first()
+
+        if prediction:
+            # Return sebagai JSON list (standar serializer Django)
+            return HttpResponse(serializers.serialize("json", [prediction]), content_type="application/json")
+    
+    # Jika tidak ada atau belum login, return 404/Empty JSON
+    return JsonResponse({'status': 'not_found'}, status=404)
+
+
+
+# ==========================================
+# ADMIN / ANALYST FLUTTER API
+# ==========================================
+
+def get_user_role(request):
+    """API untuk mengecek apakah user adalah admin/analyst"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'is_manager': False, 'role': 'guest'})
+    
+    is_manager = is_admin_or_analyst(request.user)
+    role = 'user'
+    if hasattr(request.user, 'profile'):
+        role = request.user.profile.role
+        
+    return JsonResponse({'is_manager': is_manager, 'role': role})
+
+def get_clubs_json(request):
+    """API untuk dropdown pilihan klub"""
+    # Ambil semua data klub
+    clubs = Club.objects.all().order_by('name')
+    
+    # Konversi queryset ke list of dictionaries secara manual agar lebih terkontrol
+    clubs_data = []
+    for club in clubs:
+        clubs_data.append({
+            'id': club.id,
+            'name': club.name
+        })
+        
+    # Return JSON list
+    return JsonResponse(clubs_data, safe=False)
+
+@csrf_exempt
+def create_match_flutter(request):
+    """API Create Match untuk Admin"""
+    if request.method == 'POST':
+        if not is_admin_or_analyst(request.user):
+            return JsonResponse({"status": "error", "message": "Permission denied"}, status=403)
+            
+        try:
+            data = json.loads(request.body)
+            # Validasi input sederhana
+            home_club = get_object_or_404(Club, pk=int(data['home_club_id']))
+            away_club = get_object_or_404(Club, pk=int(data['away_club_id']))
+            
+            new_match = Match.objects.create(
+                home_club=home_club,
+                away_club=away_club,
+                match_datetime=data['match_datetime'], # Pastikan format ISO String dari Flutter
+                venue=data['venue'],
+                created_by=request.user
+            )
+            new_match.save()
+            return JsonResponse({"status": "success", "message": "Match created!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+@csrf_exempt
+def edit_match_flutter(request, match_id):
+    """API Edit Match untuk Admin"""
+    if request.method == 'POST':
+        if not is_admin_or_analyst(request.user):
+            return JsonResponse({"status": "error", "message": "Permission denied"}, status=403)
+            
+        try:
+            match = get_object_or_404(Match, pk=match_id)
+            data = json.loads(request.body)
+            
+            match.home_club = get_object_or_404(Club, pk=int(data['home_club_id']))
+            match.away_club = get_object_or_404(Club, pk=int(data['away_club_id']))
+            match.match_datetime = data['match_datetime']
+            match.venue = data['venue']
+            match.save()
+            
+            return JsonResponse({"status": "success", "message": "Match updated!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+@csrf_exempt
+def delete_match_flutter(request, match_id):
+    """API Delete Match untuk Admin"""
+    if request.method == 'POST':
+        if not is_admin_or_analyst(request.user):
+            return JsonResponse({"status": "error", "message": "Permission denied"}, status=403)
+            
+        try:
+            match = get_object_or_404(Match, pk=match_id)
+            match.delete()
+            return JsonResponse({"status": "success", "message": "Match deleted!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+# --- UPDATE FUNGSI DELETE PREDICTION YANG LAMA ---
+# Kita update agar Admin bisa delete punya orang lain
+
+@csrf_exempt
+def delete_prediction_flutter(request, match_id):
+    """Menghapus prediksi (User sendiri OR Admin untuk user lain)"""
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return JsonResponse({"status": "error", "message": "Login required"}, status=403)
+        
+        # Cek apakah ada target_user_id di body (untuk Admin menghapus punya orang)
+        try:
+            data = json.loads(request.body)
+            target_user_id = data.get('target_user_id') # Optional
+        except:
+            target_user_id = None
+
+        is_manager = is_admin_or_analyst(request.user)
+
+        # Logika Query
+        if target_user_id and is_manager:
+            # Kasus Admin menghapus prediksi orang lain
+            prediction = Prediction.objects.filter(
+                user_id=target_user_id, 
+                match_id=match_id, 
+                is_deleted=False
+            ).first()
+        else:
+            # Kasus User menghapus prediksi sendiri
+            prediction = Prediction.objects.filter(
+                user=request.user, 
+                match_id=match_id, 
+                is_deleted=False
+            ).first()
+
+        if not prediction:
+            return JsonResponse({"status": "error", "message": "Prediction not found"}, status=404)
+
+        # Lakukan Soft Delete
+        prediction.is_deleted = True
+        prediction.save()
+        
+        return JsonResponse({"status": "success", "message": "Prediction deleted"}, status=200)
+    
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=400)
+
+@csrf_exempt
+def delete_prediction_by_id(request, prediction_id):
+    """
+    API Khusus Admin: Menghapus prediksi apapun berdasarkan ID Prediksi.
+    """
+    if request.method == 'POST':
+        if not is_admin_or_analyst(request.user):
+            return JsonResponse({"status": "error", "message": "Permission denied"}, status=403)
+            
+        try:
+            # Cari prediksi (termasuk yang bukan punya user ini)
+            prediction = get_object_or_404(Prediction, pk=prediction_id)
+            
+            # Lakukan Soft Delete
+            prediction.is_deleted = True
+            prediction.save()
+            
+            return JsonResponse({"status": "success", "message": "Prediction removed by admin"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)

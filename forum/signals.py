@@ -45,3 +45,4 @@ def notify_new_comment(sender, instance, created, **kwargs):
                 target_post=instance.post,
                 target_comment=instance.parent if instance.parent else None
             )
+#tes

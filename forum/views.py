@@ -7,6 +7,8 @@ from django.db.models import Count
 from django.views.decorators.http import require_http_methods
 from urllib.parse import quote
 import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 def _avatar_for_user(user):
     profile = getattr(user, "profile", None)
     avatar = getattr(profile, "profile_picture", None) if profile else None
@@ -30,6 +32,7 @@ def forum_post_detail(request, post_id):
     return render(request, "post_detail.html", {"post_id": post_id})
 
 # Create your views here.
+@ensure_csrf_cookie
 @require_http_methods(["GET"])
 def get_all_post(request):
     qs = Post.objects.select_related("author", "author__profile")
@@ -200,21 +203,22 @@ def get_my_posts(request):
         data.append(post)
     return JsonResponse({"data": data})
 
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def create_post(request):
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
+    payload = get_payload(request)
+    if payload is None:
         return JsonResponse({"error": "Invalid JSON format"}, status=400)
+
     title = payload.get("title", "").strip()
     content = payload.get("content", "").strip()
     league = (payload.get("league") or "").strip().upper()
     media_url = (payload.get("media_url") or "").strip()
+
     if not title or not content:
         return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
-    if not title or not content:
-        return JsonResponse({"error": "title dan content wajib diisi"}, status=400)
+
     valid_codes = {code for code, _ in LEAGUE_CHOICES}
     if league and league not in valid_codes:
         return JsonResponse({"error": "league tidak valid"}, status=400)
@@ -226,28 +230,31 @@ def create_post(request):
         league=league or "EPL",
         media_url=media_url or None,
     )
-    data = {
-        'id': p.id,
-        'author': p.author.username,
-        'title': p.title,
-        'content': p.content,
-        "created_at": p.created_at.isoformat(),
-        "updated_at": p.updated_at.isoformat(),
-        "comment_count": 0,
-        "league": p.league,
-        "is_author": True,
-        "like_count": 0,
-        "is_liked": False,
-        "avatar": _avatar_for_user(p.author),
-        'media_url': p.media_url
-    }
-    return JsonResponse({"data": data}, status=201)
 
+    return JsonResponse({
+        "data": {
+            "id": p.id,
+            "author": p.author.username,
+            "title": p.title,
+            "content": p.content,
+            "league": p.league,
+            "created_at": p.created_at.isoformat(),
+            "avatar": _avatar_for_user(p.author),
+            "is_author": True,
+            "is_liked": False,
+            "like_count": 0,
+            "media_url": p.media_url,
+        }
+    }, status=201)
+
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def create_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    payload = json.loads(request.body.decode("utf-8"))
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({"error": "Invalid JSON format"}, status=400)
     content = (payload.get("content") or "").strip()
     parent_id = payload.get("parent_id")
     if not content:
@@ -271,165 +278,169 @@ def create_comment(request, post_id):
     }
     return JsonResponse({"data": data}, status=201)
 
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def like_post(request, post_id):
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({"error": "invalid payload"}, status=400)
+
     if payload.get('_method') != 'PATCH':
         return JsonResponse({'error': 'Method override required'}, status=405)
-    post_id = payload.get('post_id')
-    if not post_id:
+
+    pid = payload.get('post_id')
+    if not pid:
         return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
-    post = get_object_or_404(Post, id=post_id)
+
+    post = get_object_or_404(Post, id=pid)
+
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
         liked = False
     else:
         post.likes.add(request.user)
         liked = True
-    
-    return JsonResponse({
-        'liked': liked,
-        'like_count': post.likes.count(),
-    }, status=200)
-    
+
+    return JsonResponse({'liked': liked, 'like_count': post.likes.count()}, status=200)
+
+
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def like_comment(request, comment_id):
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
     if payload.get('_method') != 'PATCH':
         return JsonResponse({'error': 'Method override required'}, status=405)
+
     post_id = payload.get('post_id')
     comment_id = payload.get('comment_id')
+
     if not post_id or not comment_id:
         return JsonResponse({'error': 'post_id dan comment_id wajib dikirim'}, status=400)
+
     post = get_object_or_404(Post, id=post_id)
     comment = get_object_or_404(Comment, id=comment_id, post=post)
+
     if comment.likes.filter(id=request.user.id).exists():
         comment.likes.remove(request.user)
         liked = False
     else:
         comment.likes.add(request.user)
         liked = True
-    return JsonResponse({
-        'liked': liked,
-        'like_count': comment.likes.count(),
-    }, status=200)
 
+    return JsonResponse({'liked': liked, 'like_count': comment.likes.count()}, status=200)
+
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def update_post(request, post_id):
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "invalid JSON"}, status=400)
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({"error": "invalid payload"}, status=400)
+
     if payload.get('_method') != 'PATCH':
         return JsonResponse({'error': 'Method override required'}, status=405)
 
-    post_id = payload.get('post_id')
-    if not post_id:
+    pid = payload.get('post_id')
+    if not pid:
         return JsonResponse({"error": "post_id wajib dikirim"}, status=400)
-    post = get_object_or_404(Post, id=post_id)
+
+    post = get_object_or_404(Post, id=pid)
+
     if post.author != request.user:
-        return JsonResponse({"error": "forbidden"}, status=400)
+        return JsonResponse({"error": "forbidden"}, status=403)
 
-    if 'title' in payload:
-        post.title = (payload.get('title') or '').strip()
-    if 'content' in payload:
-        post.content = (payload.get('content') or '').strip()
-    if 'league' in payload:
-        league = (payload.get('league') or '').strip().upper()
-        if league:
-            valid_codes = {code for code, _ in LEAGUE_CHOICES}
-            if league not in valid_codes:
-                return JsonResponse({"error": "league tidak valid"}, status=400)
-            post.league = league
+    if "title" in payload:
+        post.title = payload.get("title", "").strip()
+
+    if "content" in payload:
+        post.content = payload.get("content", "").strip()
+
+    if "league" in payload:
+        league = (payload.get("league") or "").strip().upper()
+        valid_codes = {code for code, _ in LEAGUE_CHOICES}
+        if league and league not in valid_codes:
+            return JsonResponse({"error": "league tidak valid"}, status=400)
+        post.league = league
+
     post.save()
-    return JsonResponse({
-        "message": "Post updated successfully",
-        "id": post.id,
-        "title": post.title,
-        "content": post.content,
-        "league": post.league,
-    })
+    return JsonResponse({"message": "Post updated", "id": post.id})
 
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def update_comment(request, comment_id):
-    try:
-        data = json.loads(request.body.decode('utf-8'))
-        post_id = data['post_id']
-        comment_id = data['comment_id']
-        new_content = data['content'].strip()
-    except (json.JSONDecodeError, AttributeError, KeyError):
-        return JsonResponse({'error': 'JSON tidak valid'}, status=400)
-    if data.get('_method') != 'PATCH':
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
+    if payload.get('_method') != 'PATCH':
         return JsonResponse({'error': 'Method override required'}, status=405)
+
+    post_id = payload.get("post_id")
+    comment_id = payload.get("comment_id")
+    new_content = (payload.get("content") or "").strip()
+
     if not new_content:
-        return JsonResponse({'error': 'Isi komentar tidak boleh kosong'}, status=400)
+        return JsonResponse({'error': 'Komentar kosong'}, status=400)
+
     post = get_object_or_404(Post, id=post_id)
     comment = get_object_or_404(Comment, id=comment_id, post=post)
+
     if comment.user != request.user:
-        return JsonResponse({'error': 'forbidden'}, status=400)
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
     comment.content = new_content
     comment.save()
-    return JsonResponse({
-        'status': 'success',
-        'comment_id': comment.id,
-        'new_content': comment.content,
-        'updated_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
-    })
 
+    return JsonResponse({'status': 'ok'})
+
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def delete_post(request, post_id):
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
     if payload.get('_method') != 'DELETE':
         return JsonResponse({'error': 'Method override required'}, status=405)
-    post_id = payload.get('post_id')
-    if not post_id:
-        return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
-    post = get_object_or_404(Post, id=post_id)
-    if post.author != request.user:
-        return JsonResponse({'error': 'forbidden'}, status=400)
-    post.delete()
-    return JsonResponse({
-        'message': 'Post berhasil dihapus'
-    }, status=200)
 
+    pid = payload.get('post_id')
+    post = get_object_or_404(Post, id=pid)
+
+    if post.author != request.user:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    post.delete()
+    return JsonResponse({'message': 'Post deleted'}, status=200)
+
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def delete_comment(request, comment_id):
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    payload = get_payload(request)
+    if payload is None:
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
     if payload.get('_method') != 'DELETE':
         return JsonResponse({'error': 'Method override required'}, status=405)
+
     post_id = payload.get('post_id')
     comment_id = payload.get('comment_id')
-    if not post_id:
-        return JsonResponse({'error': 'post_id wajib dikirim'}, status=400)
-    if not comment_id:
-        return JsonResponse({'error': 'comment_id wajib dikirim'}, status=400)
+
     post = get_object_or_404(Post, id=post_id)
     comment = get_object_or_404(Comment, id=comment_id, post=post)
-    if comment.user != request.user:
-        return JsonResponse({'error': 'forbidden'}, status=400)
-    comment.delete()
-    return JsonResponse({
-        'message': 'Komentar berhasil dihapus'
-    }, status=200)
 
+    if comment.user != request.user:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    comment.delete()
+    return JsonResponse({'message': 'Comment deleted'}, status=200)
 
 @login_required
 def get_notifications(request):
@@ -448,6 +459,7 @@ def get_notifications(request):
     ]
     return JsonResponse({"data": data})
 
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def mark_notifications_read(request):
@@ -470,3 +482,14 @@ def upload_attachment(request):
         "post_id": post.id,
         "url": post.attachment.url
     }, status=201)
+
+def get_payload(request):
+    content_type = request.content_type or ""
+
+    if content_type.startswith("application/json"):
+        try:
+            return json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return None
+
+    return request.POST
