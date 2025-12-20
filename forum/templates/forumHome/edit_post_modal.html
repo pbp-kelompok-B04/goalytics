@@ -1,0 +1,41 @@
+<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+      <h2 class="text-xl font-semibold text-slate-900">Edit Post</h2>
+      <button onclick="closeEditModal()" class="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <form id="editPostForm" class="space-y-5 px-6 py-6">
+      <input type="hidden" id="editPostId">
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-600">League</label>
+        <select id="editPostLeague" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200">
+          <option value="EPL">Premier League</option>
+          <option value="LALIGA">La Liga</option>
+          <option value="SERIEA">Serie A</option>
+          <option value="BUNDES">Bundesliga</option>
+          <option value="LIGUE1">Ligue 1</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-600">Title</label>
+        <input type="text" id="editPostTitle" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200" />
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-600">Content</label>
+        <textarea id="editPostContent" rows="6" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200"></textarea>
+      </div>
+      <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" onclick="closeEditModal()" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+          Cancel
+        </button>
+        <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
