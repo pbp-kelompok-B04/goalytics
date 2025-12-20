@@ -1,5 +1,5 @@
 from django.urls import path
-from users.views import login_user, register_user, logout_user, view_profile, search_users, search_users_api, toggle_block_user, toggle_flag_user,  profile_me_api, list_users_api, profile_detail_api
+from users.views import login_user, register_user, logout_user, view_profile, search_users, search_users_api, toggle_block_user, toggle_flag_user,  profile_me_api, list_users_api, profile_detail_api, image_proxy
 
 
 app_name = 'users'
@@ -16,5 +16,5 @@ urlpatterns = [
     path('api/me/', profile_me_api, name='profile_me_api'),
     path('api/users/', list_users_api, name='list_users_api'),
     path('api/profile/<str:username>/', profile_detail_api, name='profile_detail_api'),
-
+    path('image-proxy/', image_proxy, name='image_proxy'),
 ]

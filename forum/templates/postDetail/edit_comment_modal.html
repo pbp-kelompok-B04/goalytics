@@ -1,0 +1,30 @@
+<!-- Edit Comment Modal -->
+<div id="editCommentModal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+            <h2 class="text-lg font-semibold text-slate-900">Edit Comment</h2>
+            <button onclick="closeEditCommentModal()"
+                class="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="editCommentForm" class="space-y-4 px-6 py-6">
+            <textarea id="editCommentContent" rows="4" placeholder="Update your comment..."
+                class="resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200"></textarea>
+            <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onclick="closeEditCommentModal()"
+                    class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

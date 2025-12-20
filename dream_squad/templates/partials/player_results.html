@@ -3,71 +3,80 @@
     {% for player in players %}
       <article class="flex h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50/70 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-xl">
         
-        <!-- Player Info -->
-        <div class="space-y-3">
-          <div class="flex items-start gap-3">
+        <a href="{% url 'dream_squad:player_detail' player.id %}" class="space-y-3 block group">
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-slate-500 shadow-inner overflow-hidden border border-slate-100">
+                {% if player.image_url %}
+                  <img src="{{ player.image_url }}" class="h-full w-full object-cover" alt="{{ player.name }}" />
+                {% else %}
+                  {{ player.name|slice:':2'|upper }}
+                {% endif %}
+              </div>
 
-            <a href="{% url 'dream_squad:player_detail' player.id %}" class="space-y-3 block">
-            <!-- Image -->
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-slate-500 shadow-inner">
-              {% if player.image_url %}
-                <img src="{{ player.image_url }}" class="h-12 w-12 rounded-2xl object-cover" />
-              {% else %}
-                {{ player.name|slice:':2'|upper }}
-              {% endif %}
+              <div class="min-w-0">
+                <h3 class="truncate text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  {{ player.name }}
+                </h3>
+                <p class="truncate text-sm text-slate-500">
+                  {{ player.club.name|default:"Free Agent" }}
+                </p>
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  {{ player.get_position_display|default:player.position|default:"-" }}
+                </p>
+              </div>
             </div>
 
-            <!-- Name & Info -->
-            <div class="min-w-0">
-              <h3 class="truncate text-base font-semibold text-slate-900">{{ player.name }}</h3>
-              <p class="truncate text-sm text-slate-500">{{ player.club.name|default:"Free Agent" }}</p>
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                {{ player.get_position_display|default:player.position|default:"-" }}
-              </p>
+            <div class="flex items-center gap-3 text-xs text-slate-500">
+              <span class="inline-flex items-center gap-1">
+                <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6l-2 2m8 4h-3m8-6-4-4-4 4" />
+                </svg>
+                Goals {{ player.goals|default:"0" }}
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <svg class="h-4 w-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 12l5 5L20 7" />
+                </svg>
+                Assists {{ player.assists|default:"0" }}
+              </span>
             </div>
           </div>
-
-          <!-- Stats -->
-          <div class="flex items-center gap-3 text-xs text-slate-500">
-            <span class="inline-flex items-center gap-1">
-              <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6l-2 2m8 4h-3m8-6-4-4-4 4" />
-              </svg>
-              Goals {{ player.goals|default:"0" }}
-            </span>
-            <span class="inline-flex items-center gap-1">
-              <svg class="h-4 w-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12l5 5L20 7" />
-              </svg>
-              Assists {{ player.assists|default:"0" }}
-            </span>
-          </div>
-        </div>
         </a>
 
-        <!-- Add / Added Button -->
-        {% if player.id in favorite_ids %}
-          <button
-            type="button"
-            class="w-full rounded-2xl px-4 py-2 text-sm font-semibold transition cursor-not-allowed bg-emerald-500 text-white opacity-80"
-            disabled
-          >
-            Added
-          </button>
-        {% else %}
-          <a href="{% url 'dream_squad:select_squad_for_player' player.id %}"
-            class="mt-4 block w-full rounded-2xl px-4 py-2 text-sm font-semibold transition bg-slate-900 text-white hover:bg-slate-800 text-center">
-            Add to Squad
-          </a>
-        {% endif %}
-
+        <div class="mt-4">
+          {% if player.id in favorite_ids %}
+            <button
+              type="button"
+              class="w-full rounded-2xl px-4 py-2 text-sm font-semibold transition cursor-not-allowed bg-emerald-500 text-white opacity-80 flex items-center justify-center gap-2"
+              disabled
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Added to Squad
+            </button>
+          {% else %}
+            <button type="button" 
+                    onclick="openSelectSquadModal('{{ player.id }}')"
+                    class="w-full rounded-2xl border border-slate-200 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-900 hover:text-white">
+                Add to Squad
+            </button>
+          {% endif %}
+        </div>
 
       </article>
     {% endfor %}
   </div>
 
 {% else %}
-  <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-slate-500">
-    No players found for your search.
+  <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center">
+    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
+      <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    <h3 class="text-sm font-medium text-slate-900">No players found</h3>
+    <p class="mt-1 text-sm text-slate-500">Try adjusting your search or filters.</p>
   </div>
 {% endif %}

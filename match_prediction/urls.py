@@ -23,4 +23,17 @@ urlpatterns = [
 
     # --- UPVOTE (non-AJAX fallback, renamed for clarity) ---
     path('prediction/<int:prediction_id>/upvote/', views.toggle_upvote, name='toggle_upvote_fallback'),
+
+    # URLS UNTUK FLUTTER (API)
+    path('json/', views.show_json, name='show_json'),
+    path('json/<int:match_id>/predictions/', views.show_predictions_json, name='show_predictions_json'),
+    path('create-flutter/<int:match_id>/', views.create_prediction_flutter, name='create_prediction_flutter'),
+    path('json/<int:match_id>/my-prediction/', views.get_user_prediction_json, name='get_user_prediction_json'),
+    path('delete-flutter/<int:match_id>/', views.delete_prediction_flutter, name='delete_prediction_flutter'),
+    path('get-role/', views.get_user_role, name='get_user_role'),
+    path('get-clubs/', views.get_clubs_json, name='get_clubs_json'),
+    path('create-match-flutter/', views.create_match_flutter, name='create_match_flutter'),
+    path('edit-match-flutter/<int:match_id>/', views.edit_match_flutter, name='edit_match_flutter'),
+    path('delete-match-flutter/<int:match_id>/', views.delete_match_flutter, name='delete_match_flutter'),
+    path('admin-delete-prediction/<int:prediction_id>/', views.delete_prediction_by_id, name='delete_prediction_by_id'),
 ]
