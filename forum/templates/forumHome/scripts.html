@@ -458,11 +458,8 @@
 
       const mediaHTML = (() => {
         const urlCandidates = [
-          post.attachment_url,                       
           post.media_url,
           post.mediaUrl,
-          (typeof post.attachment === 'string' ? post.attachment : null),
-          (post.attachment && post.attachment.url),
           (post.media && post.media.url),
         ].filter(Boolean);
 
@@ -654,28 +651,12 @@
       const content = document.getElementById('postContent').value.trim();
       const league = document.getElementById('postLeague').value;
       const mediaUrl = document.getElementById('postMediaUrl').value.trim();
-      const file = document.getElementById('postAttachment').files[0];
+      
       if (!title || !content) {
         showToast('Please fill in all fields', true);
         return;
       }
-      let finalMediaUrl = mediaUrl;
-      if (file) {
-        const formData = new FormData();
-        formData.append("attachment", file);
-        const uploadRes = await fetch("/forum/api/posts/upload/", {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        });
-        const uploadData = await uploadRes.json();
-        if (uploadRes.ok) {
-          finalMediaUrl = uploadData.url;
-        } else {
-          showToast(uploadData.error || "Upload failed", true);
-          return;
-        }
-      }
+      
       try {
         const response = await fetch(createUrl, {
           method: 'POST',
@@ -684,7 +665,7 @@
             'X-CSRFToken': csrftoken
           },
           credentials: 'include',
-          body: JSON.stringify({title, content, league, media_url: finalMediaUrl})
+          body: JSON.stringify({title, content, league, media_url: mediaUrl})
         });
         if (response.redirected) {
           window.location.href = response.url; 

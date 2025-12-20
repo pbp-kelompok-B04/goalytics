@@ -22,6 +22,4 @@ urlpatterns = [
     path('api/notifications/', views.get_notifications, name='get_notifications'),
     path('api/notifications/mark_read/', views.mark_notifications_read, name='mark_notifications_read'),
 
-    path('api/posts/upload/', views.upload_attachment, name='upload_attachment'),
-
 ]

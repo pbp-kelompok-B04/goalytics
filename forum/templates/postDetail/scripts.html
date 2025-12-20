@@ -429,11 +429,8 @@
 
         const mediaHTML = (() => {
             const urlCandidates = [
-                post.attachment_url,
                 post.media_url,
                 post.mediaUrl,
-                (typeof post.attachment === 'string' ? post.attachment : null),
-                (post.attachment && post.attachment.url),
                 (post.media && post.media.url),
             ].filter(Boolean);
 
