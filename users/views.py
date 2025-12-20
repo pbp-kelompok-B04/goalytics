@@ -327,3 +327,30 @@ def profile_detail_api(request, username):
         status=200,
     )
 
+@require_GET
+def image_proxy(request):
+    url = (request.GET.get("url") or "").strip()
+    if not url:
+        return JsonResponse({"status": False, "message": "Missing url"}, status=400)
+
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return JsonResponse(
+            {"status": False, "message": "Invalid scheme"},
+            status=400
+        )
+
+    try:
+        r = requests.get(url, timeout=10, stream=True)
+        content_type = r.headers.get("Content-Type", "image/png")
+
+        response = HttpResponse(r.content, content_type=content_type)
+        response["Access-Control-Allow-Origin"] = "*"   # WAJIB buat Flutter Web
+        response["Cache-Control"] = "public, max-age=86400"
+        return response
+
+    except requests.RequestException:
+        return JsonResponse(
+            {"status": False, "message": "Failed to fetch image"},
+            status=502
+        )
+
