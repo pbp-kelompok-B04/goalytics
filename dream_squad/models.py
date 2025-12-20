@@ -29,3 +29,10 @@ class DreamSquadPlayer(models.Model):
 
     def __str__(self):
         return f"{self.player.name} in {self.squad.name}"
+
+class BannedWord(models.Model):
+    word = models.CharField(max_length=50, unique=True)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.word
