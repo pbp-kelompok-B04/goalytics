@@ -35,4 +35,5 @@ urlpatterns = [
     path('create-match-flutter/', views.create_match_flutter, name='create_match_flutter'),
     path('edit-match-flutter/<int:match_id>/', views.edit_match_flutter, name='edit_match_flutter'),
     path('delete-match-flutter/<int:match_id>/', views.delete_match_flutter, name='delete_match_flutter'),
+    path('admin-delete-prediction/<int:prediction_id>/', views.delete_prediction_by_id, name='delete_prediction_by_id'),
 ]

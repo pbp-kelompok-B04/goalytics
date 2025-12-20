@@ -475,9 +475,31 @@ def ajax_toggle_upvote(request, prediction_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
 
 def show_json(request):
-    """Mengembalikan daftar semua Match dalam format JSON"""
-    data = Match.objects.all().order_by('-match_datetime')
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    """Mengembalikan daftar Match dengan Nama Klub (bukan cuma ID)"""
+    data = Match.objects.all().select_related('home_club', 'away_club').order_by('-match_datetime')
+    
+    res = []
+    for match in data:
+        res.append({
+            "model": "match_prediction.match",
+            "pk": match.pk,
+            "fields": {
+                # Data ID asli (Tetap dikirim untuk keperluan Form Edit)
+                "home_club": match.home_club.id if match.home_club else None,
+                "away_club": match.away_club.id if match.away_club else None,
+                
+                "home_club_name": match.home_club.name if match.home_club else "TBD",
+                "away_club_name": match.away_club.name if match.away_club else "TBD",
+                
+                "match_datetime": match.match_datetime.isoformat(),
+                "venue": match.venue,
+                "created_by": match.created_by.id,
+                "created_at": match.created_at.isoformat(),
+                "is_active": match.is_active
+            }
+        })
+        
+    return JsonResponse(res, safe=False)
 
 def show_predictions_json(request, match_id):
     """
@@ -739,3 +761,26 @@ def delete_prediction_flutter(request, match_id):
         return JsonResponse({"status": "success", "message": "Prediction deleted"}, status=200)
     
     return JsonResponse({"status": "error", "message": "Invalid request method"}, status=400)
+
+@csrf_exempt
+def delete_prediction_by_id(request, prediction_id):
+    """
+    API Khusus Admin: Menghapus prediksi apapun berdasarkan ID Prediksi.
+    """
+    if request.method == 'POST':
+        if not is_admin_or_analyst(request.user):
+            return JsonResponse({"status": "error", "message": "Permission denied"}, status=403)
+            
+        try:
+            # Cari prediksi (termasuk yang bukan punya user ini)
+            prediction = get_object_or_404(Prediction, pk=prediction_id)
+            
+            # Lakukan Soft Delete
+            prediction.is_deleted = True
+            prediction.save()
+            
+            return JsonResponse({"status": "success", "message": "Prediction removed by admin"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
