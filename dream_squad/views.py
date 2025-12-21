@@ -116,33 +116,42 @@ def squad_list_api(request):
         # 1. Ambil Parameter Search
         query = (request.GET.get('q') or '').strip()
 
-        # 2. Cek Role Admin (Tanpa melempar error jika user belum login)
+        # 2. Cek Role Admin
         is_authenticated = request.user.is_authenticated
         is_admin = False
         if is_authenticated and hasattr(request.user, 'profile'):
             is_admin = (request.user.profile.role == 'admin')
 
-        # 3. Logika Squad
-        # Jika tidak login, user_squads kosong saja (jangan return 403 HTML)
+        # 3. Logika Ambil Data Squad
         if not is_authenticated:
-            user_squads = []
-            squads_all_count = 0 # Statistik global tetap bisa diakses
+            user_squads = DreamSquad.objects.none()
+            squads_for_stats = DreamSquad.objects.none()
         elif is_admin:
-            user_squads = DreamSquad.objects.filter(user=request.user)
-            squads_all = DreamSquad.objects.all()
-            squads_all_count = squads_all.count()
+            # Admin melihat statistik dari SEMUA squad (Global) sesuai fungsi squad_list web
+            squads_for_stats = DreamSquad.objects.all()
+            user_squads = squads_for_stats.filter(user=request.user)
         else:
+            # User biasa hanya melihat statistik squad miliknya sendiri
             user_squads = DreamSquad.objects.filter(user=request.user)
-            squads_all_count = user_squads.count()
+            squads_for_stats = user_squads
 
-        # 4. Statistik (Global Data)
-        total_players_in_all_squads = DreamSquadPlayer.objects.count()
-        avg_age_data = Player.objects.filter(in_dream_squads__isnull=False).aggregate(Avg('age'))
+        # 4. Hitung Statistik Berdasarkan Scope (Admin=Global, User=Personal)
+        total_squads_count = squads_for_stats.count()
+        
+        # Hitung pemain unik dalam scope squad tersebut
+        total_players_used = DreamSquadPlayer.objects.filter(
+            squad__in=squads_for_stats
+        ).count()
+
+        # Hitung rata-rata umur pemain dalam scope squad tersebut
+        avg_age_data = Player.objects.filter(
+            in_dream_squads__squad__in=squads_for_stats
+        ).distinct().aggregate(Avg('age'))
         avg_age = avg_age_data['age__avg'] or 0
 
-        # 5. Serialisasi My Squads
+        # 5. Serialisasi My Squads (Selalu milik user yang login)
         user_squads_list = []
-        for s in user_squads:
+        for s in user_squads.prefetch_related('players'):
             user_squads_list.append({
                 'id': s.id,
                 'name': s.name,
@@ -164,11 +173,13 @@ def squad_list_api(request):
                 'age': p.age
             })
 
-        # 7. Admin Extras
+        # 7. Admin Extras (Hanya untuk Admin)
         admin_data = {'banned_words': [], 'popular_players': []}
         if is_admin:
             admin_data['banned_words'] = list(BannedWord.objects.values_list('word', flat=True))
-            most_popular = Player.objects.annotate(usage=Count('in_dream_squads')).filter(usage__gt=0).order_by('-usage')[:5]
+            most_popular = Player.objects.annotate(
+                usage=Count('in_dream_squads')
+            ).filter(usage__gt=0).order_by('-usage')[:5]
             admin_data['popular_players'] = [{'id':p.id, 'name':p.name, 'usage':p.usage} for p in most_popular]
 
         # 8. RETURN SUCCESS RESPONSE
@@ -178,16 +189,15 @@ def squad_list_api(request):
             'my_squads': user_squads_list,
             'discovery_players': discovery_list,
             'stats': {
-                'total_squads': squads_all_count,
-                'total_players_used': total_players_in_all_squads,
+                'total_squads': total_squads_count,
+                'total_players_used': total_players_used,
                 'average_age': round(float(avg_age), 1),
             },
             'admin_extras': admin_data
         })
 
     except Exception as e:
-        # Jika ada error koding/database, kirim JSON, bukan HTML error 500
-        print(traceback.format_exc()) # Muncul di terminal server
+        print(traceback.format_exc())
         return JsonResponse({
             'success': False,
             'error': str(e),
