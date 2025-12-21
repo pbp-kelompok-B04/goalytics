@@ -59,12 +59,14 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'main',
     'adminpanel.apps.AdminpanelConfig',
     'PlayerClub_Data.apps.PlayerclubDataConfig',
@@ -78,6 +80,15 @@ INSTALLED_APPS = [
     'authentication',
     'corsheaders',
 ]
+
+# Django Channels configuration
+ASGI_APPLICATION = 'goalytics.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  
