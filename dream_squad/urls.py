@@ -24,4 +24,5 @@ urlpatterns = [
     path('api/delete/<int:squad_id>/', views.delete_squad_api, name='delete_squad_api'),
     path('api/edit/<int:squad_id>/', views.edit_squad_api, name='edit_squad_api'),
     path('api/player/<int:player_id>/', views.api_player_detail, name='api_player_detail'),
+    path('api/players-modal/', views.get_players_for_modal),
 ]
