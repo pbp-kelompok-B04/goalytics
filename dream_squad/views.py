@@ -740,7 +740,7 @@ def add_player_to_squad_api(request, squad_id, player_id):
             }, status=400)
 
         # 4. Cek Kapasitas
-        MAX_PLAYERS = 15 # Sesuaikan dengan variabel global Anda
+        MAX_PLAYERS = 22 # Sesuaikan dengan variabel global Anda
         current_count = squad.players.count()
         if current_count >= MAX_PLAYERS:
             return JsonResponse({
