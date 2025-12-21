@@ -7,3 +7,5 @@ urllib3
 python-dotenv
 django-widget-tweaks
 django-cors-headers
+channels
+daphne
