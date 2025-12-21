@@ -170,7 +170,11 @@ def squad_list_api(request):
                 'name': p.name,
                 'position': p.position,
                 'club_name': p.club.name if p.club else "No Club",
-                'age': p.age
+                'age': p.age,
+                'image_url': p.image.url if p.image else None, # Kirim Gambar
+                # Tambahkan data statistik sederhana untuk Discovery
+                'goals': p.attacking.goals if hasattr(p, 'attacking') else 0,
+                'assists': p.attacking.assists if hasattr(p, 'attacking') else 0,
             })
 
         # 7. Admin Extras (Hanya untuk Admin)
@@ -180,7 +184,7 @@ def squad_list_api(request):
             most_popular = Player.objects.annotate(
                 usage=Count('in_dream_squads')
             ).filter(usage__gt=0).order_by('-usage')[:5]
-            admin_data['popular_players'] = [{'id':p.id, 'name':p.name, 'usage':p.usage} for p in most_popular]
+            admin_data['popular_players'] = [{'id':p.id, 'name':p.name, 'usage':p.usage, 'image_url': p.image.url if p.image else None} for p in most_popular]
 
         # 8. RETURN SUCCESS RESPONSE
         return JsonResponse({
