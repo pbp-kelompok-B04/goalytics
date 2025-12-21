@@ -788,101 +788,6 @@
   const notifList = document.getElementById("notifList");
   const notifDot = document.getElementById("notif-dot"); 
   let lastNotifCount = 0;
-  let cachedNotifications = [];
-  let notificationPollInterval = null;
-
-  // --- REST API Notification Polling ---
-  async function fetchNotifications() {
-    if (!isAuthenticated) return;
-    
-    try {
-      const response = await fetch("{% url 'get_notifications' %}", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "same-origin"
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        const notifications = result.data || [];
-        
-        const newUnreadCount = notifications.filter(n => !n.is_read).length;
-        
-        if (newUnreadCount > lastNotifCount && lastNotifCount > 0) {
-          const newNotif = notifications.find(n => !n.is_read);
-          if (newNotif) {
-            showToast(`${newNotif.actor} ${newNotif.verb}`, false);
-            // Animasi ping pada dot
-            notifDot.classList.add("animate-ping");
-            setTimeout(() => notifDot.classList.remove("animate-ping"), 1000);
-          }
-        }
-        
-        cachedNotifications = notifications;
-        updateNotifDot(newUnreadCount);
-        
-        if (!notifModal.classList.contains("hidden")) {
-          renderNotifications(cachedNotifications);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  }
-
-  function startNotificationPolling() {
-    if (!isAuthenticated) return;
-    
-    fetchNotifications();
-    
-    notificationPollInterval = setInterval(fetchNotifications, 30000);
-  }
-
-  function stopNotificationPolling() {
-    if (notificationPollInterval) {
-      clearInterval(notificationPollInterval);
-      notificationPollInterval = null;
-    }
-  }
-  
-  function updateNotifDot(unreadCount) {
-    if (unreadCount > 0) {
-      notifDot.classList.remove("hidden");
-    } else {
-      notifDot.classList.add("hidden");
-    }
-    lastNotifCount = unreadCount;
-  }
-  
-  function renderNotifications(notifications) {
-    if (notifications.length === 0) {
-      notifList.innerHTML = `<p class="text-center text-slate-400">No notifications yet.</p>`;
-      return;
-    }
-    
-    notifList.innerHTML = notifications
-      .map(
-        (n) => `
-        <div class="notif-item cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 transition ${!n.is_read ? 'border-l-4 border-l-blue-500' : ''}" data-post-id="${n.post_id || ''}">
-          <p><span class="font-semibold">${n.actor}</span> ${n.verb}</p>
-          <p class="text-xs text-slate-400 mt-1">${new Date(n.created_at).toLocaleString()}</p>
-        </div>`
-      )
-      .join("");
-    
-    document.querySelectorAll(".notif-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const postId = item.dataset.postId;
-        if (postId) {
-          window.location.href = `/forum/posts/${postId}/`;
-        } else {
-          showToast("This notification has no target post", true);
-        }
-      });
-    });
-  }
 
   // --- Open modal + mark all as read ---
   async function openNotifModal() {
@@ -893,25 +798,21 @@
     notifModal.classList.remove("hidden");
     notifModal.classList.add("flex");
 
-    // Render notifikasi dari cache
-    renderNotifications(cachedNotifications);
-
-    // Mark semua notif sudah dibaca via REST API
+    // Load daftar notifikasi
+    await loadNotifications();
     try {
-      await fetch("{% url 'mark_notifications_read' %}", {
+      await fetch(`/forum/api/notifications/mark_read/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken
+          "X-CSRFToken": csrftoken,
         },
-        credentials: "same-origin"
+        credentials: "include",
       });
-      
-      // Update local cache
-      cachedNotifications.forEach(n => n.is_read = true);
-      updateNotifDot(0);
-    } catch (error) {
-      console.error("Error marking notifications as read:", error);
+      notifDot.classList.add("hidden");
+      lastNotifCount = 0;
+    } catch (e) {
+      console.error("Failed to mark notifications as read:", e);
     }
   }
 
@@ -920,8 +821,80 @@
     notifModal.classList.remove("flex");
   }
 
-  // Inisialisasi polling saat halaman dimuat
-  startNotificationPolling();
+  async function loadNotifications() {
+    notifList.innerHTML = `<p class="text-center text-slate-400">Loading notifications...</p>`;
+    try {
+      const res = await fetch(`/forum/api/notifications/`);
+      const data = await res.json();
+      const items = data.data;
+
+      if (items.length === 0) {
+        notifList.innerHTML = `<p class="text-center text-slate-400">No notifications yet.</p>`;
+        notifDot.classList.add("hidden");
+        return;
+      }
+
+      notifList.innerHTML = items
+        .map(
+          (n) => `
+          <div class="notif-item cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 p-3 transition" data-post-id="${n.post_id || ''}">
+            <p><span class="font-semibold">${n.actor}</span> ${n.verb}</p>
+            <p class="text-xs text-slate-400 mt-1">${new Date(
+              n.created_at
+            ).toLocaleString()}</p>
+          </div>`
+        )
+        .join("");
+
+
+      document.querySelectorAll(".notif-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const postId = item.dataset.postId;
+          if (postId) {
+            window.location.href = `/forum/posts/${postId}/`;
+          } else {
+            showToast("This notification has no target post", true);
+          }
+        });
+      });
+      const unreadCount = items.filter((n) => !n.is_read).length;
+      if (unreadCount > 0) {
+        notifDot.classList.remove("hidden");
+      } else {
+        notifDot.classList.add("hidden");
+      }
+    } catch (error) {
+      console.error("Error loading notifications:", error);
+      notifList.innerHTML = `<p class="text-center text-rose-500">Error loading notifications</p>`;
+    }
+  }
+
+  async function checkNotifications() {
+    if (!isAuthenticated) return;
+    try {
+      const res = await fetch(`/forum/api/notifications/`);
+      const data = await res.json();
+      const notifs = data.data || [];
+      const unread = notifs.filter((n) => !n.is_read).length;
+
+      if (unread > 0) {
+        notifDot.classList.remove("hidden");
+        if (unread > lastNotifCount) {
+          notifDot.classList.add("animate-ping");
+          setTimeout(() => notifDot.classList.remove("animate-ping"), 1000);
+        }
+      } else {
+        notifDot.classList.add("hidden");
+      }
+      lastNotifCount = unread;
+    } catch (err) {
+      console.error("Error checking notifications:", err);
+    }
+  }
+
+  // Jalankan otomatis tiap 15 detik dan saat halaman pertama kali dimuat
+  setInterval(checkNotifications, 15000);
+  checkNotifications();
   syncLeagueChips(currentLeague);
   syncSortChips(currentSort);
   loadPosts();
