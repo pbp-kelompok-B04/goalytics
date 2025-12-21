@@ -962,7 +962,7 @@ def edit_squad_api(request, squad_id):
         new_players = []
         if player_ids:
             new_players = Player.objects.filter(id__in=player_ids)
-            MAX_CAP = 15 # Sesuaikan dengan variabel global Anda
+            MAX_CAP = 22 # Sesuaikan dengan variabel global Anda
 
             if new_players.count() > MAX_CAP:
                 return JsonResponse({
