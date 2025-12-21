@@ -23,6 +23,7 @@ import traceback
 MAX_PLAYERS = 22
 REQUIRED_POS = {'GK', 'DF', 'MF', 'FW'}
 
+
 def squad_has_required_positions(player_qs):
     """Return True if at least one player for each required position exists."""
     positions_present = {p.position for p in player_qs if p.position}
@@ -171,11 +172,11 @@ def squad_list_api(request):
                 'position': p.position,
                 'club_name': p.club.name if p.club else "No Club",
                 'age': p.age,
-                'image_url': p.image.url if p.image else None, # Kirim Gambar
-                # Tambahkan data statistik sederhana untuk Discovery
-                'goals': p.attacking.goals if hasattr(p, 'attacking') else 0,
-                'assists': p.attacking.assists if hasattr(p, 'attacking') else 0,
+                'image_url': getattr(p, 'image_url', None),
+                'goals': getattr(p, 'goals', 0),
+                'assists': getattr(p, 'assists', 0),
             })
+
 
         # 7. Admin Extras (Hanya untuk Admin)
         admin_data = {'banned_words': [], 'popular_players': []}
@@ -184,7 +185,8 @@ def squad_list_api(request):
             most_popular = Player.objects.annotate(
                 usage=Count('in_dream_squads')
             ).filter(usage__gt=0).order_by('-usage')[:5]
-            admin_data['popular_players'] = [{'id':p.id, 'name':p.name, 'usage':p.usage, 'image_url': p.image.url if p.image else None} for p in most_popular]
+            admin_data['popular_players'] = [{'id':p.id, 'name':p.name, 'usage': p.usage, 'image_url': getattr(p, 'image_url', None)} for p in most_popular]
+
 
         # 8. RETURN SUCCESS RESPONSE
         return JsonResponse({
@@ -624,7 +626,7 @@ def squad_detail_api(request, squad_id):
             'club_name': p.club.name if p.club else "No Club",
             'goals': getattr(p, 'goals', 0),
             'assists': getattr(p, 'assists', 0),
-            'image_url': p.image.url if hasattr(p, 'image') and p.image else None,
+            'image_url': getattr(p, 'image_url', None),
         } for p in squad_players]
 
         discovery_list = [{
@@ -633,8 +635,9 @@ def squad_detail_api(request, squad_id):
             'position': p.position,
             'club_name': p.club.name if p.club else "No Club",
             'is_already_added': p.id in favorite_ids,
-            'image_url': p.image.url if hasattr(p, 'image') and p.image else None,
+            'image_url': getattr(p, 'image_url', None),
         } for p in discovery_players]
+
 
         # 7. RETURN SUCCESS RESPONSE (Struktur Flat)
         return JsonResponse({
@@ -1167,7 +1170,7 @@ def api_player_detail(request, player_id):
             'success': True,
             'id': player.id,
             'name': player.name,
-            'image_url': player.image.url if hasattr(player, 'image') and player.image else None,
+            'image_url': getattr(player, 'image_url', None),
             'position_display': player.get_position_display() if hasattr(player, 'get_position_display') else player.position,
             'position_raw': player.position,
             'club_name': player.club.name if player.club else "Free Agent",
