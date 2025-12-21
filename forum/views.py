@@ -73,7 +73,6 @@ def get_all_post(request):
             "is_liked": p.id in liked_post_ids,
             "avatar": _avatar_for_user(p.author),
             "media_url": p.media_url or None,
-            "attachment_url": (getattr(p.attachment, "url", None) if p.attachment else None)
         }
         data.append(post)
     return JsonResponse({"data": data})
@@ -104,7 +103,6 @@ def get_post_by_id(request, post_id):
         "like_count": getattr(post, "like_count", 0),
         "is_liked": liked,
         "media_url": post.media_url or None,
-        "attachment_url": (getattr(post.attachment, "url", None) if post.attachment else None)
     }
     return JsonResponse({"data": data})
 
@@ -465,23 +463,6 @@ def get_notifications(request):
 def mark_notifications_read(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     return JsonResponse({"message": "All notifications marked as read"})
-
-@login_required
-@require_http_methods(["POST"])
-def upload_attachment(request):
-    file = request.FILES.get("attachment")
-    if not file:
-        return JsonResponse({"error": "file tidak ditemukan"}, status=400)
-
-    post = Post.objects.create(author=request.user, title="(upload-only)", content="")
-    post.attachment = file
-    post.save()
-
-    return JsonResponse({
-        "attachment_url": post.attachment.url,
-        "post_id": post.id,
-        "url": post.attachment.url
-    }, status=201)
 
 def get_payload(request):
     content_type = request.content_type or ""

@@ -1,6 +1,6 @@
 {% with url_name=request.resolver_match.url_name|default:'' %}
 {% with namespace=request.resolver_match.namespace|default:'' %}
-<nav id="sidebarShell" class="fixed left-0 top-0 h-screen w-72 flex flex-col border-r border-slate-200 bg-white overflow-y-auto no-scrollbar z-40 transition-transform duration-300 ease-in-out">
+<nav id="sidebarShell" class="fixed left-0 top-0 h-screen w-72 flex flex-col border-r border-slate-200 bg-white overflow-y-auto no-scrollbar z-40">
   <div class="flex items-center justify-between px-6 py-4 md:py-8">
     <a href="{% if user.is_authenticated %}{% url 'main:dashboard' %}{% else %}{% url 'main:home' %}{% endif %}" class="flex items-center gap-3 cursor-pointer">
     <div class="flex items-center gap-3">
@@ -23,16 +23,19 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l-7 7 7 7" />
         </svg>
       </button>
-      <button id="sidebarToggle" type="button" class="md:hidden inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+      <button id="sidebarToggle" type="button" class="md:hidden relative inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-slate-300 hover:text-slate-900 w-10 h-10">
         <span class="sr-only">Toggle menu</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="hamburger-icon absolute h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="close-icon absolute h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
   </div>
 
-  <div id="sidebarContent" class="hidden md:flex md:flex-col md:justify-between px-6 pb-6 md:pb-10">
+  <div id="sidebarContent" class="md:flex md:flex-col md:justify-between px-6 pb-6 md:pb-10 flex-1">
     <div class="flex flex-col gap-6">
 
       {% if user.is_authenticated %}
@@ -292,17 +295,45 @@
 </nav>
 
 <script>
-  const sidebarToggle = document.getElementById('sidebarToggle');
-  const sidebarContent = document.getElementById('sidebarContent');
+  (function() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarContent = document.getElementById('sidebarContent');
 
-  if (sidebarToggle && sidebarContent) {
-    sidebarToggle.addEventListener('click', () => {
-      sidebarContent.classList.toggle('hidden');
-      sidebarContent.classList.toggle('flex');
-      sidebarContent.classList.toggle('flex-col');
-      sidebarContent.classList.toggle('justify-between');
-    });
-  }
+    if (sidebarToggle && sidebarContent) {
+      sidebarToggle.addEventListener('click', () => {
+        const isOpen = sidebarContent.classList.contains('mobile-open');
+        
+        if (isOpen) {
+          // Close menu
+          sidebarContent.classList.remove('mobile-open');
+          sidebarToggle.classList.remove('menu-open');
+        } else {
+          // Open menu
+          sidebarContent.classList.add('mobile-open');
+          sidebarToggle.classList.add('menu-open');
+        }
+      });
+      
+      // Close dropdown when clicking a link (mobile)
+      const links = sidebarContent.querySelectorAll('a');
+      links.forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 768) {
+            sidebarContent.classList.remove('mobile-open');
+            sidebarToggle.classList.remove('menu-open');
+          }
+        });
+      });
+      
+      // Close dropdown when resizing to desktop
+      window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768) {
+          sidebarContent.classList.remove('mobile-open');
+          sidebarToggle.classList.remove('menu-open');
+        }
+      });
+    }
+  })();
 </script>
 {% endwith %}
 {% endwith %}

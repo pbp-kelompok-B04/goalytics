@@ -9,26 +9,32 @@ from .models import Profile
 from PlayerClub_Data.models import Club
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.views.decorators.http import require_GET
+
+import requests
+from urllib.parse import urlparse
+
 
 def login_user(request):
-    
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            login(request, user)  
+            login(request, user)
             messages.success(request, f"Welcome back, {username}!")
             return redirect('main:dashboard')
         else:
             messages.error(request, "Invalid username or password.")
-    
+
     return render(request, 'login.html')
+
 
 def register_user(request):
     if request.method == 'POST':
@@ -40,7 +46,7 @@ def register_user(request):
         if password != confirm:
             messages.error(request, "Passwords do not match.")
             return redirect('users:register')
-        
+
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already taken.")
             return redirect('users:register')
@@ -53,10 +59,12 @@ def register_user(request):
 
     return render(request, 'register.html')
 
+
 def logout_user(request):
-    logout(request)  
+    logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('main:home')
+
 
 @login_required
 def search_users(request):
@@ -83,7 +91,7 @@ def search_users(request):
 
     qs = qs.order_by('user__username')
 
-    paginator = Paginator(qs, 12)  
+    paginator = Paginator(qs, 12)
     page_obj = paginator.get_page(request.GET.get('page'))
     active_filters = sum(1 for value in (q, league, position) if value)
 
@@ -98,6 +106,7 @@ def search_users(request):
         'results_count': paginator.count,
     }
     return render(request, 'search.html', context)
+
 
 @login_required
 def search_users_api(request):
@@ -122,7 +131,7 @@ def search_users_api(request):
     if position:
         qs = qs.filter(preferred_position=position)
 
-    qs = qs.order_by('user__username')[:50]  
+    qs = qs.order_by('user__username')[:50]
 
     results = []
     for p in qs:
@@ -142,6 +151,7 @@ def search_users_api(request):
         })
 
     return JsonResponse({"status": True, "results": results}, status=200)
+
 
 @login_required
 def view_profile(request, username):
@@ -166,6 +176,7 @@ def view_profile(request, username):
         "is_owner": is_owner,
         "form": form,
     })
+
 
 @login_required
 def toggle_block_user(request, username):
@@ -202,6 +213,7 @@ def toggle_flag_user(request, username):
         return redirect(next_url)
     return redirect('users:profile', username=username)
 
+
 def serialize_profile(profile, include_email=False):
     user = profile.user
     return {
@@ -222,6 +234,7 @@ def serialize_profile(profile, include_email=False):
         "is_blocked": profile.is_blocked,
         "is_flagged": profile.is_flagged,
     }
+
 
 @csrf_exempt
 def profile_me_api(request):
@@ -263,7 +276,7 @@ def profile_me_api(request):
                 profile.favorite_team = None
             else:
                 club_obj = Club.objects.filter(name__iexact=team_name_str).first()
-                profile.favorite_team = club_obj  
+                profile.favorite_team = club_obj
 
         editable_fields = [
             "bio",
@@ -293,7 +306,6 @@ def profile_me_api(request):
     )
 
 
-
 @login_required
 def list_users_api(request):
     try:
@@ -301,7 +313,7 @@ def list_users_api(request):
     except ValueError:
         limit = 50
 
-    limit = max(1, min(limit, 200))  
+    limit = max(1, min(limit, 200))
 
     qs = Profile.objects.select_related('user', 'favorite_team') \
                         .order_by('user__username')[:limit]
@@ -313,13 +325,14 @@ def list_users_api(request):
         status=200,
     )
 
+
 def profile_detail_api(request, username):
     profile = get_object_or_404(
         Profile.objects.select_related('user', 'favorite_team'),
         user__username__iexact=username,
     )
 
-    include_email = (request.user == profile.user) 
+    include_email = (request.user == profile.user)
     data = serialize_profile(profile, include_email=include_email)
 
     return JsonResponse(
@@ -327,3 +340,56 @@ def profile_detail_api(request, username):
         status=200,
     )
 
+
+@require_GET
+def image_proxy(request):
+    url = (request.GET.get("url") or "").strip()
+    if not url:
+        return JsonResponse({"status": False, "message": "Missing url"}, status=400)
+
+    # Validate scheme
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return JsonResponse({"status": False, "message": "Invalid scheme"}, status=400)
+    except Exception:
+        return JsonResponse({"status": False, "message": "Invalid url"}, status=400)
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; GoalyticsImageProxy/1.0)",
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        "Referer": url,
+    }
+
+    try:
+        r = requests.get(
+            url,
+            headers=headers,
+            timeout=10,
+            allow_redirects=True,
+            stream=True,
+        )
+        r.raise_for_status()
+    except requests.exceptions.Timeout:
+        return JsonResponse({"status": False, "message": "Upstream timeout"}, status=504)
+    except requests.RequestException as e:
+        return JsonResponse(
+            {"status": False, "message": f"Upstream request failed: {str(e)}"},
+            status=502,
+        )
+
+    content_type = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+    if not content_type.startswith("image/"):
+        return JsonResponse(
+            {
+                "status": False,
+                "message": "Upstream content is not an image",
+                "content_type": content_type or None,
+            },
+            status=415,
+        )
+
+    response = HttpResponse(r.content, content_type=content_type)
+    response["Access-Control-Allow-Origin"] = "*"  # Flutter Web
+    response["Cache-Control"] = "public, max-age=86400"
+    return response

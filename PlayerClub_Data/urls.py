@@ -11,6 +11,7 @@ from PlayerClub_Data.views import (
     database_home,
     get_all_player,
     get_all_club,
+    get_all_leagues,
 )
 
 app_name = 'PlayerClub_Data'
@@ -27,4 +28,5 @@ urlpatterns = [
     path('clubs/add/', club_create, name='club_create'),
     path('clubs/<int:pk>/edit/', club_update, name='club_update'),
     path('clubs/<int:pk>/delete/', club_delete, name='club_delete'),
+    path('api/leagues/', get_all_leagues, name='get_all_leagues'),
 ]
