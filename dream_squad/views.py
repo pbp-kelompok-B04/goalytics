@@ -194,6 +194,39 @@ def squad_list_api(request):
             'my_squads': [],
             'discovery_players': []
         }, status=500)
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def add_banned_word_api(request):
+    """API khusus Admin untuk menambah kata terlarang via Flutter"""
+    try:
+        # 1. Cek Admin
+        if not request.user.is_authenticated or request.user.profile.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Unauthorized. Admin only.'}, status=403)
+
+        # 2. Parse Data
+        data = json.loads(request.body)
+        word_to_ban = data.get('word', '').strip().lower()
+
+        if not word_to_ban:
+            return JsonResponse({'success': False, 'error': 'Word cannot be empty.'}, status=400)
+
+        # 3. Simpan
+        obj, created = BannedWord.objects.get_or_create(word=word_to_ban)
+        
+        if created:
+            return JsonResponse({
+                'success': True, 
+                'message': f"Kata '{word_to_ban}' berhasil diblokir."
+            })
+        else:
+            return JsonResponse({
+                'success': False, 
+                'error': f"Kata '{word_to_ban}' sudah ada di daftar."
+            }, status=400)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 def create_squad(request):
@@ -1008,7 +1041,7 @@ def delete_squad_api(request, squad_id):
         # 4. Return Success Response (Struktur Flat)
         return JsonResponse({
             'success': True,
-            'message': f'Squad "{squad_name}" berhasil dihapus selamanya.',
+            'message': f'Squad "{squad_name}" has been deleted.',
             'deleted_squad_id': squad_id
         })
 
