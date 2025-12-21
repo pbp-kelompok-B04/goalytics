@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .models import Player, Club
 from .forms import PlayerForm, ClubForm
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET
 from django.http import JsonResponse
 from django.db.models import Count
 from django.apps import apps
@@ -301,3 +301,14 @@ def club_create_api(request):
         "expected_xag": club.expected_xag,
     }
     return JsonResponse({"message": "Club created successfully", "data": data}, status=201)
+
+@require_GET
+def get_all_leagues(request):
+    leagues = (
+        Club.objects.exclude(league__isnull=True)
+        .exclude(league__exact="")
+        .values_list("league", flat=True)
+        .distinct()
+        .order_by("league")
+    )
+    return JsonResponse({"status": True, "results": list(leagues)}, status=200)
