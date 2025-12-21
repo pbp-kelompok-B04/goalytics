@@ -391,6 +391,24 @@ def create_squad_api(request):
             'error': f'Server error: {str(e)}'
         }, status=500)
     
+@require_http_methods(["GET"])
+def get_players_for_modal(request):
+    """API khusus untuk mengisi dropdown modal Flutter tanpa limit abjad"""
+    try:
+        # Kita ambil SEMUA pemain dan kelompokkan di server agar Flutter tinggal pakai
+        data = {
+            'success': True,
+            'players_by_pos': {
+                'GK': list(Player.objects.filter(position='GK').order_by('name').values('id', 'name')),
+                'DF': list(Player.objects.filter(position='DF').order_by('name').values('id', 'name')),
+                'MF': list(Player.objects.filter(position='MF').order_by('name').values('id', 'name')),
+                'FW': list(Player.objects.filter(position='FW').order_by('name').values('id', 'name')),
+            }
+        }
+        return JsonResponse(data)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
 # dream_squad/views.py (Hanya fungsi squad_detail)
 @login_required
 def squad_detail(request, squad_id):
@@ -962,6 +980,7 @@ def delete_squad(request, squad_id):
         
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
 
+@csrf_exempt
 @require_http_methods(["POST"])
 def delete_squad_api(request, squad_id):
     """API Version - Mengikuti pola stabil untuk menghapus squad secara keseluruhan."""
